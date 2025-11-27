@@ -1,22 +1,39 @@
+
 import React, { useState, useEffect } from 'react';
-import { getAllProfiles, updateUserRole, getProfile } from '../services/api';
-import type { AppUser, Profile, Role } from '../types';
+import { getAllProfiles, updateUserRole, getProfile, updateProfile, getAppConfig, updateAppConfig } from '../services/api';
+import { supabase } from '../services/supabase';
+import type { AppUser, Profile, Role, AppConfig } from '../types';
 import Spinner from '../components/Spinner';
-import { ShieldIcon } from '../components/icons/Icons';
+import Modal from '../components/Modal';
+import { ShieldIcon, EditIcon, PlusIcon, UserIcon } from '../components/icons/Icons';
 
 interface AdminPageProps {
   user: AppUser;
 }
 
 const AdminPage: React.FC<AdminPageProps> = ({ user }) => {
+  const [activeTab, setActiveTab] = useState<'users' | 'settings'>('users');
   const [profiles, setProfiles] = useState<(Profile & { email?: string })[]>([]);
   const [loading, setLoading] = useState(true);
   const [authorized, setAuthorized] = useState(false);
 
+  // Settings State
+  const [siteConfig, setSiteConfig] = useState<AppConfig>({
+      site_name: '', site_description: '', site_logo: '', site_favicon: ''
+  });
+
+  // Modal State for Users
+  const [isUserModalOpen, setIsUserModalOpen] = useState(false);
+  const [editingProfile, setEditingProfile] = useState<Profile | null>(null);
+  const [newUserMode, setNewUserMode] = useState(false);
+
+  // Form State
+  const [formData, setFormData] = useState({ firstName: '', lastName: '', email: '', password: '', role: 'basic' as Role });
+  const [formLoading, setFormLoading] = useState(false);
+
   useEffect(() => {
     const fetchAdminData = async () => {
         try {
-            // Security Check
             const currentUserProfile = await getProfile(user.id);
             if (currentUserProfile?.role !== 'admin') {
                 setAuthorized(false);
@@ -24,9 +41,9 @@ const AdminPage: React.FC<AdminPageProps> = ({ user }) => {
                 return;
             }
             setAuthorized(true);
-
-            const allProfiles = await getAllProfiles();
-            setProfiles(allProfiles);
+            await fetchProfiles();
+            const config = await getAppConfig();
+            setSiteConfig(config);
         } catch (error) {
             console.error("Failed to fetch admin data", error);
         } finally {
@@ -36,77 +53,262 @@ const AdminPage: React.FC<AdminPageProps> = ({ user }) => {
     fetchAdminData();
   }, [user.id]);
 
-  const handleRoleChange = async (userId: string, newRole: Role) => {
+  const fetchProfiles = async () => {
+      const allProfiles = await getAllProfiles();
+      setProfiles(allProfiles);
+  }
+
+  const handleOpenEdit = (profile: Profile) => {
+      setEditingProfile(profile);
+      setNewUserMode(false);
+      setFormData({
+          firstName: profile.first_name || '',
+          lastName: profile.last_name || '',
+          email: '', // Cannot edit email directly easily without auth api
+          password: '',
+          role: profile.role
+      });
+      setIsUserModalOpen(true);
+  }
+
+  const handleOpenCreate = () => {
+      setEditingProfile(null);
+      setNewUserMode(true);
+      setFormData({ firstName: '', lastName: '', email: '', password: '', role: 'basic' });
+      setIsUserModalOpen(true);
+  }
+
+  const handleUserSubmit = async (e: React.FormEvent) => {
+      e.preventDefault();
+      setFormLoading(true);
       try {
-          await updateUserRole(userId, newRole);
-          setProfiles(prev => prev.map(p => p.id === userId ? { ...p, role: newRole } : p));
+          if (newUserMode) {
+              // Create New User
+              // NOTE: This signs the user in on client side.
+              const { data, error } = await supabase.auth.signUp({
+                  email: formData.email,
+                  password: formData.password,
+                  options: {
+                      data: {
+                          first_name: formData.firstName,
+                          last_name: formData.lastName
+                      }
+                  }
+              });
+              if (error) throw error;
+              if (data.user) {
+                  // If we want to set role immediately, we need to wait for trigger or do it manually
+                  // Since we are admin, we can update the profile row after creation if RLS allows
+                  // But signUp logs us in as the new user.
+                  alert("Usuário criado! Atenção: Devido a limitações de segurança do navegador, você pode ter sido desconectado. Por favor, faça login novamente.");
+                  window.location.reload();
+              }
+          } else if (editingProfile) {
+              // Update Existing Profile
+              await updateProfile(editingProfile.id, {
+                  first_name: formData.firstName,
+                  last_name: formData.lastName,
+                  role: formData.role
+              });
+              // Role update via specific function if needed, but updateProfile covers metadata
+              // We also explicit call updateUserRole to be safe if separated
+              await updateUserRole(editingProfile.id, formData.role);
+              
+              await fetchProfiles();
+              setIsUserModalOpen(false);
+          }
+      } catch (error: any) {
+          alert("Erro: " + error.message);
+      } finally {
+          setFormLoading(false);
+      }
+  }
+
+  const handleSettingsSubmit = async (e: React.FormEvent) => {
+      e.preventDefault();
+      setFormLoading(true);
+      try {
+          await updateAppConfig(siteConfig);
+          alert("Configurações atualizadas! Atualize a página para ver as mudanças.");
       } catch (error) {
-          alert("Erro ao atualizar cargo do usuário.");
+          alert("Erro ao salvar configurações.");
+      } finally {
+          setFormLoading(false);
       }
   }
 
   if (loading) return <Spinner />;
-
-  if (!authorized) {
-      return (
-          <div className="flex flex-col items-center justify-center h-full text-red-500">
-              <ShieldIcon className="h-16 w-16 mb-4" />
-              <h1 className="text-2xl font-bold">Acesso Negado</h1>
-              <p>Você não tem permissão para acessar esta página.</p>
-          </div>
-      )
-  }
+  if (!authorized) return <div className="text-center text-red-500 mt-10">Acesso Negado</div>;
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-6 pb-20">
       <h1 className="text-3xl font-bold text-text-primary flex items-center">
           <ShieldIcon className="h-8 w-8 text-brand-primary mr-3" />
           Painel Administrativo
       </h1>
 
-      <div className="bg-card rounded-2xl border border-border shadow-lg overflow-hidden">
-          <div className="overflow-x-auto">
-            <table className="min-w-full divide-y divide-border">
-              <thead className="bg-gray-900/50">
-                <tr>
-                  <th className="px-6 py-4 text-left text-xs font-medium text-text-secondary uppercase tracking-wider">ID / Nome</th>
-                  <th className="px-6 py-4 text-left text-xs font-medium text-text-secondary uppercase tracking-wider">Cargo Atual</th>
-                  <th className="px-6 py-4 text-right text-xs font-medium text-text-secondary uppercase tracking-wider">Ações</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-border text-text-primary">
-                {profiles.map((profile) => (
-                  <tr key={profile.id} className="hover:bg-gray-800/50">
-                    <td className="px-6 py-4">
-                        <div className="font-bold">{profile.first_name} {profile.last_name}</div>
-                        <div className="text-xs text-text-secondary font-mono">{profile.id}</div>
-                    </td>
-                    <td className="px-6 py-4">
-                        <span className={`px-2 py-1 rounded-lg text-xs font-bold uppercase ${
-                            profile.role === 'admin' ? 'bg-red-500/20 text-red-400' :
-                            profile.role === 'pro' ? 'bg-brand-primary/20 text-brand-primary' :
-                            'bg-gray-700 text-gray-300'
-                        }`}>
-                            {profile.role}
-                        </span>
-                    </td>
-                    <td className="px-6 py-4 text-right">
-                        <select 
-                            value={profile.role} 
-                            onChange={(e) => handleRoleChange(profile.id, e.target.value as Role)}
-                            className="bg-background border border-border rounded-lg p-2 text-sm focus:ring-brand-primary"
-                        >
-                            <option value="basic">Basic</option>
-                            <option value="pro">Pro</option>
-                            <option value="admin">Admin</option>
-                        </select>
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
+      {/* Tabs */}
+      <div className="flex space-x-4 border-b border-border">
+          <button 
+            onClick={() => setActiveTab('users')}
+            className={`py-2 px-4 font-medium transition-colors ${activeTab === 'users' ? 'text-brand-primary border-b-2 border-brand-primary' : 'text-text-secondary hover:text-text-primary'}`}
+          >
+              Gerenciar Usuários
+          </button>
+          <button 
+            onClick={() => setActiveTab('settings')}
+            className={`py-2 px-4 font-medium transition-colors ${activeTab === 'settings' ? 'text-brand-primary border-b-2 border-brand-primary' : 'text-text-secondary hover:text-text-primary'}`}
+          >
+              Configurações do Site
+          </button>
       </div>
+
+      {activeTab === 'users' ? (
+          <div>
+            <div className="flex justify-end mb-4">
+                <button 
+                    onClick={handleOpenCreate}
+                    className="flex items-center bg-brand-primary hover:bg-brand-secondary text-black font-bold py-2 px-4 rounded-xl transition-colors"
+                >
+                    <PlusIcon className="h-5 w-5 mr-2" /> Novo Usuário
+                </button>
+            </div>
+            <div className="bg-card rounded-2xl border border-border shadow-lg overflow-hidden">
+                <div className="overflow-x-auto">
+                    <table className="min-w-full divide-y divide-border">
+                    <thead className="bg-gray-900/50">
+                        <tr>
+                        <th className="px-6 py-4 text-left text-xs font-medium text-text-secondary uppercase tracking-wider">Nome / ID</th>
+                        <th className="px-6 py-4 text-left text-xs font-medium text-text-secondary uppercase tracking-wider">Cargo</th>
+                        <th className="px-6 py-4 text-right text-xs font-medium text-text-secondary uppercase tracking-wider">Ações</th>
+                        </tr>
+                    </thead>
+                    <tbody className="divide-y divide-border text-text-primary">
+                        {profiles.map((profile) => (
+                        <tr key={profile.id} className="hover:bg-gray-800/50">
+                            <td className="px-6 py-4">
+                                <div className="font-bold">{profile.first_name} {profile.last_name}</div>
+                                <div className="text-xs text-text-secondary font-mono">{profile.id}</div>
+                            </td>
+                            <td className="px-6 py-4">
+                                <span className={`px-2 py-1 rounded-lg text-xs font-bold uppercase ${
+                                    profile.role === 'admin' ? 'bg-red-500/20 text-red-400' :
+                                    profile.role === 'pro' ? 'bg-brand-primary/20 text-brand-primary' :
+                                    'bg-gray-700 text-gray-300'
+                                }`}>
+                                    {profile.role}
+                                </span>
+                            </td>
+                            <td className="px-6 py-4 text-right">
+                                <button 
+                                    onClick={() => handleOpenEdit(profile)}
+                                    className="text-brand-primary hover:text-brand-secondary p-2"
+                                    title="Editar Usuário"
+                                >
+                                    <EditIcon className="h-5 w-5" />
+                                </button>
+                            </td>
+                        </tr>
+                        ))}
+                    </tbody>
+                    </table>
+                </div>
+            </div>
+          </div>
+      ) : (
+          <div className="bg-card p-8 rounded-2xl border border-border max-w-2xl">
+              <h2 className="text-xl font-bold mb-6">Informações Gerais do Site</h2>
+              <form onSubmit={handleSettingsSubmit} className="space-y-6">
+                  <div>
+                      <label className="block text-sm font-medium text-text-secondary mb-1">Nome do Site</label>
+                      <input 
+                        type="text" 
+                        value={siteConfig.site_name} 
+                        onChange={e => setSiteConfig({...siteConfig, site_name: e.target.value})}
+                        className="w-full bg-background border border-border rounded-xl p-3 text-text-primary focus:ring-brand-primary"
+                      />
+                  </div>
+                  <div>
+                      <label className="block text-sm font-medium text-text-secondary mb-1">Descrição (Meta Tag)</label>
+                      <textarea 
+                        value={siteConfig.site_description} 
+                        onChange={e => setSiteConfig({...siteConfig, site_description: e.target.value})}
+                        className="w-full bg-background border border-border rounded-xl p-3 text-text-primary focus:ring-brand-primary h-24"
+                      />
+                  </div>
+                  <div>
+                      <label className="block text-sm font-medium text-text-secondary mb-1">URL do Logo</label>
+                      <input 
+                        type="text" 
+                        value={siteConfig.site_logo} 
+                        onChange={e => setSiteConfig({...siteConfig, site_logo: e.target.value})}
+                        className="w-full bg-background border border-border rounded-xl p-3 text-text-primary focus:ring-brand-primary"
+                        placeholder="https://..."
+                      />
+                      {siteConfig.site_logo && <img src={siteConfig.site_logo} alt="Preview" className="h-10 mt-2 object-contain" />}
+                  </div>
+                  <div>
+                      <label className="block text-sm font-medium text-text-secondary mb-1">URL do Favicon</label>
+                      <input 
+                        type="text" 
+                        value={siteConfig.site_favicon} 
+                        onChange={e => setSiteConfig({...siteConfig, site_favicon: e.target.value})}
+                        className="w-full bg-background border border-border rounded-xl p-3 text-text-primary focus:ring-brand-primary"
+                         placeholder="https://..."
+                      />
+                  </div>
+                  <div className="flex justify-end">
+                      <button type="submit" disabled={formLoading} className="bg-brand-primary hover:bg-brand-secondary text-black font-bold py-2 px-6 rounded-xl transition-colors">
+                          {formLoading ? 'Salvando...' : 'Salvar Configurações'}
+                      </button>
+                  </div>
+              </form>
+          </div>
+      )}
+
+      {/* User Modal */}
+      <Modal isOpen={isUserModalOpen} onClose={() => setIsUserModalOpen(false)} title={newUserMode ? 'Novo Usuário' : 'Editar Usuário'}>
+          <form onSubmit={handleUserSubmit} className="space-y-4">
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                    <label className="block text-sm text-text-secondary">Nome</label>
+                    <input type="text" required value={formData.firstName} onChange={e => setFormData({...formData, firstName: e.target.value})} className="w-full bg-background border border-border rounded-xl p-3 text-text-primary" />
+                </div>
+                <div>
+                    <label className="block text-sm text-text-secondary">Sobrenome</label>
+                    <input type="text" value={formData.lastName} onChange={e => setFormData({...formData, lastName: e.target.value})} className="w-full bg-background border border-border rounded-xl p-3 text-text-primary" />
+                </div>
+              </div>
+              
+              {newUserMode && (
+                  <>
+                    <div>
+                        <label className="block text-sm text-text-secondary">E-mail</label>
+                        <input type="email" required value={formData.email} onChange={e => setFormData({...formData, email: e.target.value})} className="w-full bg-background border border-border rounded-xl p-3 text-text-primary" />
+                    </div>
+                    <div>
+                        <label className="block text-sm text-text-secondary">Senha</label>
+                        <input type="password" required value={formData.password} onChange={e => setFormData({...formData, password: e.target.value})} className="w-full bg-background border border-border rounded-xl p-3 text-text-primary" />
+                    </div>
+                  </>
+              )}
+
+              <div>
+                  <label className="block text-sm text-text-secondary">Cargo</label>
+                  <select value={formData.role} onChange={e => setFormData({...formData, role: e.target.value as Role})} className="w-full bg-background border border-border rounded-xl p-3 text-text-primary">
+                      <option value="basic">Básico</option>
+                      <option value="pro">Pro</option>
+                      <option value="admin">Admin</option>
+                  </select>
+              </div>
+
+              <div className="flex justify-end pt-4">
+                  <button type="submit" disabled={formLoading} className="bg-brand-primary hover:bg-brand-secondary text-black font-bold py-2 px-6 rounded-xl">
+                      {formLoading ? 'Salvando...' : 'Confirmar'}
+                  </button>
+              </div>
+          </form>
+      </Modal>
     </div>
   );
 };

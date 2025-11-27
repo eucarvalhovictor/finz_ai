@@ -1,6 +1,6 @@
 
 import { supabase } from './supabase';
-import type { AppUser, Transaction, Profile, CreditCard, Role } from '../types';
+import type { AppUser, Transaction, Profile, CreditCard, Role, AppConfig } from '../types';
 
 // Fetch all transactions for the logged-in user
 export const getTransactions = async (userId: string): Promise<Transaction[]> => {
@@ -76,7 +76,6 @@ export const getCategories = async (userId: string): Promise<string[]> => {
 
     if (!data || !Array.isArray(data)) return [];
 
-    // Fix: Cast data to any[] to ensure map works and explicit casting in filter to return string[]
     const categories = (data as any[])
         .map((item: any) => item.category)
         .filter((c: any): c is string => typeof c === 'string' && c.length > 0);
@@ -93,9 +92,7 @@ export const getProfile = async (userId: string): Promise<Profile | null> => {
         .single();
     
     if (error) {
-         // PGRST116 = no rows found. This is expected for new users before profile is created.
         if (error.code === 'PGRST116') return null;
-        
         console.error('Error fetching profile:', error.message);
         throw error;
     }
@@ -103,7 +100,7 @@ export const getProfile = async (userId: string): Promise<Profile | null> => {
 }
 
 // Update user profile
-export const updateProfile = async (userId: string, updates: { first_name?: string; last_name?: string; avatar_url?: string }) => {
+export const updateProfile = async (userId: string, updates: { first_name?: string; last_name?: string; avatar_url?: string, role?: Role }) => {
     const { error } = await supabase
         .from('profiles')
         .update(updates)
@@ -139,7 +136,6 @@ export const uploadAvatar = async (userId: string, file: File): Promise<string> 
 
 // --- Credit Card API ---
 
-// Fetch all credit cards for a user
 export const getCreditCards = async (userId: string): Promise<CreditCard[]> => {
     const { data, error } = await supabase
         .from('credit_cards')
@@ -154,7 +150,6 @@ export const getCreditCards = async (userId: string): Promise<CreditCard[]> => {
     return data || [];
 };
 
-// Add a new credit card
 export const addCreditCard = async (card: Omit<CreditCard, 'id' | 'created_at'>): Promise<CreditCard> => {
     const { data, error } = await supabase
         .from('credit_cards')
@@ -169,7 +164,6 @@ export const addCreditCard = async (card: Omit<CreditCard, 'id' | 'created_at'>)
     return data;
 };
 
-// Delete a credit card
 export const deleteCreditCard = async (cardId: string) => {
     const { error } = await supabase
         .from('credit_cards')
@@ -185,10 +179,6 @@ export const deleteCreditCard = async (cardId: string) => {
 // --- Admin API ---
 
 export const getAllProfiles = async (): Promise<(Profile & { email?: string })[]> => {
-    // Note: Fetching email requires joining with auth.users which is restricted in client.
-    // We will just fetch profiles here. In a real app, you'd use a Secure Edge Function.
-    // For this demo, we will try to fetch profiles. 
-    
     const { data: profiles, error } = await supabase
         .from('profiles')
         .select('*')
@@ -209,6 +199,56 @@ export const updateUserRole = async (userId: string, role: Role) => {
     
     if (error) {
         console.error('Error updating user role:', error);
+        throw error;
+    }
+}
+
+// --- Site Config API ---
+
+export const getAppConfig = async (): Promise<AppConfig> => {
+    const { data, error } = await supabase
+        .from('app_config')
+        .select('*');
+
+    const config: AppConfig = {
+        site_name: 'FinzAI',
+        site_description: 'Dashboard Financeiro',
+        site_logo: '',
+        site_favicon: ''
+    };
+
+    if (error) {
+        // Table might not exist yet, return defaults
+        return config;
+    }
+
+    if (data) {
+        data.forEach((row: any) => {
+            if (row.key === 'site_name') config.site_name = row.value;
+            if (row.key === 'site_description') config.site_description = row.value;
+            if (row.key === 'site_logo') config.site_logo = row.value;
+            if (row.key === 'site_favicon') config.site_favicon = row.value;
+        });
+    }
+
+    return config;
+}
+
+export const updateAppConfig = async (config: AppConfig) => {
+    // Upsert each key
+    const updates = [
+        { key: 'site_name', value: config.site_name },
+        { key: 'site_description', value: config.site_description },
+        { key: 'site_logo', value: config.site_logo },
+        { key: 'site_favicon', value: config.site_favicon },
+    ];
+
+    const { error } = await supabase
+        .from('app_config')
+        .upsert(updates, { onConflict: 'key' });
+
+    if (error) {
+        console.error('Error updating app config:', error);
         throw error;
     }
 }

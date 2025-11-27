@@ -1,3 +1,4 @@
+
 import type { User } from '@supabase/supabase-js';
 
 export interface CreditCard {
@@ -43,4 +44,11 @@ export interface Profile {
   avatar_url: string | null;
   updated_at: string | null;
   role: Role;
+}
+
+export interface AppConfig {
+  site_name: string;
+  site_description: string;
+  site_logo: string;
+  site_favicon: string;
 }
