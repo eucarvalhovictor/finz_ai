@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect, useMemo, useCallback } from 'react';
 import { getTransactions, getProfile, getCategories, getCreditCards, addTransaction, updateTransaction } from '../services/api';
 import type { AppUser, Transaction, MonthlySummary, CreditCard, Profile } from '../types';
@@ -148,22 +149,22 @@ const DashboardPage: React.FC<DashboardPageProps> = ({ user }) => {
   }
 
   return (
-    <div className="space-y-8">
+    <div className="space-y-6 md:space-y-8">
       <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-4">
         <div>
-          <h1 className="text-3xl font-bold text-text-primary">Dashboard</h1>
-          <p className="text-text-secondary mt-1">Bem-vindo(a) de volta, {userName}!</p>
+          <h1 className="text-2xl md:text-3xl font-bold text-text-primary">Dashboard</h1>
+          <p className="text-sm md:text-base text-text-secondary mt-1">Bem-vindo(a) de volta, {userName}!</p>
         </div>
         <button
           onClick={() => setIsModalOpen(true)}
-          className="flex items-center justify-center bg-brand-primary text-black font-bold py-3 px-6 rounded-xl text-lg shadow-md hover:shadow-glow hover:bg-brand-secondary transition-all transform hover:scale-105 duration-300 ease-in-out"
+          className="flex items-center justify-center bg-brand-primary text-black font-bold py-2 px-4 md:py-3 md:px-6 rounded-xl text-sm md:text-lg shadow-md hover:shadow-glow hover:bg-brand-secondary transition-all transform hover:scale-105 duration-300 ease-in-out"
         >
-          <PlusIcon className="h-6 w-6 mr-2" />
+          <PlusIcon className="h-5 w-5 md:h-6 md:w-6 mr-2" />
           Adicionar Transação
         </button>
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-6">
+      <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-4 md:gap-6">
         <DashboardCard 
             title="Patrimônio Líquido" 
             amount={totalInvestments} 

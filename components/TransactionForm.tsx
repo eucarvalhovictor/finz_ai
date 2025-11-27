@@ -29,14 +29,14 @@ const DEFAULT_CATEGORIES = [
 const FormInput: React.FC<React.InputHTMLAttributes<HTMLInputElement>> = (props) => (
     <input
         {...props}
-        className="mt-1 block w-full bg-background border border-border rounded-xl shadow-sm focus:ring-2 focus:ring-brand-primary focus:border-brand-primary sm:text-sm p-3 text-text-primary"
+        className="mt-1 block w-full bg-background border border-border rounded-xl shadow-sm focus:ring-2 focus:ring-brand-primary focus:border-brand-primary text-sm p-3 text-text-primary placeholder-text-secondary/50"
     />
 );
 
 const FormSelect: React.FC<React.SelectHTMLAttributes<HTMLSelectElement>> = (props) => (
     <select
         {...props}
-        className="mt-1 block w-full bg-background border border-border rounded-xl shadow-sm focus:ring-2 focus:ring-brand-primary focus:border-brand-primary sm:text-sm p-3 text-text-primary"
+        className="mt-1 block w-full bg-background border border-border rounded-xl shadow-sm focus:ring-2 focus:ring-brand-primary focus:border-brand-primary text-sm p-3 text-text-primary"
     >
         {props.children}
     </select>
@@ -90,18 +90,18 @@ const TransactionForm: React.FC<TransactionFormProps> = ({ onSave, onClose, exis
     }
     setIsSubmitting(true);
     
-    const newTransaction: Omit<Transaction, 'id' | 'created_at' | 'user_id'> = {
+    const isCreditExpense = paymentMethod === 'Cartão' && type === 'EXPENSE';
+
+    const newTransaction: any = {
       description,
       amount: +amount,
       date,
       type,
       category,
       payment_method: paymentMethod,
-      ...(paymentMethod === 'Cartão' && type === 'EXPENSE' && {
-          card_id: cardId,
-          payment_type: paymentType,
-          installments: paymentType === 'Parcelado' ? Number(installments) : 1,
-      })
+      card_id: isCreditExpense ? cardId : null,
+      payment_type: isCreditExpense ? paymentType : null,
+      installments: isCreditExpense && paymentType === 'Parcelado' ? Number(installments) : null,
     };
     
     await onSave(newTransaction, existingTransaction?.id);
@@ -111,22 +111,42 @@ const TransactionForm: React.FC<TransactionFormProps> = ({ onSave, onClose, exis
   const hasCreditCards = creditCards.length > 0;
   
   return (
-    <form onSubmit={handleSubmit} className="space-y-6">
+    <form onSubmit={handleSubmit} className="flex flex-col h-full gap-4">
+       
+       {/* Toggle Tipo */}
+       <div className="bg-background p-1 rounded-xl border border-border flex">
+          <button 
+            type="button" 
+            onClick={() => setType('INCOME')} 
+            className={`flex-1 py-2 rounded-lg text-sm font-bold transition-all ${type === 'INCOME' ? 'bg-green-500 text-white shadow-sm' : 'text-text-secondary hover:text-text-primary'}`}
+          >
+            Receita
+          </button>
+          <button 
+            type="button" 
+            onClick={() => setType('EXPENSE')} 
+            className={`flex-1 py-2 rounded-lg text-sm font-bold transition-all ${type === 'EXPENSE' ? 'bg-red-500 text-white shadow-sm' : 'text-text-secondary hover:text-text-primary'}`}
+          >
+            Despesa
+          </button>
+       </div>
+
        <div>
-        <label htmlFor="description" className="block text-sm font-medium text-text-secondary mb-1">Descrição</label>
+        <label htmlFor="description" className="block text-xs font-medium text-text-secondary mb-1">Descrição</label>
         <FormInput
           type="text"
           id="description"
           value={description}
           onChange={(e) => setDescription(e.target.value)}
           required
-          placeholder="Ex: Supermercado, Salário, Cinema"
+          placeholder="Ex: Supermercado"
         />
       </div>
       
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-        <div>
-          <label htmlFor="amount" className="block text-sm font-medium text-text-secondary mb-1">Valor (R$)</label>
+      {/* Valor e Data lado a lado */}
+      <div className="flex gap-3">
+        <div className="flex-1">
+          <label htmlFor="amount" className="block text-xs font-medium text-text-secondary mb-1">Valor (R$)</label>
           <FormInput
             type="number"
             id="amount"
@@ -138,8 +158,8 @@ const TransactionForm: React.FC<TransactionFormProps> = ({ onSave, onClose, exis
             placeholder="0,00"
           />
         </div>
-        <div>
-            <label htmlFor="date" className="block text-sm font-medium text-text-secondary mb-1">Data</label>
+        <div className="w-2/5">
+            <label htmlFor="date" className="block text-xs font-medium text-text-secondary mb-1">Data</label>
             <FormInput
               type="date"
               id="date"
@@ -149,17 +169,9 @@ const TransactionForm: React.FC<TransactionFormProps> = ({ onSave, onClose, exis
             />
         </div>
       </div>
-     
-      <div>
-        <span className="block text-sm font-medium text-text-secondary mb-2">Tipo de Transação</span>
-        <div className="flex space-x-4">
-          <button type="button" onClick={() => setType('INCOME')} className={`w-full p-3 rounded-xl font-semibold transition-all duration-200 ${type === 'INCOME' ? 'bg-green-500 text-white' : 'bg-background border border-border hover:bg-border text-text-secondary'}`}>Receita</button>
-          <button type="button" onClick={() => setType('EXPENSE')} className={`w-full p-3 rounded-xl font-semibold transition-all duration-200 ${type === 'EXPENSE' ? 'bg-red-500 text-white' : 'bg-background border border-border hover:bg-border text-text-secondary'}`}>Despesa</button>
-        </div>
-      </div>
 
        <div>
-        <label htmlFor="category" className="block text-sm font-medium text-text-secondary mb-1">Categoria</label>
+        <label htmlFor="category" className="block text-xs font-medium text-text-secondary mb-1">Categoria</label>
         <FormInput
           type="text"
           id="category"
@@ -167,60 +179,60 @@ const TransactionForm: React.FC<TransactionFormProps> = ({ onSave, onClose, exis
           onChange={(e) => setCategory(e.target.value)}
           required
           list="category-suggestions"
-          placeholder="Selecione ou digite uma categoria"
+          placeholder="Selecione ou digite..."
         />
         <datalist id="category-suggestions">
           {allCategories.map(cat => <option key={cat} value={cat} />)}
         </datalist>
       </div>
 
-      <div className="space-y-4 p-4 border border-border rounded-2xl">
-          <h4 className="text-sm font-medium text-text-secondary">Meio de Pagamento</h4>
+      <div className="space-y-3 p-3 border border-border rounded-xl bg-background/50">
+          <h4 className="text-xs font-medium text-text-secondary">Meio de Pagamento</h4>
           <div className="grid grid-cols-3 gap-2">
-              <button type="button" onClick={() => setPaymentMethod('Dinheiro')} className={`p-2 text-sm rounded-lg font-semibold transition-all duration-200 ${paymentMethod === 'Dinheiro' ? 'bg-brand-primary text-black' : 'bg-background border border-border hover:bg-border text-text-secondary'}`}>
+              <button type="button" onClick={() => setPaymentMethod('Dinheiro')} className={`py-2 px-1 text-xs rounded-lg font-semibold transition-all ${paymentMethod === 'Dinheiro' ? 'bg-brand-primary text-black' : 'bg-card border border-border text-text-secondary'}`}>
                   Dinheiro
               </button>
-               <button type="button" onClick={() => setPaymentMethod('Pix')} className={`p-2 text-sm rounded-lg font-semibold transition-all duration-200 ${paymentMethod === 'Pix' ? 'bg-brand-primary text-black' : 'bg-background border border-border hover:bg-border text-text-secondary'}`}>
+               <button type="button" onClick={() => setPaymentMethod('Pix')} className={`py-2 px-1 text-xs rounded-lg font-semibold transition-all ${paymentMethod === 'Pix' ? 'bg-brand-primary text-black' : 'bg-card border border-border text-text-secondary'}`}>
                   Pix
               </button>
                {type === 'EXPENSE' && (
-                <button type="button" onClick={() => setPaymentMethod('Cartão')} className={`p-2 text-sm rounded-lg font-semibold transition-all duration-200 ${paymentMethod === 'Cartão' ? 'bg-brand-primary text-black' : 'bg-background border border-border hover:bg-border text-text-secondary'}`}>
+                <button type="button" onClick={() => setPaymentMethod('Cartão')} className={`py-2 px-1 text-xs rounded-lg font-semibold transition-all ${paymentMethod === 'Cartão' ? 'bg-brand-primary text-black' : 'bg-card border border-border text-text-secondary'}`}>
                     Cartão
                 </button>
                )}
           </div>
           
           {paymentMethod === 'Cartão' && type === 'EXPENSE' && (
-              <div className="space-y-4 animate-fade-in-up mt-4">
+              <div className="space-y-3 animate-fade-in-up pt-2 border-t border-border mt-2">
                   {!hasCreditCards ? (
-                      <div className="bg-yellow-500/10 border border-yellow-500/50 text-yellow-500 p-4 rounded-xl text-sm">
+                      <div className="bg-yellow-500/10 border border-yellow-500/50 text-yellow-500 p-3 rounded-xl text-xs">
                           <p className="font-bold">Nenhum cartão encontrado.</p>
-                          <p>Acesse o menu <span className="font-bold">Cartões</span> para cadastrar seu primeiro cartão de crédito.</p>
+                          <p>Cadastre um cartão no menu "Cartões".</p>
                       </div>
                   ) : (
                       <>
                         <div>
-                            <label htmlFor="card" className="block text-sm font-medium text-text-secondary mb-1">Cartão</label>
+                            <label htmlFor="card" className="block text-xs font-medium text-text-secondary mb-1">Selecione o Cartão</label>
                             <FormSelect id="card" value={cardId || ''} onChange={e => setCardId(e.target.value)} required>
-                                <option value="">Selecione um cartão</option>
+                                <option value="">Selecione...</option>
                                 {creditCards.map(card => (
-                                    <option key={card.id} value={card.id}>{card.name} - Final {card.last_four_digits}</option>
+                                    <option key={card.id} value={card.id}>{card.name} (Final {card.last_four_digits})</option>
                                 ))}
                             </FormSelect>
                         </div>
 
-                        <div className="grid grid-cols-2 gap-2">
-                            <button type="button" onClick={() => setPaymentType('À Vista')} className={`p-2 text-sm rounded-lg font-semibold transition-all duration-200 ${paymentType === 'À Vista' ? 'bg-brand-primary text-black' : 'bg-background border border-border hover:bg-border text-text-secondary'}`}>
+                        <div className="flex gap-2">
+                            <button type="button" onClick={() => setPaymentType('À Vista')} className={`flex-1 py-2 text-xs rounded-lg font-semibold transition-all ${paymentType === 'À Vista' ? 'bg-brand-primary text-black' : 'bg-card border border-border text-text-secondary'}`}>
                                 À Vista
                             </button>
-                            <button type="button" onClick={() => setPaymentType('Parcelado')} className={`p-2 text-sm rounded-lg font-semibold transition-all duration-200 ${paymentType === 'Parcelado' ? 'bg-brand-primary text-black' : 'bg-background border border-border hover:bg-border text-text-secondary'}`}>
+                            <button type="button" onClick={() => setPaymentType('Parcelado')} className={`flex-1 py-2 text-xs rounded-lg font-semibold transition-all ${paymentType === 'Parcelado' ? 'bg-brand-primary text-black' : 'bg-card border border-border text-text-secondary'}`}>
                                 Parcelado
                             </button>
                         </div>
 
                         {paymentType === 'Parcelado' && (
                             <div className="animate-fade-in-up">
-                                <label htmlFor="installments" className="block text-sm font-medium text-text-secondary mb-1">Nº de Parcelas</label>
+                                <label htmlFor="installments" className="block text-xs font-medium text-text-secondary mb-1">Parcelas</label>
                                 <FormInput
                                     type="number"
                                     id="installments"
@@ -229,6 +241,7 @@ const TransactionForm: React.FC<TransactionFormProps> = ({ onSave, onClose, exis
                                     min="2"
                                     max="24"
                                     required
+                                    placeholder="2"
                                 />
                             </div>
                         )}
@@ -238,20 +251,20 @@ const TransactionForm: React.FC<TransactionFormProps> = ({ onSave, onClose, exis
           )}
       </div>
 
-      <div className="flex justify-end space-x-4 pt-4">
+      <div className="flex gap-3 pt-2 mt-auto">
         <button
           type="button"
           onClick={onClose}
-          className="px-6 py-2 text-sm font-semibold text-text-secondary hover:bg-border rounded-xl transition-colors"
+          className="flex-1 py-3 text-sm font-semibold text-text-primary bg-white/5 hover:bg-white/10 rounded-xl transition-colors border border-border"
         >
           Cancelar
         </button>
         <button
           type="submit"
           disabled={isSubmitting || (paymentMethod === 'Cartão' && type === 'EXPENSE' && !hasCreditCards)}
-          className="px-6 py-2 text-sm font-semibold bg-brand-primary hover:bg-brand-secondary text-black rounded-xl transition-colors disabled:opacity-50"
+          className="flex-1 py-3 text-sm font-semibold bg-brand-primary hover:bg-brand-secondary text-black rounded-xl transition-colors disabled:opacity-50"
         >
-          {isSubmitting ? 'Salvando...' : 'Salvar Transação'}
+          {isSubmitting ? '...' : 'Salvar'}
         </button>
       </div>
     </form>

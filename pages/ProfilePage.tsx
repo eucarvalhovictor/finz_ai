@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { supabase } from '../services/supabase';
 import { getProfile, updateProfile, uploadAvatar } from '../services/api';
@@ -12,14 +13,14 @@ interface ProfilePageProps {
 const ProfileInput: React.FC<React.InputHTMLAttributes<HTMLInputElement>> = (props) => (
     <input
         {...props}
-        className="mt-1 block w-full bg-background border border-border rounded-xl shadow-sm focus:ring-2 focus:ring-brand-primary focus:border-brand-primary text-base p-3 disabled:bg-gray-800 disabled:cursor-not-allowed text-text-primary"
+        className="mt-1 block w-full bg-background border border-border rounded-xl shadow-sm focus:ring-2 focus:ring-brand-primary focus:border-brand-primary text-sm md:text-base p-2 md:p-3 disabled:bg-gray-800 disabled:cursor-not-allowed text-text-primary"
     />
 );
 
 const ProfileButton: React.FC<React.ButtonHTMLAttributes<HTMLButtonElement>> = (props) => (
     <button
         {...props}
-        className="bg-brand-primary hover:bg-brand-secondary text-black font-bold py-3 px-6 text-base rounded-xl transition disabled:opacity-50"
+        className="bg-brand-primary hover:bg-brand-secondary text-black font-bold py-2 px-4 md:py-3 md:px-6 text-sm md:text-base rounded-xl transition disabled:opacity-50"
     >
         {props.children}
     </button>
@@ -152,40 +153,40 @@ const ProfilePage: React.FC<ProfilePageProps> = ({ user }) => {
   if (loading) return <div className="flex justify-center items-center h-full"><Spinner /></div>;
 
   return (
-    <div className="space-y-8 max-w-4xl mx-auto">
-      <h1 className="text-3xl font-bold text-text-primary">Meu Perfil</h1>
+    <div className="space-y-6 max-w-4xl mx-auto pb-8">
+      <h1 className="text-2xl md:text-3xl font-bold text-text-primary">Meu Perfil</h1>
       
       {/* Profile Details Form */}
-      <div className="bg-card p-8 rounded-2xl border border-border">
-        <h2 className="text-xl font-bold text-text-primary mb-6">Informações Pessoais</h2>
-        <form onSubmit={handleUpdateProfile} className="space-y-6">
-            <div className="flex items-center space-x-6">
+      <div className="bg-card p-4 md:p-8 rounded-2xl border border-border">
+        <h2 className="text-lg md:text-xl font-bold text-text-primary mb-6">Informações Pessoais</h2>
+        <form onSubmit={handleUpdateProfile} className="space-y-4 md:space-y-6">
+            <div className="flex items-center space-x-4 md:space-x-6">
                 {avatarUrl ? 
-                    <img src={avatarUrl} alt="Avatar" className="h-24 w-24 rounded-full object-cover border-2 border-border" />
-                    : <div className="h-24 w-24 rounded-full bg-background border border-border flex items-center justify-center"><UserIcon className="h-12 w-12 text-gray-500" /></div>
+                    <img src={avatarUrl} alt="Avatar" className="h-20 w-20 md:h-24 md:w-24 rounded-full object-cover border-2 border-border" />
+                    : <div className="h-20 w-20 md:h-24 md:w-24 rounded-full bg-background border border-border flex items-center justify-center"><UserIcon className="h-10 w-10 md:h-12 md:w-12 text-gray-500" /></div>
                 }
                 <div>
-                    <label htmlFor="avatar-upload" className="cursor-pointer bg-border hover:bg-opacity-80 text-text-primary font-semibold py-3 px-5 rounded-xl transition inline-block">
+                    <label htmlFor="avatar-upload" className="cursor-pointer bg-border hover:bg-opacity-80 text-text-primary font-semibold py-2 px-4 md:py-3 md:px-5 text-sm md:text-base rounded-xl transition inline-block">
                         {uploading ? 'Enviando...' : 'Trocar Foto'}
                     </label>
                     <input id="avatar-upload" type="file" accept="image/*" onChange={handleAvatarUpload} disabled={uploading} className="hidden" />
-                    <p className="text-sm text-text-secondary mt-6">PNG, JPG, GIF até 2MB.</p>
+                    <p className="text-xs text-text-secondary mt-2">PNG, JPG até 2MB.</p>
                 </div>
             </div>
 
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 md:gap-6">
                 <div>
-                  <label htmlFor="firstName" className="block text-sm font-medium text-text-secondary mb-1">Nome</label>
+                  <label htmlFor="firstName" className="block text-xs md:text-sm font-medium text-text-secondary mb-1">Nome</label>
                   <ProfileInput type="text" id="firstName" value={firstName} onChange={e => setFirstName(e.target.value)} />
                 </div>
                 <div>
-                  <label htmlFor="lastName" className="block text-sm font-medium text-text-secondary mb-1">Sobrenome (Opcional)</label>
+                  <label htmlFor="lastName" className="block text-xs md:text-sm font-medium text-text-secondary mb-1">Sobrenome</label>
                   <ProfileInput type="text" id="lastName" value={lastName} onChange={e => setLastName(e.target.value)} />
                 </div>
             </div>
 
              <div>
-              <label htmlFor="email" className="block text-sm font-medium text-text-secondary mb-1">E-mail</label>
+              <label htmlFor="email" className="block text-xs md:text-sm font-medium text-text-secondary mb-1">E-mail</label>
               <ProfileInput type="text" id="email" value={user.email} disabled />
             </div>
 
@@ -193,32 +194,32 @@ const ProfilePage: React.FC<ProfilePageProps> = ({ user }) => {
 
             <div className="text-right pt-2">
                 <ProfileButton type="submit" disabled={updatingProfile}>
-                  {updatingProfile ? 'Salvando...' : 'Salvar Alterações'}
+                  {updatingProfile ? 'Salvando...' : 'Salvar'}
                 </ProfileButton>
             </div>
         </form>
       </div>
 
       {/* Password Change Form */}
-      <div className="bg-card p-8 rounded-2xl border border-border">
-        <h2 className="text-xl font-bold text-text-primary mb-6">Alterar Senha</h2>
-        <form onSubmit={handleUpdatePassword} className="space-y-6">
+      <div className="bg-card p-4 md:p-8 rounded-2xl border border-border">
+        <h2 className="text-lg md:text-xl font-bold text-text-primary mb-6">Alterar Senha</h2>
+        <form onSubmit={handleUpdatePassword} className="space-y-4 md:space-y-6">
             <div>
-              <label htmlFor="oldPassword" className="block text-sm font-medium text-text-secondary mb-1">Senha Antiga</label>
+              <label htmlFor="oldPassword" className="block text-xs md:text-sm font-medium text-text-secondary mb-1">Senha Antiga</label>
               <ProfileInput type="password" id="oldPassword" value={oldPassword} onChange={e => setOldPassword(e.target.value)} placeholder="••••••••" />
             </div>
             <div>
-              <label htmlFor="newPassword" className="block text-sm font-medium text-text-secondary mb-1">Nova Senha</label>
+              <label htmlFor="newPassword" className="block text-xs md:text-sm font-medium text-text-secondary mb-1">Nova Senha</label>
               <ProfileInput type="password" id="newPassword" value={newPassword} onChange={e => setNewPassword(e.target.value)} placeholder="••••••••" />
             </div>
              <div>
-              <label htmlFor="confirmPassword" className="block text-sm font-medium text-text-secondary mb-1">Confirmar Nova Senha</label>
+              <label htmlFor="confirmPassword" className="block text-xs md:text-sm font-medium text-text-secondary mb-1">Confirmar Nova Senha</label>
               <ProfileInput type="password" id="confirmPassword" value={confirmPassword} onChange={e => setConfirmPassword(e.target.value)} placeholder="••••••••" />
             </div>
             {passwordMessage.text && <p className={`text-sm ${passwordMessage.type === 'error' ? 'text-red-400' : 'text-green-400'}`}>{passwordMessage.text}</p>}
             <div className="text-right pt-2">
                 <ProfileButton type="submit" disabled={updatingPassword}>
-                    {updatingPassword ? 'Atualizando...' : 'Atualizar Senha'}
+                    {updatingPassword ? 'Atualizando...' : 'Atualizar'}
                 </ProfileButton>
             </div>
         </form>

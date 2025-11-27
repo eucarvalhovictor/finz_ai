@@ -30,19 +30,19 @@ const CreditCardForm: React.FC<CreditCardFormProps> = ({ onSave, onCancel, isSub
     return (
         <form onSubmit={handleSubmit} className="space-y-4">
             <div>
-                <label htmlFor="name" className="block text-sm font-medium text-text-secondary">Apelido do Cartão (Ex: Nubank Pessoal)</label>
+                <label htmlFor="name" className="block text-xs md:text-sm font-medium text-text-secondary">Apelido do Cartão</label>
                 <input 
                     type="text" 
                     id="name" 
                     value={name} 
                     onChange={e => setName(e.target.value)} 
                     required 
-                    placeholder="Meu Cartão Principal"
-                    className="mt-1 block w-full bg-background border border-border rounded-xl shadow-sm focus:ring-2 focus:ring-brand-primary focus:border-brand-primary sm:text-sm p-3 text-text-primary" 
+                    placeholder="Ex: Nubank Principal"
+                    className="mt-1 block w-full bg-background border border-border rounded-xl shadow-sm focus:ring-2 focus:ring-brand-primary focus:border-brand-primary text-sm p-2 md:p-3 text-text-primary" 
                 />
             </div>
             <div>
-                <label htmlFor="lastFour" className="block text-sm font-medium text-text-secondary">Últimos 4 dígitos</label>
+                <label htmlFor="lastFour" className="block text-xs md:text-sm font-medium text-text-secondary">Últimos 4 dígitos</label>
                 <input 
                     type="text" 
                     id="lastFour" 
@@ -51,19 +51,19 @@ const CreditCardForm: React.FC<CreditCardFormProps> = ({ onSave, onCancel, isSub
                     maxLength={4} 
                     required 
                     placeholder="1234"
-                    className="mt-1 block w-full bg-background border border-border rounded-xl shadow-sm focus:ring-2 focus:ring-brand-primary focus:border-brand-primary sm:text-sm p-3 text-text-primary" 
+                    className="mt-1 block w-full bg-background border border-border rounded-xl shadow-sm focus:ring-2 focus:ring-brand-primary focus:border-brand-primary text-sm p-2 md:p-3 text-text-primary" 
                 />
             </div>
             <div>
-                <label htmlFor="bank" className="block text-sm font-medium text-text-secondary">Banco Emissor</label>
+                <label htmlFor="bank" className="block text-xs md:text-sm font-medium text-text-secondary">Banco Emissor</label>
                 <input 
                     type="text" 
                     id="bank" 
                     value={bank} 
                     onChange={e => setBank(e.target.value)} 
                     required 
-                    placeholder="Ex: Itaú, Nubank, Santander"
-                    className="mt-1 block w-full bg-background border border-border rounded-xl shadow-sm focus:ring-2 focus:ring-brand-primary focus:border-brand-primary sm:text-sm p-3 text-text-primary" 
+                    placeholder="Ex: Itaú, Nubank"
+                    className="mt-1 block w-full bg-background border border-border rounded-xl shadow-sm focus:ring-2 focus:ring-brand-primary focus:border-brand-primary text-sm p-2 md:p-3 text-text-primary" 
                 />
             </div>
             
@@ -78,16 +78,16 @@ const CreditCardForm: React.FC<CreditCardFormProps> = ({ onSave, onCancel, isSub
                     type="button" 
                     onClick={onCancel}
                     disabled={isSubmitting}
-                    className="px-4 py-2 text-sm font-medium text-text-secondary hover:text-text-primary transition-colors"
+                    className="px-4 py-2 text-xs md:text-sm font-medium text-text-secondary hover:text-text-primary transition-colors"
                 >
                     Cancelar
                 </button>
                 <button 
                     type="submit" 
                     disabled={isSubmitting}
-                    className="bg-brand-primary hover:bg-brand-secondary text-black font-bold py-2 px-6 rounded-xl transition-colors disabled:opacity-50 flex items-center"
+                    className="bg-brand-primary hover:bg-brand-secondary text-black font-bold py-2 px-4 md:px-6 rounded-xl text-sm transition-colors disabled:opacity-50 flex items-center"
                 >
-                    {isSubmitting ? 'Salvando...' : 'Salvar Cartão'}
+                    {isSubmitting ? 'Salvando...' : 'Salvar'}
                 </button>
             </div>
         </form>
@@ -173,30 +173,30 @@ const CreditCardsPage: React.FC<CreditCardsPageProps> = ({ user }) => {
     <div className="space-y-6">
       <div className="flex justify-between items-center">
         <div>
-            <h1 className="text-3xl font-bold text-text-primary">Meus Cartões de Crédito</h1>
-            <p className="text-text-secondary text-sm mt-1">
-                Plano Atual: <span className="font-bold text-brand-primary uppercase">{userRole}</span> 
-                (Usando {cards.length} de {userRole === 'basic' ? 1 : userRole === 'pro' ? 5 : '∞'} slots)
+            <h1 className="text-2xl md:text-3xl font-bold text-text-primary">Cartões</h1>
+            <p className="text-text-secondary text-xs md:text-sm mt-1">
+                Plano: <span className="font-bold text-brand-primary uppercase">{userRole}</span> 
+                ({cards.length}/{userRole === 'basic' ? 1 : userRole === 'pro' ? 5 : '∞'})
             </p>
         </div>
-        <button onClick={handleAddCardClick} className="flex items-center bg-brand-primary hover:bg-brand-secondary text-black font-bold py-2 px-4 rounded-lg transition-colors">
-            <PlusIcon className="h-5 w-5 mr-2" />
-            Adicionar Cartão
+        <button onClick={handleAddCardClick} className="flex items-center bg-brand-primary hover:bg-brand-secondary text-black font-bold py-2 px-3 md:px-4 rounded-lg text-sm md:text-base transition-colors">
+            <PlusIcon className="h-5 w-5 mr-1 md:mr-2" />
+            Adicionar
         </button>
       </div>
       
       {loading ? <Spinner /> : (
         cards.length > 0 ? (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 md:gap-6">
             {cards.map(card => (
-              <div key={card.id} className="bg-card p-6 rounded-2xl border border-border shadow-lg flex flex-col justify-between hover:border-brand-primary transition-colors">
+              <div key={card.id} className="bg-card p-4 md:p-6 rounded-2xl border border-border shadow-lg flex flex-col justify-between hover:border-brand-primary transition-colors">
                 <div>
                   <div className="flex justify-between items-start">
-                    <h3 className="text-xl font-bold text-text-primary">{card.name}</h3>
-                    <CreditCardIcon className="h-8 w-8 text-brand-primary" />
+                    <h3 className="text-lg md:text-xl font-bold text-text-primary truncate">{card.name}</h3>
+                    <CreditCardIcon className="h-6 w-6 md:h-8 md:w-8 text-brand-primary flex-shrink-0" />
                   </div>
-                  <p className="text-text-secondary mt-1">{card.bank}</p>
-                  <p className="font-mono text-lg text-text-primary mt-4 tracking-widest">**** **** **** {card.last_four_digits}</p>
+                  <p className="text-text-secondary text-sm mt-1 truncate">{card.bank}</p>
+                  <p className="font-mono text-base md:text-lg text-text-primary mt-4 tracking-widest">**** **** **** {card.last_four_digits}</p>
                 </div>
                 <div className="text-right mt-4">
                   <button onClick={() => handleDeleteCard(card.id)} className="text-red-400 hover:text-red-300 p-2 rounded-lg hover:bg-red-500/10 transition" title="Excluir Cartão">
@@ -219,7 +219,7 @@ const CreditCardsPage: React.FC<CreditCardsPageProps> = ({ user }) => {
         )
       )}
 
-      <Modal isOpen={isModalOpen} onClose={() => setIsModalOpen(false)} title="Adicionar Novo Cartão">
+      <Modal isOpen={isModalOpen} onClose={() => setIsModalOpen(false)} title="Novo Cartão">
           <CreditCardForm 
             onSave={handleSaveCard} 
             onCancel={() => setIsModalOpen(false)}

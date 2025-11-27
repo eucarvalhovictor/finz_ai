@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect, useCallback } from 'react';
 import { getTransactions, addTransaction, updateTransaction, deleteTransaction, getCategories, getCreditCards } from '../services/api';
 import type { AppUser, Transaction, CreditCard } from '../types';
@@ -98,12 +99,12 @@ const TransactionsPage: React.FC<TransactionsPageProps> = ({ user }) => {
   return (
     <div className="space-y-6">
       <div className="flex justify-between items-center">
-        <h1 className="text-3xl font-bold text-text-primary">Transações</h1>
+        <h1 className="text-2xl md:text-3xl font-bold text-text-primary">Transações</h1>
         <button
           onClick={() => handleOpenModal()}
-          className="flex items-center bg-brand-primary hover:bg-brand-secondary text-black font-bold py-2 px-4 rounded-lg transition-colors"
+          className="flex items-center bg-brand-primary hover:bg-brand-secondary text-black font-bold py-2 px-3 md:px-4 rounded-lg text-sm md:text-base transition-colors"
         >
-          <PlusIcon className="h-5 w-5 mr-2" />
+          <PlusIcon className="h-5 w-5 mr-1 md:mr-2" />
           Nova Transação
         </button>
       </div>
@@ -114,27 +115,27 @@ const TransactionsPage: React.FC<TransactionsPageProps> = ({ user }) => {
             <table className="min-w-full divide-y divide-border">
               <thead className="bg-gray-900/50">
                 <tr>
-                  <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-text-secondary uppercase tracking-wider">Descrição</th>
-                  <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-text-secondary uppercase tracking-wider">Valor</th>
-                  <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-text-secondary uppercase tracking-wider hidden md:table-cell">Categoria</th>
-                  <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-text-secondary uppercase tracking-wider hidden sm:table-cell">Data</th>
-                   <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-text-secondary uppercase tracking-wider hidden sm:table-cell">Pagamento</th>
-                  <th scope="col" className="px-6 py-3 text-right text-xs font-medium text-text-secondary uppercase tracking-wider">Ações</th>
+                  <th scope="col" className="px-4 py-3 md:px-6 md:py-3 text-left text-xs font-medium text-text-secondary uppercase tracking-wider">Descrição</th>
+                  <th scope="col" className="px-4 py-3 md:px-6 md:py-3 text-left text-xs font-medium text-text-secondary uppercase tracking-wider">Valor</th>
+                  <th scope="col" className="px-4 py-3 md:px-6 md:py-3 text-left text-xs font-medium text-text-secondary uppercase tracking-wider hidden md:table-cell">Categoria</th>
+                  <th scope="col" className="px-4 py-3 md:px-6 md:py-3 text-left text-xs font-medium text-text-secondary uppercase tracking-wider hidden sm:table-cell">Data</th>
+                   <th scope="col" className="px-4 py-3 md:px-6 md:py-3 text-left text-xs font-medium text-text-secondary uppercase tracking-wider hidden sm:table-cell">Pagamento</th>
+                  <th scope="col" className="px-4 py-3 md:px-6 md:py-3 text-right text-xs font-medium text-text-secondary uppercase tracking-wider">Ações</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-border">
                 {transactions.map((t) => (
                   <tr key={t.id} className="hover:bg-gray-800/50">
-                    <td className="px-6 py-4 whitespace-nowrap">
-                      <div className="text-sm font-medium text-text-primary">{t.description}</div>
+                    <td className="px-4 py-3 md:px-6 md:py-4 whitespace-nowrap">
+                      <div className="text-sm font-medium text-text-primary truncate max-w-[120px] md:max-w-none">{t.description}</div>
                     </td>
-                    <td className={`px-6 py-4 whitespace-nowrap text-sm font-semibold ${t.type === 'INCOME' ? 'text-green-400' : 'text-red-400'}`}>
+                    <td className={`px-4 py-3 md:px-6 md:py-4 whitespace-nowrap text-sm font-semibold ${t.type === 'INCOME' ? 'text-green-400' : 'text-red-400'}`}>
                       {t.type === 'INCOME' ? '+ ' : '- '}{formatCurrency(t.amount)}
                     </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-text-secondary hidden md:table-cell">{t.category}</td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-text-secondary hidden sm:table-cell">{formatDate(t.date)}</td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-text-secondary hidden sm:table-cell">{t.payment_method}</td>
-                    <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
+                    <td className="px-4 py-3 md:px-6 md:py-4 whitespace-nowrap text-sm text-text-secondary hidden md:table-cell">{t.category}</td>
+                    <td className="px-4 py-3 md:px-6 md:py-4 whitespace-nowrap text-sm text-text-secondary hidden sm:table-cell">{formatDate(t.date)}</td>
+                    <td className="px-4 py-3 md:px-6 md:py-4 whitespace-nowrap text-sm text-text-secondary hidden sm:table-cell">{t.payment_method}</td>
+                    <td className="px-4 py-3 md:px-6 md:py-4 whitespace-nowrap text-right text-sm font-medium">
                       <div className="flex justify-end space-x-2">
                         <button onClick={() => handleOpenModal(t)} className="text-blue-400 hover:text-blue-300"><EditIcon className="h-5 w-5" /></button>
                         <button onClick={() => handleDeleteTransaction(t.id)} className="text-red-400 hover:text-red-300"><DeleteIcon className="h-5 w-5" /></button>
