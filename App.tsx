@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { supabase } from './services/supabase';
 import type { Session } from '@supabase/supabase-js';
@@ -28,113 +29,124 @@ const App: React.FC = () => {
     let mounted = true;
 
     const initApp = async () => {
-      const loadingTimeout = setTimeout(() => {
-          if (mounted && loading) {
-              console.warn("App initialization timed out, forcing load.");
-              setLoading(false);
+      // 1. Configuração do listener de Auth (Executa imediatamente)
+      const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
+        if (!mounted) return;
+        
+        setSession(session);
+        
+        if (session) {
+          // Se estivermos apenas refrescando o token, não resetamos a página
+          if (event === 'SIGNED_IN' || event === 'PASSWORD_RECOVERY') {
+              setActivePage('dashboard');
           }
-      }, 5000);
-
-      try {
-          // Fetch Site Config
-          const config = await getAppConfig();
-          if (mounted) {
-              setAppConfig(config);
-              // Apply Site Config (SEO)
-              if (config.site_name) document.title = config.site_name;
-              
-              // Helper to update meta tags
-              const updateMeta = (name: string, content: string | undefined) => {
-                  if (!content) return;
-                  let meta = document.querySelector(`meta[name="${name}"]`);
-                  if (!meta) {
-                      meta = document.createElement('meta');
-                      meta.setAttribute('name', name);
-                      document.head.appendChild(meta);
-                  }
-                  meta.setAttribute('content', content);
-              };
-
-              updateMeta('description', config.site_description);
-              updateMeta('keywords', config.site_keywords);
-              updateMeta('author', config.site_author);
-              
-              // Open Graph
-              const updateOg = (property: string, content: string | undefined) => {
-                 if (!content) return;
-                  let meta = document.querySelector(`meta[property="${property}"]`);
-                  if (!meta) {
-                      meta = document.createElement('meta');
-                      meta.setAttribute('property', property);
-                      document.head.appendChild(meta);
-                  }
-                  meta.setAttribute('content', content);
-              }
-              updateOg('og:title', config.site_name);
-              updateOg('og:description', config.site_description);
-              updateOg('og:image', config.site_og_image);
-
-              if (config.site_favicon) {
-                   let link = document.querySelector("link[rel~='icon']") as HTMLLinkElement;
-                   if (!link) {
-                       link = document.createElement('link');
-                       link.rel = 'icon';
-                       document.head.appendChild(link);
-                   }
-                   link.href = config.site_favicon;
-              }
-          }
-
-          const { data } = await supabase.auth.getSession();
           
-          if (mounted) {
-              setSession(data.session);
-              
-              if (data.session) {
-                  try {
-                      const profile = await getProfile(data.session.user.id);
-                      if (profile) setUserRole(profile.role);
-                  } catch (e) {
-                      console.error("Error fetching user role", e);
-                  }
-              }
-          }
+          // Buscar role do usuário em background
+          getProfile(session.user.id)
+            .then(profile => {
+                if (mounted && profile) setUserRole(profile.role);
+            })
+            .catch(e => console.error("Error fetching user role", e));
+        } else {
+            setUserRole('basic');
+        }
+
+        // Se o AuthStateChange disparar, já sabemos o estado do usuário, então podemos parar o loading
+        setLoading(false);
+      });
+
+      // 2. Verificação inicial explícita e Carregamento de Config em Paralelo
+      try {
+        const [configResult, sessionResult] = await Promise.allSettled([
+            getAppConfig(),
+            supabase.auth.getSession()
+        ]);
+
+        if (!mounted) return;
+
+        // Tratar Configurações
+        if (configResult.status === 'fulfilled') {
+            const config = configResult.value;
+            setAppConfig(config);
+            applySiteConfig(config);
+        }
+
+        // Tratar Sessão Inicial
+        if (sessionResult.status === 'fulfilled') {
+            const { data } = sessionResult.value;
+            // Se houver sessão, o onAuthStateChange vai lidar com isso, 
+            // mas definimos aqui para garantir rapidez na primeira renderização
+            if (data.session) {
+                setSession(data.session);
+                // Fetch role immediately if session exists
+                try {
+                    const profile = await getProfile(data.session.user.id);
+                    if (mounted && profile) setUserRole(profile.role);
+                } catch (e) { console.error(e); }
+            }
+        }
+
       } catch (err) {
           console.error("Initialization error:", err);
       } finally {
-          clearTimeout(loadingTimeout);
           if (mounted) setLoading(false);
       }
+
+      return () => {
+        subscription.unsubscribe();
+      };
     };
 
     initApp();
 
-    const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
-      if (!mounted) return;
-      setSession(session);
-      if (session) {
-        // Only redirect to dashboard if we are strictly logging in (SIGNED_IN)
-        // This prevents the app from resetting to dashboard when token refreshes in background (TOKEN_REFRESHED)
-        if (event === 'SIGNED_IN' || event === 'PASSWORD_RECOVERY') {
-            setActivePage('dashboard');
-        }
-        
-        try {
-            const profile = await getProfile(session.user.id);
-            if (profile) setUserRole(profile.role);
-        } catch (e) {
-            console.error("Error fetching user role", e);
-        }
-      } else {
-          setUserRole('basic');
-      }
-    });
-
     return () => {
         mounted = false;
-        subscription.unsubscribe();
     };
   }, []);
+
+  // Helper function for SEO updates
+  const applySiteConfig = (config: AppConfig) => {
+      if (config.site_name) document.title = config.site_name;
+      
+      const updateMeta = (name: string, content: string | undefined) => {
+          if (!content) return;
+          let meta = document.querySelector(`meta[name="${name}"]`);
+          if (!meta) {
+              meta = document.createElement('meta');
+              meta.setAttribute('name', name);
+              document.head.appendChild(meta);
+          }
+          meta.setAttribute('content', content);
+      };
+
+      updateMeta('description', config.site_description);
+      updateMeta('keywords', config.site_keywords);
+      updateMeta('author', config.site_author);
+      
+      const updateOg = (property: string, content: string | undefined) => {
+         if (!content) return;
+          let meta = document.querySelector(`meta[property="${property}"]`);
+          if (!meta) {
+              meta = document.createElement('meta');
+              meta.setAttribute('property', property);
+              document.head.appendChild(meta);
+          }
+          meta.setAttribute('content', content);
+      }
+      updateOg('og:title', config.site_name);
+      updateOg('og:description', config.site_description);
+      updateOg('og:image', config.site_og_image);
+
+      if (config.site_favicon) {
+           let link = document.querySelector("link[rel~='icon']") as HTMLLinkElement;
+           if (!link) {
+               link = document.createElement('link');
+               link.rel = 'icon';
+               document.head.appendChild(link);
+           }
+           link.href = config.site_favicon;
+      }
+  };
 
   // Inactivity Timer Effect
   useEffect(() => {
@@ -153,16 +165,10 @@ const App: React.FC = () => {
           timeoutId = setTimeout(handleLogout, INACTIVITY_LIMIT);
       };
 
-      // Events to track activity
       const events = ['mousedown', 'mousemove', 'keydown', 'scroll', 'touchstart', 'click'];
-
-      // Setup listeners
       events.forEach(event => document.addEventListener(event, resetTimer));
-      
-      // Start initial timer
       resetTimer();
 
-      // Cleanup
       return () => {
           if (timeoutId) clearTimeout(timeoutId);
           events.forEach(event => document.removeEventListener(event, resetTimer));
