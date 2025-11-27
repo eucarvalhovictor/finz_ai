@@ -21,7 +21,7 @@ export const getTransactions = async (userId: string): Promise<Transaction[]> =>
 export const addTransaction = async (transaction: Omit<Transaction, 'id' | 'created_at'>): Promise<Transaction> => {
   const { data, error } = await supabase
     .from('transactions')
-    .insert([transaction])
+    .insert([{ ...transaction, id: crypto.randomUUID() }])
     .select()
     .single();
 
@@ -153,7 +153,7 @@ export const getCreditCards = async (userId: string): Promise<CreditCard[]> => {
 export const addCreditCard = async (card: Omit<CreditCard, 'id' | 'created_at'>): Promise<CreditCard> => {
     const { data, error } = await supabase
         .from('credit_cards')
-        .insert([card])
+        .insert([{ ...card, id: crypto.randomUUID() }])
         .select()
         .single();
     

@@ -24,6 +24,10 @@ const DashboardPage: React.FC<DashboardPageProps> = ({ user }) => {
   const [categories, setCategories] = useState<string[]>([]);
   const [creditCards, setCreditCards] = useState<CreditCard[]>([]);
 
+  // Scroll to top on mount
+  useEffect(() => {
+    window.scrollTo(0, 0);
+  }, []);
 
   const fetchDashboardData = useCallback(async () => {
     let isMounted = true;
@@ -192,7 +196,8 @@ const DashboardPage: React.FC<DashboardPageProps> = ({ user }) => {
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-5 gap-6">
-        <div className="lg:col-span-3">
+        {/* Added min-w-0 to fix Recharts in grid issue */}
+        <div className="lg:col-span-3 min-w-0">
           <MonthlySummaryChart data={monthlySummaryData} />
         </div>
         <div className="lg:col-span-2">
