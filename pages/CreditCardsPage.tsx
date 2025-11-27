@@ -47,18 +47,26 @@ const CreditCardsPage: React.FC<CreditCardsPageProps> = ({ user }) => {
   const [userRole, setUserRole] = useState<Role>('basic');
 
   const fetchCards = useCallback(async () => {
+    let isMounted = true;
+    const safetyTimeout = setTimeout(() => {
+        if (isMounted && loading) setLoading(false);
+    }, 8000);
+
     setLoading(true);
     try {
       const [cardsData, profileData] = await Promise.all([
           getCreditCards(user.id),
           getProfile(user.id)
       ]);
-      setCards(cardsData);
-      if (profileData) setUserRole(profileData.role);
+      if (isMounted) {
+          setCards(cardsData);
+          if (profileData) setUserRole(profileData.role);
+      }
     } catch(error) {
       console.error("Failed to fetch cards", error);
     } finally {
-      setLoading(false);
+      clearTimeout(safetyTimeout);
+      if (isMounted) setLoading(false);
     }
   }, [user.id]);
 

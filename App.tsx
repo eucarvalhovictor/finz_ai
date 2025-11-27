@@ -109,14 +109,16 @@ const App: React.FC = () => {
 
     initApp();
 
-    const { data: { subscription } } = supabase.auth.onAuthStateChange(async (_event, session) => {
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
       if (!mounted) return;
       setSession(session);
       if (session) {
-        // Only redirect to dashboard if we are strictly logging in (not just refreshing)
-        // However, usually keeping it simple is better. 
-        // We will keep the behavior: on auth change (login), go to dashboard.
-        setActivePage('dashboard');
+        // Only redirect to dashboard if we are strictly logging in (SIGNED_IN)
+        // This prevents the app from resetting to dashboard when token refreshes in background (TOKEN_REFRESHED)
+        if (event === 'SIGNED_IN' || event === 'PASSWORD_RECOVERY') {
+            setActivePage('dashboard');
+        }
+        
         try {
             const profile = await getProfile(session.user.id);
             if (profile) setUserRole(profile.role);

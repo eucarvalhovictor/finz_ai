@@ -25,6 +25,16 @@ const DashboardPage: React.FC<DashboardPageProps> = ({ user }) => {
 
 
   const fetchDashboardData = useCallback(async () => {
+    let isMounted = true;
+    
+    // Safety timeout: if data fetching takes more than 8 seconds, force stop loading
+    const safetyTimeout = setTimeout(() => {
+        if (isMounted && loading) {
+            console.warn("Dashboard data fetch timed out.");
+            setLoading(false);
+        }
+    }, 8000);
+
     try {
         setLoading(true);
         const [transData, profileData, catData, cardData] = await Promise.all([
@@ -34,22 +44,25 @@ const DashboardPage: React.FC<DashboardPageProps> = ({ user }) => {
             getCreditCards(user.id)
         ]);
         
-        setTransactions(transData);
-        setCategories(catData);
-        setCreditCards(cardData);
+        if (isMounted) {
+            setTransactions(transData);
+            setCategories(catData);
+            setCreditCards(cardData);
 
-        if (profileData) {
-            const name = [profileData.first_name, profileData.last_name].filter(Boolean).join(' ');
-            setUserName(name || user.email?.split('@')[0] || 'Usuário');
-        } else {
-            setUserName(user.email?.split('@')[0] || 'Usuário');
+            if (profileData) {
+                const name = [profileData.first_name, profileData.last_name].filter(Boolean).join(' ');
+                setUserName(name || user.email?.split('@')[0] || 'Usuário');
+            } else {
+                setUserName(user.email?.split('@')[0] || 'Usuário');
+            }
         }
 
     } catch (error) {
         console.error("Failed to fetch dashboard data", error);
-        setUserName(user.email?.split('@')[0] || 'Usuário');
+        if (isMounted) setUserName(user.email?.split('@')[0] || 'Usuário');
     } finally {
-        setLoading(false);
+        clearTimeout(safetyTimeout);
+        if (isMounted) setLoading(false);
     }
   }, [user.id, user.email]);
 

@@ -19,6 +19,11 @@ const TransactionsPage: React.FC<TransactionsPageProps> = ({ user }) => {
   const [editingTransaction, setEditingTransaction] = useState<Transaction | null>(null);
 
   const fetchAllData = useCallback(async () => {
+    let isMounted = true;
+    const safetyTimeout = setTimeout(() => {
+        if (isMounted && loading) setLoading(false);
+    }, 8000);
+
     try {
       setLoading(true);
       const [transData, catData, cardData] = await Promise.all([
@@ -26,13 +31,16 @@ const TransactionsPage: React.FC<TransactionsPageProps> = ({ user }) => {
         getCategories(user.id),
         getCreditCards(user.id)
       ]);
-      setTransactions(transData);
-      setCategories(catData);
-      setCreditCards(cardData);
+      if (isMounted) {
+        setTransactions(transData);
+        setCategories(catData);
+        setCreditCards(cardData);
+      }
     } catch (error) {
       console.error("Failed to fetch data", error);
     } finally {
-      setLoading(false);
+      clearTimeout(safetyTimeout);
+      if (isMounted) setLoading(false);
     }
   }, [user.id]);
 

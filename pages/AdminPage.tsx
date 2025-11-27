@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect, useMemo } from 'react';
 import { getAllProfiles, updateUserRole, getProfile, updateProfile, getAppConfig, updateAppConfig } from '../services/api';
 import { supabase } from '../services/supabase';
@@ -34,9 +33,16 @@ const AdminPage: React.FC<AdminPageProps> = ({ user }) => {
   const [formLoading, setFormLoading] = useState(false);
 
   useEffect(() => {
+    let isMounted = true;
+    const safetyTimeout = setTimeout(() => {
+        if (isMounted && loading) setLoading(false);
+    }, 8000);
+
     const fetchAdminData = async () => {
         try {
             const currentUserProfile = await getProfile(user.id);
+            if (!isMounted) return;
+
             if (currentUserProfile?.role !== 'admin') {
                 setAuthorized(false);
                 setLoading(false);
@@ -45,14 +51,17 @@ const AdminPage: React.FC<AdminPageProps> = ({ user }) => {
             setAuthorized(true);
             await fetchProfiles();
             const config = await getAppConfig();
-            setSiteConfig(config);
+            if (isMounted) setSiteConfig(config);
         } catch (error) {
             console.error("Failed to fetch admin data", error);
         } finally {
-            setLoading(false);
+            clearTimeout(safetyTimeout);
+            if (isMounted) setLoading(false);
         }
     };
     fetchAdminData();
+
+    return () => { isMounted = false; };
   }, [user.id]);
 
   const fetchProfiles = async () => {
