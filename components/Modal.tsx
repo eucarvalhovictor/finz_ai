@@ -14,15 +14,15 @@ const Modal: React.FC<ModalProps> = ({ isOpen, onClose, title, children }) => {
 
   return (
     <div
-      className="fixed inset-0 z-[100] flex items-end md:items-center justify-center bg-black/80 overflow-hidden"
+      className="fixed inset-0 z-[1000] flex items-end md:items-center justify-center bg-black/80 backdrop-blur-sm isolate"
       onClick={onClose}
     >
       <div
-        className="bg-card w-full h-[100dvh] md:h-auto md:max-h-[90vh] md:max-w-lg md:rounded-2xl border-0 md:border border-border relative animate-fade-in-up flex flex-col shadow-2xl overflow-hidden"
+        className="bg-card w-full h-[100dvh] md:h-auto md:max-h-[90vh] md:max-w-lg md:rounded-2xl border-0 md:border border-border relative flex flex-col shadow-2xl overflow-hidden"
         onClick={(e) => e.stopPropagation()}
       >
-        {/* Cabeçalho Fixo */}
-        <div className="flex-none flex justify-between items-center px-4 py-3 md:p-4 border-b border-border bg-card md:rounded-t-2xl z-10">
+        {/* Cabeçalho Fixo - Fundo SÓLIDO e Z-index alto para cobrir o conteúdo ao rolar */}
+        <div className="flex-none flex justify-between items-center px-4 py-3 md:p-4 border-b border-border bg-[#121212] md:rounded-t-2xl z-50 relative">
           <h3 className="text-lg md:text-xl font-bold text-text-primary">{title}</h3>
           <button
             onClick={onClose}
@@ -34,7 +34,7 @@ const Modal: React.FC<ModalProps> = ({ isOpen, onClose, title, children }) => {
         </div>
         
         {/* Corpo Flexível */}
-        <div className="flex-1 overflow-y-auto overflow-x-hidden p-3 md:p-6 custom-scrollbar flex flex-col">
+        <div className="flex-1 overflow-y-auto overflow-x-hidden p-3 md:p-6 custom-scrollbar flex flex-col z-10 relative bg-card">
           {children}
         </div>
       </div>
