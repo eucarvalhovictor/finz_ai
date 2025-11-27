@@ -235,7 +235,8 @@ export const getAppConfig = async (): Promise<AppConfig> => {
 }
 
 export const updateAppConfig = async (config: AppConfig) => {
-    // Upsert each key
+    // We update each key individually to ensure we only use UPDATE permissions
+    // and avoid "upsert" which might require INSERT permissions that the RLS policy doesn't grant.
     const updates = [
         { key: 'site_name', value: config.site_name },
         { key: 'site_description', value: config.site_description },
@@ -243,12 +244,15 @@ export const updateAppConfig = async (config: AppConfig) => {
         { key: 'site_favicon', value: config.site_favicon },
     ];
 
-    const { error } = await supabase
-        .from('app_config')
-        .upsert(updates, { onConflict: 'key' });
+    for (const item of updates) {
+        const { error } = await supabase
+            .from('app_config')
+            .update({ value: item.value })
+            .eq('key', item.key);
 
-    if (error) {
-        console.error('Error updating app config:', error);
-        throw error;
+        if (error) {
+            console.error(`Error updating app config for key ${item.key}:`, error);
+            throw new Error(`Failed to update ${item.key}: ${error.message}`);
+        }
     }
 }

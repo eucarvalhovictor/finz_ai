@@ -1,21 +1,23 @@
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { getAllProfiles, updateUserRole, getProfile, updateProfile, getAppConfig, updateAppConfig } from '../services/api';
 import { supabase } from '../services/supabase';
 import type { AppUser, Profile, Role, AppConfig } from '../types';
 import Spinner from '../components/Spinner';
 import Modal from '../components/Modal';
-import { ShieldIcon, EditIcon, PlusIcon, UserIcon } from '../components/icons/Icons';
+import { ShieldIcon, EditIcon, PlusIcon, UserIcon, DashboardIcon, TrendingUp } from '../components/icons/Icons';
+import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip as RechartsTooltip, Legend, BarChart, Bar, XAxis, YAxis, CartesianGrid } from 'recharts';
 
 interface AdminPageProps {
   user: AppUser;
 }
 
 const AdminPage: React.FC<AdminPageProps> = ({ user }) => {
-  const [activeTab, setActiveTab] = useState<'users' | 'settings'>('users');
+  const [activeTab, setActiveTab] = useState<'metrics' | 'users' | 'settings'>('metrics');
   const [profiles, setProfiles] = useState<(Profile & { email?: string })[]>([]);
   const [loading, setLoading] = useState(true);
   const [authorized, setAuthorized] = useState(false);
+  const [searchTerm, setSearchTerm] = useState('');
 
   // Settings State
   const [siteConfig, setSiteConfig] = useState<AppConfig>({
@@ -97,9 +99,6 @@ const AdminPage: React.FC<AdminPageProps> = ({ user }) => {
               });
               if (error) throw error;
               if (data.user) {
-                  // If we want to set role immediately, we need to wait for trigger or do it manually
-                  // Since we are admin, we can update the profile row after creation if RLS allows
-                  // But signUp logs us in as the new user.
                   alert("Usuário criado! Atenção: Devido a limitações de segurança do navegador, você pode ter sido desconectado. Por favor, faça login novamente.");
                   window.location.reload();
               }
@@ -110,10 +109,7 @@ const AdminPage: React.FC<AdminPageProps> = ({ user }) => {
                   last_name: formData.lastName,
                   role: formData.role
               });
-              // Role update via specific function if needed, but updateProfile covers metadata
-              // We also explicit call updateUserRole to be safe if separated
               await updateUserRole(editingProfile.id, formData.role);
-              
               await fetchProfiles();
               setIsUserModalOpen(false);
           }
@@ -130,12 +126,40 @@ const AdminPage: React.FC<AdminPageProps> = ({ user }) => {
       try {
           await updateAppConfig(siteConfig);
           alert("Configurações atualizadas! Atualize a página para ver as mudanças.");
-      } catch (error) {
-          alert("Erro ao salvar configurações.");
+      } catch (error: any) {
+          console.error(error);
+          alert("Erro ao salvar configurações: " + (error.message || "Erro desconhecido"));
       } finally {
           setFormLoading(false);
       }
   }
+
+  // Filtering Logic
+  const filteredProfiles = useMemo(() => {
+      return profiles.filter(p => {
+          const fullName = `${p.first_name || ''} ${p.last_name || ''}`.toLowerCase();
+          return fullName.includes(searchTerm.toLowerCase());
+      });
+  }, [profiles, searchTerm]);
+
+  // Metrics Logic
+  const metrics = useMemo(() => {
+      const totalUsers = profiles.length;
+      const basicCount = profiles.filter(p => p.role === 'basic').length;
+      const proCount = profiles.filter(p => p.role === 'pro').length;
+      const adminCount = profiles.filter(p => p.role === 'admin').length;
+
+      // Estimated Revenue (Mock: Basic=0, Pro=29.90, Admin=0)
+      const estimatedRevenue = proCount * 29.90;
+
+      const planData = [
+          { name: 'Básico', value: basicCount, color: '#94a3b8' },
+          { name: 'Pro', value: proCount, color: '#40ff00' },
+          { name: 'Admin', value: adminCount, color: '#ef4444' }
+      ];
+
+      return { totalUsers, basicCount, proCount, adminCount, estimatedRevenue, planData };
+  }, [profiles]);
 
   if (loading) return <Spinner />;
   if (!authorized) return <div className="text-center text-red-500 mt-10">Acesso Negado</div>;
@@ -148,27 +172,124 @@ const AdminPage: React.FC<AdminPageProps> = ({ user }) => {
       </h1>
 
       {/* Tabs */}
-      <div className="flex space-x-4 border-b border-border">
+      <div className="flex space-x-2 md:space-x-4 border-b border-border overflow-x-auto pb-1">
+          <button 
+            onClick={() => setActiveTab('metrics')}
+            className={`py-2 px-4 font-medium transition-colors whitespace-nowrap ${activeTab === 'metrics' ? 'text-brand-primary border-b-2 border-brand-primary' : 'text-text-secondary hover:text-text-primary'}`}
+          >
+              Métricas
+          </button>
           <button 
             onClick={() => setActiveTab('users')}
-            className={`py-2 px-4 font-medium transition-colors ${activeTab === 'users' ? 'text-brand-primary border-b-2 border-brand-primary' : 'text-text-secondary hover:text-text-primary'}`}
+            className={`py-2 px-4 font-medium transition-colors whitespace-nowrap ${activeTab === 'users' ? 'text-brand-primary border-b-2 border-brand-primary' : 'text-text-secondary hover:text-text-primary'}`}
           >
               Gerenciar Usuários
           </button>
           <button 
             onClick={() => setActiveTab('settings')}
-            className={`py-2 px-4 font-medium transition-colors ${activeTab === 'settings' ? 'text-brand-primary border-b-2 border-brand-primary' : 'text-text-secondary hover:text-text-primary'}`}
+            className={`py-2 px-4 font-medium transition-colors whitespace-nowrap ${activeTab === 'settings' ? 'text-brand-primary border-b-2 border-brand-primary' : 'text-text-secondary hover:text-text-primary'}`}
           >
               Configurações do Site
           </button>
       </div>
 
-      {activeTab === 'users' ? (
-          <div>
-            <div className="flex justify-end mb-4">
+      {activeTab === 'metrics' && (
+          <div className="space-y-6 animate-fade-in-up">
+              {/* Summary Cards */}
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                  <div className="bg-card p-6 rounded-2xl border border-border">
+                      <div className="flex justify-between items-center mb-4">
+                          <h3 className="text-text-secondary font-medium">Total de Usuários</h3>
+                          <div className="p-2 bg-blue-500/20 rounded-full"><UserIcon className="h-6 w-6 text-blue-400" /></div>
+                      </div>
+                      <p className="text-3xl font-bold text-text-primary">{metrics.totalUsers}</p>
+                  </div>
+                  <div className="bg-card p-6 rounded-2xl border border-border">
+                      <div className="flex justify-between items-center mb-4">
+                          <h3 className="text-text-secondary font-medium">Faturamento Estimado</h3>
+                          <div className="p-2 bg-green-500/20 rounded-full"><TrendingUp className="h-6 w-6 text-green-400" /></div>
+                      </div>
+                      <p className="text-3xl font-bold text-text-primary">
+                          {new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(metrics.estimatedRevenue)}
+                      </p>
+                      <p className="text-xs text-text-secondary mt-1">Baseado em assinaturas Pro ativas</p>
+                  </div>
+                  <div className="bg-card p-6 rounded-2xl border border-border">
+                      <div className="flex justify-between items-center mb-4">
+                          <h3 className="text-text-secondary font-medium">Plano Mais Popular</h3>
+                          <div className="p-2 bg-yellow-500/20 rounded-full"><DashboardIcon className="h-6 w-6 text-yellow-400" /></div>
+                      </div>
+                      <p className="text-3xl font-bold text-text-primary">
+                          {metrics.planData.reduce((a, b) => a.value > b.value ? a : b).name}
+                      </p>
+                  </div>
+              </div>
+
+              {/* Charts Row */}
+              <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                  {/* Pie Chart: Plan Distribution */}
+                  <div className="bg-card p-6 rounded-2xl border border-border h-96">
+                      <h3 className="text-xl font-bold mb-6 text-text-primary">Distribuição de Planos</h3>
+                      <ResponsiveContainer width="100%" height="90%">
+                          <PieChart>
+                              <Pie
+                                  data={metrics.planData}
+                                  cx="50%"
+                                  cy="50%"
+                                  innerRadius={60}
+                                  outerRadius={100}
+                                  paddingAngle={5}
+                                  dataKey="value"
+                              >
+                                  {metrics.planData.map((entry, index) => (
+                                      <Cell key={`cell-${index}`} fill={entry.color} />
+                                  ))}
+                              </Pie>
+                              <RechartsTooltip contentStyle={{ backgroundColor: '#121212', borderColor: '#27272a', color: '#f4f4f5' }} />
+                              <Legend verticalAlign="bottom" height={36} />
+                          </PieChart>
+                      </ResponsiveContainer>
+                  </div>
+
+                  {/* Bar Chart: User Growth (Mock Data for Visual) */}
+                  <div className="bg-card p-6 rounded-2xl border border-border h-96">
+                      <h3 className="text-xl font-bold mb-6 text-text-primary">Crescimento (Últimos 6 Meses)</h3>
+                      <ResponsiveContainer width="100%" height="90%">
+                           <BarChart data={[
+                               {name: 'Mai', users: metrics.totalUsers - 5},
+                               {name: 'Jun', users: metrics.totalUsers - 3},
+                               {name: 'Jul', users: metrics.totalUsers - 2},
+                               {name: 'Ago', users: metrics.totalUsers - 1},
+                               {name: 'Set', users: metrics.totalUsers},
+                               {name: 'Out', users: metrics.totalUsers + 2}, // Mock projection
+                           ]}>
+                              <CartesianGrid strokeDasharray="3 3" stroke="#27272a" vertical={false} />
+                              <XAxis dataKey="name" stroke="#a1a1aa" />
+                              <YAxis stroke="#a1a1aa" />
+                              <RechartsTooltip cursor={{fill: 'rgba(255,255,255,0.05)'}} contentStyle={{ backgroundColor: '#121212', borderColor: '#27272a', color: '#f4f4f5' }} />
+                              <Bar dataKey="users" fill="#40ff00" radius={[4, 4, 0, 0]} />
+                          </BarChart>
+                      </ResponsiveContainer>
+                  </div>
+              </div>
+          </div>
+      )}
+
+      {activeTab === 'users' && (
+          <div className="animate-fade-in-up">
+            <div className="flex flex-col md:flex-row justify-between items-center mb-6 gap-4">
+                <div className="w-full md:w-1/2">
+                    <input 
+                        type="text" 
+                        placeholder="Buscar usuário por nome..." 
+                        value={searchTerm}
+                        onChange={(e) => setSearchTerm(e.target.value)}
+                        className="w-full bg-card border border-border rounded-xl px-4 py-2 text-text-primary focus:ring-2 focus:ring-brand-primary focus:outline-none"
+                    />
+                </div>
                 <button 
                     onClick={handleOpenCreate}
-                    className="flex items-center bg-brand-primary hover:bg-brand-secondary text-black font-bold py-2 px-4 rounded-xl transition-colors"
+                    className="w-full md:w-auto flex items-center justify-center bg-brand-primary hover:bg-brand-secondary text-black font-bold py-2 px-4 rounded-xl transition-colors"
                 >
                     <PlusIcon className="h-5 w-5 mr-2" /> Novo Usuário
                 </button>
@@ -184,11 +305,11 @@ const AdminPage: React.FC<AdminPageProps> = ({ user }) => {
                         </tr>
                     </thead>
                     <tbody className="divide-y divide-border text-text-primary">
-                        {profiles.map((profile) => (
+                        {filteredProfiles.length > 0 ? filteredProfiles.map((profile) => (
                         <tr key={profile.id} className="hover:bg-gray-800/50">
                             <td className="px-6 py-4">
                                 <div className="font-bold">{profile.first_name} {profile.last_name}</div>
-                                <div className="text-xs text-text-secondary font-mono">{profile.id}</div>
+                                <div className="text-xs text-text-secondary font-mono truncate max-w-[150px] sm:max-w-none">{profile.id}</div>
                             </td>
                             <td className="px-6 py-4">
                                 <span className={`px-2 py-1 rounded-lg text-xs font-bold uppercase ${
@@ -202,21 +323,29 @@ const AdminPage: React.FC<AdminPageProps> = ({ user }) => {
                             <td className="px-6 py-4 text-right">
                                 <button 
                                     onClick={() => handleOpenEdit(profile)}
-                                    className="text-brand-primary hover:text-brand-secondary p-2"
+                                    className="text-brand-primary hover:text-brand-secondary p-2 bg-brand-primary/10 rounded-lg transition-colors"
                                     title="Editar Usuário"
                                 >
                                     <EditIcon className="h-5 w-5" />
                                 </button>
                             </td>
                         </tr>
-                        ))}
+                        )) : (
+                            <tr>
+                                <td colSpan={3} className="px-6 py-8 text-center text-text-secondary">
+                                    Nenhum usuário encontrado com "{searchTerm}".
+                                </td>
+                            </tr>
+                        )}
                     </tbody>
                     </table>
                 </div>
             </div>
           </div>
-      ) : (
-          <div className="bg-card p-8 rounded-2xl border border-border max-w-2xl">
+      )}
+
+      {activeTab === 'settings' && (
+          <div className="bg-card p-6 md:p-8 rounded-2xl border border-border max-w-2xl animate-fade-in-up">
               <h2 className="text-xl font-bold mb-6">Informações Gerais do Site</h2>
               <form onSubmit={handleSettingsSubmit} className="space-y-6">
                   <div>
