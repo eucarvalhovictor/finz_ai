@@ -21,7 +21,7 @@ const AdminPage: React.FC<AdminPageProps> = ({ user }) => {
 
   // Settings State
   const [siteConfig, setSiteConfig] = useState<AppConfig>({
-      site_name: '', site_description: '', site_logo: '', site_favicon: ''
+      site_name: '', site_description: '', site_logo: '', site_favicon: '', site_keywords: '', site_author: '', site_og_image: ''
   });
 
   // Modal State for Users
@@ -66,7 +66,7 @@ const AdminPage: React.FC<AdminPageProps> = ({ user }) => {
       setFormData({
           firstName: profile.first_name || '',
           lastName: profile.last_name || '',
-          email: '', // Cannot edit email directly easily without auth api
+          email: profile.email || '', 
           password: '',
           role: profile.role
       });
@@ -86,7 +86,6 @@ const AdminPage: React.FC<AdminPageProps> = ({ user }) => {
       try {
           if (newUserMode) {
               // Create New User
-              // NOTE: This signs the user in on client side.
               const { data, error } = await supabase.auth.signUp({
                   email: formData.email,
                   password: formData.password,
@@ -104,10 +103,13 @@ const AdminPage: React.FC<AdminPageProps> = ({ user }) => {
               }
           } else if (editingProfile) {
               // Update Existing Profile
+              // Note: Changing the actual auth email requires backend admin privileges or user confirmation.
+              // Here we update the profile record which serves as the display/contact email.
               await updateProfile(editingProfile.id, {
                   first_name: formData.firstName,
                   last_name: formData.lastName,
-                  role: formData.role
+                  role: formData.role,
+                  email: formData.email
               });
               await updateUserRole(editingProfile.id, formData.role);
               await fetchProfiles();
@@ -138,7 +140,9 @@ const AdminPage: React.FC<AdminPageProps> = ({ user }) => {
   const filteredProfiles = useMemo(() => {
       return profiles.filter(p => {
           const fullName = `${p.first_name || ''} ${p.last_name || ''}`.toLowerCase();
-          return fullName.includes(searchTerm.toLowerCase());
+          const email = p.email || '';
+          const search = searchTerm.toLowerCase();
+          return fullName.includes(search) || email.toLowerCase().includes(search);
       });
   }, [profiles, searchTerm]);
 
@@ -281,7 +285,7 @@ const AdminPage: React.FC<AdminPageProps> = ({ user }) => {
                 <div className="w-full md:w-1/2">
                     <input 
                         type="text" 
-                        placeholder="Buscar usuário por nome..." 
+                        placeholder="Buscar usuário por nome ou e-mail..." 
                         value={searchTerm}
                         onChange={(e) => setSearchTerm(e.target.value)}
                         className="w-full bg-card border border-border rounded-xl px-4 py-2 text-text-primary focus:ring-2 focus:ring-brand-primary focus:outline-none"
@@ -299,7 +303,8 @@ const AdminPage: React.FC<AdminPageProps> = ({ user }) => {
                     <table className="min-w-full divide-y divide-border">
                     <thead className="bg-gray-900/50">
                         <tr>
-                        <th className="px-6 py-4 text-left text-xs font-medium text-text-secondary uppercase tracking-wider">Nome / ID</th>
+                        <th className="px-6 py-4 text-left text-xs font-medium text-text-secondary uppercase tracking-wider">Nome</th>
+                        <th className="px-6 py-4 text-left text-xs font-medium text-text-secondary uppercase tracking-wider">E-mail</th>
                         <th className="px-6 py-4 text-left text-xs font-medium text-text-secondary uppercase tracking-wider">Cargo</th>
                         <th className="px-6 py-4 text-right text-xs font-medium text-text-secondary uppercase tracking-wider">Ações</th>
                         </tr>
@@ -309,7 +314,9 @@ const AdminPage: React.FC<AdminPageProps> = ({ user }) => {
                         <tr key={profile.id} className="hover:bg-gray-800/50">
                             <td className="px-6 py-4">
                                 <div className="font-bold">{profile.first_name} {profile.last_name}</div>
-                                <div className="text-xs text-text-secondary font-mono truncate max-w-[150px] sm:max-w-none">{profile.id}</div>
+                            </td>
+                            <td className="px-6 py-4">
+                                <div className="text-sm text-text-secondary">{profile.email || 'Não informado'}</div>
                             </td>
                             <td className="px-6 py-4">
                                 <span className={`px-2 py-1 rounded-lg text-xs font-bold uppercase ${
@@ -332,7 +339,7 @@ const AdminPage: React.FC<AdminPageProps> = ({ user }) => {
                         </tr>
                         )) : (
                             <tr>
-                                <td colSpan={3} className="px-6 py-8 text-center text-text-secondary">
+                                <td colSpan={4} className="px-6 py-8 text-center text-text-secondary">
                                     Nenhum usuário encontrado com "{searchTerm}".
                                 </td>
                             </tr>
@@ -345,50 +352,90 @@ const AdminPage: React.FC<AdminPageProps> = ({ user }) => {
       )}
 
       {activeTab === 'settings' && (
-          <div className="bg-card p-6 md:p-8 rounded-2xl border border-border max-w-2xl animate-fade-in-up">
-              <h2 className="text-xl font-bold mb-6">Informações Gerais do Site</h2>
+          <div className="bg-card p-6 md:p-8 rounded-2xl border border-border animate-fade-in-up">
+              <h2 className="text-xl font-bold mb-6">Configurações Gerais & SEO</h2>
               <form onSubmit={handleSettingsSubmit} className="space-y-6">
-                  <div>
-                      <label className="block text-sm font-medium text-text-secondary mb-1">Nome do Site</label>
-                      <input 
-                        type="text" 
-                        value={siteConfig.site_name} 
-                        onChange={e => setSiteConfig({...siteConfig, site_name: e.target.value})}
-                        className="w-full bg-background border border-border rounded-xl p-3 text-text-primary focus:ring-brand-primary"
-                      />
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                      <div>
+                          <label className="block text-sm font-medium text-text-secondary mb-1">Nome do Site (Title)</label>
+                          <input 
+                            type="text" 
+                            value={siteConfig.site_name} 
+                            onChange={e => setSiteConfig({...siteConfig, site_name: e.target.value})}
+                            className="w-full bg-background border border-border rounded-xl p-3 text-text-primary focus:ring-brand-primary"
+                          />
+                      </div>
+                      <div>
+                          <label className="block text-sm font-medium text-text-secondary mb-1">Autor</label>
+                          <input 
+                            type="text" 
+                            value={siteConfig.site_author || ''} 
+                            onChange={e => setSiteConfig({...siteConfig, site_author: e.target.value})}
+                            className="w-full bg-background border border-border rounded-xl p-3 text-text-primary focus:ring-brand-primary"
+                          />
+                      </div>
                   </div>
+
                   <div>
-                      <label className="block text-sm font-medium text-text-secondary mb-1">Descrição (Meta Tag)</label>
+                      <label className="block text-sm font-medium text-text-secondary mb-1">Descrição (Meta Description)</label>
                       <textarea 
                         value={siteConfig.site_description} 
                         onChange={e => setSiteConfig({...siteConfig, site_description: e.target.value})}
                         className="w-full bg-background border border-border rounded-xl p-3 text-text-primary focus:ring-brand-primary h-24"
                       />
                   </div>
+
                   <div>
-                      <label className="block text-sm font-medium text-text-secondary mb-1">URL do Logo</label>
+                      <label className="block text-sm font-medium text-text-secondary mb-1">Palavras-chave (Keywords)</label>
                       <input 
                         type="text" 
-                        value={siteConfig.site_logo} 
-                        onChange={e => setSiteConfig({...siteConfig, site_logo: e.target.value})}
+                        value={siteConfig.site_keywords || ''} 
+                        onChange={e => setSiteConfig({...siteConfig, site_keywords: e.target.value})}
                         className="w-full bg-background border border-border rounded-xl p-3 text-text-primary focus:ring-brand-primary"
-                        placeholder="https://..."
+                        placeholder="finanças, dashboard, controle, dinheiro..."
                       />
-                      {siteConfig.site_logo && <img src={siteConfig.site_logo} alt="Preview" className="h-10 mt-2 object-contain" />}
                   </div>
-                  <div>
-                      <label className="block text-sm font-medium text-text-secondary mb-1">URL do Favicon</label>
+
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                      <div>
+                          <label className="block text-sm font-medium text-text-secondary mb-1">URL do Logo</label>
+                          <input 
+                            type="text" 
+                            value={siteConfig.site_logo} 
+                            onChange={e => setSiteConfig({...siteConfig, site_logo: e.target.value})}
+                            className="w-full bg-background border border-border rounded-xl p-3 text-text-primary focus:ring-brand-primary"
+                            placeholder="https://..."
+                          />
+                          {siteConfig.site_logo && <img src={siteConfig.site_logo} alt="Preview" className="h-10 mt-2 object-contain bg-white/5 p-1 rounded" />}
+                      </div>
+                      <div>
+                          <label className="block text-sm font-medium text-text-secondary mb-1">URL do Favicon</label>
+                          <input 
+                            type="text" 
+                            value={siteConfig.site_favicon} 
+                            onChange={e => setSiteConfig({...siteConfig, site_favicon: e.target.value})}
+                            className="w-full bg-background border border-border rounded-xl p-3 text-text-primary focus:ring-brand-primary"
+                             placeholder="https://..."
+                          />
+                          {siteConfig.site_favicon && <img src={siteConfig.site_favicon} alt="Favicon" className="h-6 w-6 mt-2" />}
+                      </div>
+                  </div>
+
+                   <div>
+                      <label className="block text-sm font-medium text-text-secondary mb-1">Imagem de Compartilhamento (OG:Image)</label>
                       <input 
                         type="text" 
-                        value={siteConfig.site_favicon} 
-                        onChange={e => setSiteConfig({...siteConfig, site_favicon: e.target.value})}
+                        value={siteConfig.site_og_image || ''} 
+                        onChange={e => setSiteConfig({...siteConfig, site_og_image: e.target.value})}
                         className="w-full bg-background border border-border rounded-xl p-3 text-text-primary focus:ring-brand-primary"
-                         placeholder="https://..."
+                         placeholder="https://... (URL da imagem para redes sociais)"
                       />
+                      {siteConfig.site_og_image && <img src={siteConfig.site_og_image} alt="OG Preview" className="h-32 mt-2 object-cover rounded-lg border border-border" />}
                   </div>
-                  <div className="flex justify-end">
-                      <button type="submit" disabled={formLoading} className="bg-brand-primary hover:bg-brand-secondary text-black font-bold py-2 px-6 rounded-xl transition-colors">
-                          {formLoading ? 'Salvando...' : 'Salvar Configurações'}
+
+                  <div className="flex justify-end pt-4 border-t border-border">
+                      <button type="submit" disabled={formLoading} className="bg-brand-primary hover:bg-brand-secondary text-black font-bold py-3 px-8 rounded-xl transition-colors">
+                          {formLoading ? 'Salvando...' : 'Salvar Todas as Configurações'}
                       </button>
                   </div>
               </form>
@@ -409,17 +456,18 @@ const AdminPage: React.FC<AdminPageProps> = ({ user }) => {
                 </div>
               </div>
               
+              {/* Email is editable for admins in this view (updates profile record) */}
+              <div>
+                  <label className="block text-sm text-text-secondary">E-mail</label>
+                  <input type="email" required value={formData.email} onChange={e => setFormData({...formData, email: e.target.value})} className="w-full bg-background border border-border rounded-xl p-3 text-text-primary" />
+                  {!newUserMode && <p className="text-xs text-yellow-500 mt-1">Nota: Alterar este e-mail atualiza o perfil de contato, mas não as credenciais de login do usuário.</p>}
+              </div>
+
               {newUserMode && (
-                  <>
-                    <div>
-                        <label className="block text-sm text-text-secondary">E-mail</label>
-                        <input type="email" required value={formData.email} onChange={e => setFormData({...formData, email: e.target.value})} className="w-full bg-background border border-border rounded-xl p-3 text-text-primary" />
-                    </div>
-                    <div>
-                        <label className="block text-sm text-text-secondary">Senha</label>
-                        <input type="password" required value={formData.password} onChange={e => setFormData({...formData, password: e.target.value})} className="w-full bg-background border border-border rounded-xl p-3 text-text-primary" />
-                    </div>
-                  </>
+                  <div>
+                    <label className="block text-sm text-text-secondary">Senha</label>
+                    <input type="password" required value={formData.password} onChange={e => setFormData({...formData, password: e.target.value})} className="w-full bg-background border border-border rounded-xl p-3 text-text-primary" />
+                </div>
               )}
 
               <div>
