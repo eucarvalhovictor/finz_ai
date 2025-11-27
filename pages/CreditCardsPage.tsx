@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect, useCallback } from 'react';
 import { getCreditCards, addCreditCard, deleteCreditCard, getProfile } from '../services/api';
 import type { AppUser, CreditCard, Role } from '../types';
@@ -9,7 +10,14 @@ interface CreditCardsPageProps {
   user: AppUser;
 }
 
-const CreditCardForm: React.FC<{ onSave: (card: Omit<CreditCard, 'id'|'created_at'|'user_id'>) => void; userId: string; }> = ({ onSave, userId }) => {
+interface CreditCardFormProps {
+    onSave: (card: Omit<CreditCard, 'id'|'created_at'|'user_id'>) => void;
+    onCancel: () => void;
+    isSubmitting: boolean;
+    error: string | null;
+}
+
+const CreditCardForm: React.FC<CreditCardFormProps> = ({ onSave, onCancel, isSubmitting, error }) => {
     const [name, setName] = useState('');
     const [lastFour, setLastFour] = useState('');
     const [bank, setBank] = useState('');
@@ -23,18 +31,64 @@ const CreditCardForm: React.FC<{ onSave: (card: Omit<CreditCard, 'id'|'created_a
         <form onSubmit={handleSubmit} className="space-y-4">
             <div>
                 <label htmlFor="name" className="block text-sm font-medium text-text-secondary">Apelido do Cartão (Ex: Nubank Pessoal)</label>
-                <input type="text" id="name" value={name} onChange={e => setName(e.target.value)} required className="mt-1 block w-full bg-background border-border rounded-md shadow-sm focus:ring-brand-primary focus:border-brand-primary sm:text-sm p-3 text-text-primary rounded-xl border" />
+                <input 
+                    type="text" 
+                    id="name" 
+                    value={name} 
+                    onChange={e => setName(e.target.value)} 
+                    required 
+                    placeholder="Meu Cartão Principal"
+                    className="mt-1 block w-full bg-background border border-border rounded-xl shadow-sm focus:ring-2 focus:ring-brand-primary focus:border-brand-primary sm:text-sm p-3 text-text-primary" 
+                />
             </div>
             <div>
                 <label htmlFor="lastFour" className="block text-sm font-medium text-text-secondary">Últimos 4 dígitos</label>
-                <input type="text" id="lastFour" value={lastFour} onChange={e => setLastFour(e.target.value.replace(/\D/g, '').slice(0, 4))} maxLength={4} required className="mt-1 block w-full bg-background border-border rounded-md shadow-sm focus:ring-brand-primary focus:border-brand-primary sm:text-sm p-3 text-text-primary rounded-xl border" />
+                <input 
+                    type="text" 
+                    id="lastFour" 
+                    value={lastFour} 
+                    onChange={e => setLastFour(e.target.value.replace(/\D/g, '').slice(0, 4))} 
+                    maxLength={4} 
+                    required 
+                    placeholder="1234"
+                    className="mt-1 block w-full bg-background border border-border rounded-xl shadow-sm focus:ring-2 focus:ring-brand-primary focus:border-brand-primary sm:text-sm p-3 text-text-primary" 
+                />
             </div>
             <div>
                 <label htmlFor="bank" className="block text-sm font-medium text-text-secondary">Banco Emissor</label>
-                <input type="text" id="bank" value={bank} onChange={e => setBank(e.target.value)} required className="mt-1 block w-full bg-background border-border rounded-md shadow-sm focus:ring-brand-primary focus:border-brand-primary sm:text-sm p-3 text-text-primary rounded-xl border" />
+                <input 
+                    type="text" 
+                    id="bank" 
+                    value={bank} 
+                    onChange={e => setBank(e.target.value)} 
+                    required 
+                    placeholder="Ex: Itaú, Nubank, Santander"
+                    className="mt-1 block w-full bg-background border border-border rounded-xl shadow-sm focus:ring-2 focus:ring-brand-primary focus:border-brand-primary sm:text-sm p-3 text-text-primary" 
+                />
             </div>
-            <div className="flex justify-end">
-                <button type="submit" className="bg-brand-primary hover:bg-brand-secondary text-black font-bold py-2 px-4 rounded-xl transition-colors">Salvar Cartão</button>
+            
+            {error && (
+                <div className="bg-red-500/10 border border-red-500/50 text-red-500 p-3 rounded-lg text-sm">
+                    {error}
+                </div>
+            )}
+
+            <div className="flex justify-end space-x-3 pt-2">
+                <button 
+                    type="button" 
+                    onClick={onCancel}
+                    disabled={isSubmitting}
+                    className="px-4 py-2 text-sm font-medium text-text-secondary hover:text-text-primary transition-colors"
+                >
+                    Cancelar
+                </button>
+                <button 
+                    type="submit" 
+                    disabled={isSubmitting}
+                    className="bg-brand-primary hover:bg-brand-secondary text-black font-bold py-2 px-6 rounded-xl transition-colors disabled:opacity-50 flex items-center"
+                >
+                    {isSubmitting ? 'Salvando...' : 'Salvar Cartão'}
+                </button>
             </div>
         </form>
     )
@@ -45,6 +99,10 @@ const CreditCardsPage: React.FC<CreditCardsPageProps> = ({ user }) => {
   const [loading, setLoading] = useState(true);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [userRole, setUserRole] = useState<Role>('basic');
+  
+  // Form specific state
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [formError, setFormError] = useState<string | null>(null);
 
   const fetchCards = useCallback(async () => {
     let isMounted = true;
@@ -75,12 +133,17 @@ const CreditCardsPage: React.FC<CreditCardsPageProps> = ({ user }) => {
   }, [fetchCards]);
 
   const handleSaveCard = async (cardData: Omit<CreditCard, 'id'|'created_at'|'user_id'>) => {
+    setIsSubmitting(true);
+    setFormError(null);
     try {
       await addCreditCard({ ...cardData, user_id: user.id });
       setIsModalOpen(false);
       await fetchCards();
-    } catch (error) {
+    } catch (error: any) {
       console.error("Failed to save card", error);
+      setFormError(error.message || "Erro ao salvar cartão. Verifique sua conexão.");
+    } finally {
+      setIsSubmitting(false);
     }
   }
 
@@ -91,6 +154,7 @@ const CreditCardsPage: React.FC<CreditCardsPageProps> = ({ user }) => {
               await fetchCards();
           } catch (error) {
               console.error("Failed to delete card", error);
+              alert("Erro ao excluir cartão.");
           }
       }
   }
@@ -101,6 +165,7 @@ const CreditCardsPage: React.FC<CreditCardsPageProps> = ({ user }) => {
           alert(`Seu plano (${userRole.toUpperCase()}) permite apenas ${limit} cartão(ões). Atualize seu plano para adicionar mais.`);
           return;
       }
+      setFormError(null);
       setIsModalOpen(true);
   }
 
@@ -134,7 +199,7 @@ const CreditCardsPage: React.FC<CreditCardsPageProps> = ({ user }) => {
                   <p className="font-mono text-lg text-text-primary mt-4 tracking-widest">**** **** **** {card.last_four_digits}</p>
                 </div>
                 <div className="text-right mt-4">
-                  <button onClick={() => handleDeleteCard(card.id)} className="text-red-400 hover:text-red-300 p-2 rounded-lg hover:bg-red-500/10 transition">
+                  <button onClick={() => handleDeleteCard(card.id)} className="text-red-400 hover:text-red-300 p-2 rounded-lg hover:bg-red-500/10 transition" title="Excluir Cartão">
                       <DeleteIcon className="h-5 w-5" />
                   </button>
                 </div>
@@ -155,7 +220,12 @@ const CreditCardsPage: React.FC<CreditCardsPageProps> = ({ user }) => {
       )}
 
       <Modal isOpen={isModalOpen} onClose={() => setIsModalOpen(false)} title="Adicionar Novo Cartão">
-          <CreditCardForm onSave={handleSaveCard} userId={user.id} />
+          <CreditCardForm 
+            onSave={handleSaveCard} 
+            onCancel={() => setIsModalOpen(false)}
+            isSubmitting={isSubmitting}
+            error={formError}
+          />
       </Modal>
     </div>
   );

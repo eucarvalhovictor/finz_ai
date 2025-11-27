@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { Transaction, CreditCard } from '../types';
 
@@ -107,6 +108,8 @@ const TransactionForm: React.FC<TransactionFormProps> = ({ onSave, onClose, exis
     setIsSubmitting(false);
   };
   
+  const hasCreditCards = creditCards.length > 0;
+  
   return (
     <form onSubmit={handleSubmit} className="space-y-6">
        <div>
@@ -189,38 +192,47 @@ const TransactionForm: React.FC<TransactionFormProps> = ({ onSave, onClose, exis
           
           {paymentMethod === 'Cartão' && type === 'EXPENSE' && (
               <div className="space-y-4 animate-fade-in-up mt-4">
-                  <div>
-                      <label htmlFor="card" className="block text-sm font-medium text-text-secondary mb-1">Cartão</label>
-                       <FormSelect id="card" value={cardId || ''} onChange={e => setCardId(e.target.value)} required>
-                          <option value="">Selecione um cartão</option>
-                          {creditCards.map(card => (
-                              <option key={card.id} value={card.id}>{card.name} - Final {card.last_four_digits}</option>
-                          ))}
-                      </FormSelect>
-                  </div>
-
-                  <div className="grid grid-cols-2 gap-2">
-                      <button type="button" onClick={() => setPaymentType('À Vista')} className={`p-2 text-sm rounded-lg font-semibold transition-all duration-200 ${paymentType === 'À Vista' ? 'bg-brand-primary text-black' : 'bg-background border border-border hover:bg-border text-text-secondary'}`}>
-                          À Vista
-                      </button>
-                      <button type="button" onClick={() => setPaymentType('Parcelado')} className={`p-2 text-sm rounded-lg font-semibold transition-all duration-200 ${paymentType === 'Parcelado' ? 'bg-brand-primary text-black' : 'bg-background border border-border hover:bg-border text-text-secondary'}`}>
-                          Parcelado
-                      </button>
-                  </div>
-
-                  {paymentType === 'Parcelado' && (
-                      <div className="animate-fade-in-up">
-                          <label htmlFor="installments" className="block text-sm font-medium text-text-secondary mb-1">Nº de Parcelas</label>
-                          <FormInput
-                              type="number"
-                              id="installments"
-                              value={installments}
-                              onChange={(e) => setInstallments(e.target.valueAsNumber || '')}
-                              min="2"
-                              max="24"
-                              required
-                          />
+                  {!hasCreditCards ? (
+                      <div className="bg-yellow-500/10 border border-yellow-500/50 text-yellow-500 p-4 rounded-xl text-sm">
+                          <p className="font-bold">Nenhum cartão encontrado.</p>
+                          <p>Acesse o menu <span className="font-bold">Cartões</span> para cadastrar seu primeiro cartão de crédito.</p>
                       </div>
+                  ) : (
+                      <>
+                        <div>
+                            <label htmlFor="card" className="block text-sm font-medium text-text-secondary mb-1">Cartão</label>
+                            <FormSelect id="card" value={cardId || ''} onChange={e => setCardId(e.target.value)} required>
+                                <option value="">Selecione um cartão</option>
+                                {creditCards.map(card => (
+                                    <option key={card.id} value={card.id}>{card.name} - Final {card.last_four_digits}</option>
+                                ))}
+                            </FormSelect>
+                        </div>
+
+                        <div className="grid grid-cols-2 gap-2">
+                            <button type="button" onClick={() => setPaymentType('À Vista')} className={`p-2 text-sm rounded-lg font-semibold transition-all duration-200 ${paymentType === 'À Vista' ? 'bg-brand-primary text-black' : 'bg-background border border-border hover:bg-border text-text-secondary'}`}>
+                                À Vista
+                            </button>
+                            <button type="button" onClick={() => setPaymentType('Parcelado')} className={`p-2 text-sm rounded-lg font-semibold transition-all duration-200 ${paymentType === 'Parcelado' ? 'bg-brand-primary text-black' : 'bg-background border border-border hover:bg-border text-text-secondary'}`}>
+                                Parcelado
+                            </button>
+                        </div>
+
+                        {paymentType === 'Parcelado' && (
+                            <div className="animate-fade-in-up">
+                                <label htmlFor="installments" className="block text-sm font-medium text-text-secondary mb-1">Nº de Parcelas</label>
+                                <FormInput
+                                    type="number"
+                                    id="installments"
+                                    value={installments}
+                                    onChange={(e) => setInstallments(e.target.valueAsNumber || '')}
+                                    min="2"
+                                    max="24"
+                                    required
+                                />
+                            </div>
+                        )}
+                      </>
                   )}
               </div>
           )}
@@ -236,7 +248,7 @@ const TransactionForm: React.FC<TransactionFormProps> = ({ onSave, onClose, exis
         </button>
         <button
           type="submit"
-          disabled={isSubmitting}
+          disabled={isSubmitting || (paymentMethod === 'Cartão' && type === 'EXPENSE' && !hasCreditCards)}
           className="px-6 py-2 text-sm font-semibold bg-brand-primary hover:bg-brand-secondary text-black rounded-xl transition-colors disabled:opacity-50"
         >
           {isSubmitting ? 'Salvando...' : 'Salvar Transação'}

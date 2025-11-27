@@ -35,13 +35,13 @@ export type Page = 'dashboard' | 'transactions' | 'insights' | 'investments' | '
 
 export type Role = 'basic' | 'pro' | 'admin';
 
-export interface AppUser extends User {}
+export type AppUser = User;
 
 export interface Profile {
   id: string;
   first_name: string | null;
   last_name: string | null;
-  email?: string; // Added email for admin management
+  email?: string; 
   avatar_url: string | null;
   updated_at: string | null;
   role: Role;
@@ -52,7 +52,6 @@ export interface AppConfig {
   site_description: string;
   site_logo: string;
   site_favicon: string;
-  // SEO Fields
   site_keywords?: string;
   site_author?: string;
   site_og_image?: string;

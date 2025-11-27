@@ -1,20 +1,16 @@
+
 import { GoogleGenAI } from "@google/genai";
 import type { Transaction } from '../types';
 
 export const getFinancialInsight = async (transactions: Transaction[]): Promise<string> => {
-  // Fix: Move API_KEY check and GoogleGenAI initialization inside the function
-  // to ensure it only runs when needed and with a valid key.
-  const API_KEY = process.env.API_KEY;
-  if (!API_KEY) {
-    return "A chave de API do Gemini não está configurada. Por favor, configure a variável de ambiente API_KEY.";
-  }
+  // Initialize Gemini API with the API key from environment variables.
+  // We assume process.env.API_KEY is pre-configured and valid.
+  const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
+  const model = 'gemini-2.5-flash';
 
   if (transactions.length === 0) {
     return "Não há transações suficientes para gerar uma análise. Adicione algumas transações e tente novamente.";
   }
-  
-  const ai = new GoogleGenAI({ apiKey: API_KEY });
-  const model = 'gemini-2.5-flash';
 
   const formattedTransactions = transactions.map(t => ({
     descricao: t.description,
