@@ -29,14 +29,14 @@ const DEFAULT_CATEGORIES = [
 const FormInput: React.FC<React.InputHTMLAttributes<HTMLInputElement>> = (props) => (
     <input
         {...props}
-        className="mt-1 block w-full bg-background border border-border rounded-xl shadow-sm focus:ring-2 focus:ring-brand-primary focus:border-brand-primary text-sm p-3 text-text-primary placeholder-text-secondary/50"
+        className="block w-full bg-background border border-border rounded-lg shadow-sm focus:ring-1 focus:ring-brand-primary focus:border-brand-primary text-sm py-2 px-3 text-text-primary placeholder-text-secondary/50"
     />
 );
 
 const FormSelect: React.FC<React.SelectHTMLAttributes<HTMLSelectElement>> = (props) => (
     <select
         {...props}
-        className="mt-1 block w-full bg-background border border-border rounded-xl shadow-sm focus:ring-2 focus:ring-brand-primary focus:border-brand-primary text-sm p-3 text-text-primary"
+        className="block w-full bg-background border border-border rounded-lg shadow-sm focus:ring-1 focus:ring-brand-primary focus:border-brand-primary text-sm py-2 px-3 text-text-primary"
     >
         {props.children}
     </select>
@@ -111,147 +111,153 @@ const TransactionForm: React.FC<TransactionFormProps> = ({ onSave, onClose, exis
   const hasCreditCards = creditCards.length > 0;
   
   return (
-    <form onSubmit={handleSubmit} className="flex flex-col h-full gap-4">
+    <form onSubmit={handleSubmit} className="flex flex-col h-full">
        
-       {/* Toggle Tipo */}
-       <div className="bg-background p-1 rounded-xl border border-border flex">
-          <button 
-            type="button" 
-            onClick={() => setType('INCOME')} 
-            className={`flex-1 py-2 rounded-lg text-sm font-bold transition-all ${type === 'INCOME' ? 'bg-green-500 text-white shadow-sm' : 'text-text-secondary hover:text-text-primary'}`}
-          >
-            Receita
-          </button>
-          <button 
-            type="button" 
-            onClick={() => setType('EXPENSE')} 
-            className={`flex-1 py-2 rounded-lg text-sm font-bold transition-all ${type === 'EXPENSE' ? 'bg-red-500 text-white shadow-sm' : 'text-text-secondary hover:text-text-primary'}`}
-          >
-            Despesa
-          </button>
+       <div className="flex-1 space-y-3">
+            {/* Toggle Tipo Compacto */}
+            <div className="flex bg-background rounded-lg border border-border p-0.5 h-8 md:h-10">
+                <button 
+                    type="button" 
+                    onClick={() => setType('INCOME')} 
+                    className={`flex-1 rounded-md text-xs font-bold transition-all ${type === 'INCOME' ? 'bg-green-600 text-white' : 'text-text-secondary'}`}
+                >
+                    Receita
+                </button>
+                <button 
+                    type="button" 
+                    onClick={() => setType('EXPENSE')} 
+                    className={`flex-1 rounded-md text-xs font-bold transition-all ${type === 'EXPENSE' ? 'bg-red-600 text-white' : 'text-text-secondary'}`}
+                >
+                    Despesa
+                </button>
+            </div>
+
+            {/* Descrição */}
+            <div>
+                <label htmlFor="description" className="block text-[10px] md:text-xs font-medium text-text-secondary mb-0.5">Descrição</label>
+                <FormInput
+                type="text"
+                id="description"
+                value={description}
+                onChange={(e) => setDescription(e.target.value)}
+                required
+                placeholder="Ex: Supermercado"
+                />
+            </div>
+            
+            {/* Valor e Data lado a lado */}
+            <div className="flex gap-2">
+                <div className="flex-1">
+                <label htmlFor="amount" className="block text-[10px] md:text-xs font-medium text-text-secondary mb-0.5">Valor (R$)</label>
+                <FormInput
+                    type="number"
+                    id="amount"
+                    value={amount}
+                    onChange={(e) => setAmount(e.target.valueAsNumber || '')}
+                    required
+                    step="0.01"
+                    min="0"
+                    placeholder="0,00"
+                />
+                </div>
+                <div className="w-[45%]">
+                    <label htmlFor="date" className="block text-[10px] md:text-xs font-medium text-text-secondary mb-0.5">Data</label>
+                    <FormInput
+                    type="date"
+                    id="date"
+                    value={date}
+                    onChange={(e) => setDate(e.target.value)}
+                    required
+                    />
+                </div>
+            </div>
+
+            {/* Categoria */}
+            <div>
+                <label htmlFor="category" className="block text-[10px] md:text-xs font-medium text-text-secondary mb-0.5">Categoria</label>
+                <FormInput
+                type="text"
+                id="category"
+                value={category}
+                onChange={(e) => setCategory(e.target.value)}
+                required
+                list="category-suggestions"
+                placeholder="Selecione..."
+                />
+                <datalist id="category-suggestions">
+                {allCategories.map(cat => <option key={cat} value={cat} />)}
+                </datalist>
+            </div>
+
+            {/* Meio de Pagamento (Segmented) */}
+            <div>
+                <label className="block text-[10px] md:text-xs font-medium text-text-secondary mb-1">Meio de Pagamento</label>
+                <div className="flex bg-background rounded-lg border border-border p-0.5 h-8">
+                    {['Dinheiro', 'Pix', 'Cartão'].map((method) => {
+                        if (type === 'INCOME' && method === 'Cartão') return null;
+                        return (
+                            <button
+                                key={method}
+                                type="button"
+                                onClick={() => setPaymentMethod(method as any)}
+                                className={`flex-1 rounded-md text-[10px] md:text-xs font-bold transition-all ${paymentMethod === method ? 'bg-brand-primary text-black shadow-sm' : 'text-text-secondary'}`}
+                            >
+                                {method}
+                            </button>
+                        );
+                    })}
+                </div>
+            </div>
+            
+            {/* Área Cartão de Crédito */}
+            {paymentMethod === 'Cartão' && type === 'EXPENSE' && (
+                <div className="space-y-2 p-2 border border-border rounded-lg bg-background/30">
+                    {!hasCreditCards ? (
+                        <p className="text-yellow-500 text-xs text-center p-2">Sem cartões cadastrados.</p>
+                    ) : (
+                        <>
+                            <div className="flex gap-2">
+                                <div className="flex-1">
+                                    <label htmlFor="card" className="block text-[10px] md:text-xs font-medium text-text-secondary mb-0.5">Cartão</label>
+                                    <FormSelect id="card" value={cardId || ''} onChange={e => setCardId(e.target.value)} required>
+                                        <option value="">...</option>
+                                        {creditCards.map(card => (
+                                            <option key={card.id} value={card.id}>{card.name} ({card.last_four_digits})</option>
+                                        ))}
+                                    </FormSelect>
+                                </div>
+                                <div className="flex-1">
+                                    <label className="block text-[10px] md:text-xs font-medium text-text-secondary mb-0.5">Tipo</label>
+                                    <FormSelect value={paymentType} onChange={e => setPaymentType(e.target.value as any)}>
+                                        <option value="À Vista">À Vista</option>
+                                        <option value="Parcelado">Parcelado</option>
+                                    </FormSelect>
+                                </div>
+                            </div>
+
+                            {paymentType === 'Parcelado' && (
+                                <div>
+                                    <label htmlFor="installments" className="block text-[10px] md:text-xs font-medium text-text-secondary mb-0.5">Parcelas</label>
+                                    <FormInput
+                                        type="number"
+                                        id="installments"
+                                        value={installments}
+                                        onChange={(e) => setInstallments(e.target.valueAsNumber || '')}
+                                        min="2"
+                                        max="24"
+                                        required
+                                        placeholder="Qtd"
+                                    />
+                                </div>
+                            )}
+                        </>
+                    )}
+                </div>
+            )}
        </div>
 
-       <div>
-        <label htmlFor="description" className="block text-xs font-medium text-text-secondary mb-1">Descrição</label>
-        <FormInput
-          type="text"
-          id="description"
-          value={description}
-          onChange={(e) => setDescription(e.target.value)}
-          required
-          placeholder="Ex: Supermercado"
-        />
-      </div>
-      
-      {/* Valor e Data lado a lado */}
-      <div className="flex gap-3">
-        <div className="flex-1">
-          <label htmlFor="amount" className="block text-xs font-medium text-text-secondary mb-1">Valor (R$)</label>
-          <FormInput
-            type="number"
-            id="amount"
-            value={amount}
-            onChange={(e) => setAmount(e.target.valueAsNumber || '')}
-            required
-            step="0.01"
-            min="0"
-            placeholder="0,00"
-          />
-        </div>
-        <div className="w-2/5">
-            <label htmlFor="date" className="block text-xs font-medium text-text-secondary mb-1">Data</label>
-            <FormInput
-              type="date"
-              id="date"
-              value={date}
-              onChange={(e) => setDate(e.target.value)}
-              required
-            />
-        </div>
-      </div>
-
-       <div>
-        <label htmlFor="category" className="block text-xs font-medium text-text-secondary mb-1">Categoria</label>
-        <FormInput
-          type="text"
-          id="category"
-          value={category}
-          onChange={(e) => setCategory(e.target.value)}
-          required
-          list="category-suggestions"
-          placeholder="Selecione ou digite..."
-        />
-        <datalist id="category-suggestions">
-          {allCategories.map(cat => <option key={cat} value={cat} />)}
-        </datalist>
-      </div>
-
-      <div className="space-y-3 p-3 border border-border rounded-xl bg-background/50">
-          <h4 className="text-xs font-medium text-text-secondary">Meio de Pagamento</h4>
-          <div className="grid grid-cols-3 gap-2">
-              <button type="button" onClick={() => setPaymentMethod('Dinheiro')} className={`py-2 px-1 text-xs rounded-lg font-semibold transition-all ${paymentMethod === 'Dinheiro' ? 'bg-brand-primary text-black' : 'bg-card border border-border text-text-secondary'}`}>
-                  Dinheiro
-              </button>
-               <button type="button" onClick={() => setPaymentMethod('Pix')} className={`py-2 px-1 text-xs rounded-lg font-semibold transition-all ${paymentMethod === 'Pix' ? 'bg-brand-primary text-black' : 'bg-card border border-border text-text-secondary'}`}>
-                  Pix
-              </button>
-               {type === 'EXPENSE' && (
-                <button type="button" onClick={() => setPaymentMethod('Cartão')} className={`py-2 px-1 text-xs rounded-lg font-semibold transition-all ${paymentMethod === 'Cartão' ? 'bg-brand-primary text-black' : 'bg-card border border-border text-text-secondary'}`}>
-                    Cartão
-                </button>
-               )}
-          </div>
-          
-          {paymentMethod === 'Cartão' && type === 'EXPENSE' && (
-              <div className="space-y-3 animate-fade-in-up pt-2 border-t border-border mt-2">
-                  {!hasCreditCards ? (
-                      <div className="bg-yellow-500/10 border border-yellow-500/50 text-yellow-500 p-3 rounded-xl text-xs">
-                          <p className="font-bold">Nenhum cartão encontrado.</p>
-                          <p>Cadastre um cartão no menu "Cartões".</p>
-                      </div>
-                  ) : (
-                      <>
-                        <div>
-                            <label htmlFor="card" className="block text-xs font-medium text-text-secondary mb-1">Selecione o Cartão</label>
-                            <FormSelect id="card" value={cardId || ''} onChange={e => setCardId(e.target.value)} required>
-                                <option value="">Selecione...</option>
-                                {creditCards.map(card => (
-                                    <option key={card.id} value={card.id}>{card.name} (Final {card.last_four_digits})</option>
-                                ))}
-                            </FormSelect>
-                        </div>
-
-                        <div className="flex gap-2">
-                            <button type="button" onClick={() => setPaymentType('À Vista')} className={`flex-1 py-2 text-xs rounded-lg font-semibold transition-all ${paymentType === 'À Vista' ? 'bg-brand-primary text-black' : 'bg-card border border-border text-text-secondary'}`}>
-                                À Vista
-                            </button>
-                            <button type="button" onClick={() => setPaymentType('Parcelado')} className={`flex-1 py-2 text-xs rounded-lg font-semibold transition-all ${paymentType === 'Parcelado' ? 'bg-brand-primary text-black' : 'bg-card border border-border text-text-secondary'}`}>
-                                Parcelado
-                            </button>
-                        </div>
-
-                        {paymentType === 'Parcelado' && (
-                            <div className="animate-fade-in-up">
-                                <label htmlFor="installments" className="block text-xs font-medium text-text-secondary mb-1">Parcelas</label>
-                                <FormInput
-                                    type="number"
-                                    id="installments"
-                                    value={installments}
-                                    onChange={(e) => setInstallments(e.target.valueAsNumber || '')}
-                                    min="2"
-                                    max="24"
-                                    required
-                                    placeholder="2"
-                                />
-                            </div>
-                        )}
-                      </>
-                  )}
-              </div>
-          )}
-      </div>
-
-      <div className="flex gap-3 pt-2 mt-auto">
+       {/* Botões de Ação Fixos no Rodapé */}
+       <div className="flex gap-3 pt-3 mt-auto border-t border-border md:border-t-0">
         <button
           type="button"
           onClick={onClose}
