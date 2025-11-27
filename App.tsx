@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { supabase } from './services/supabase';
 import type { Session } from '@supabase/supabase-js';
@@ -15,6 +14,8 @@ import ProfilePage from './pages/ProfilePage';
 import AdminPage from './pages/AdminPage';
 import { Page } from './types';
 import { WalletIcon } from './components/icons/Icons';
+
+const INACTIVITY_LIMIT = 15 * 60 * 1000; // 15 minutes in milliseconds
 
 const App: React.FC = () => {
   const [session, setSession] = useState<Session | null>(null);
@@ -112,6 +113,9 @@ const App: React.FC = () => {
       if (!mounted) return;
       setSession(session);
       if (session) {
+        // Only redirect to dashboard if we are strictly logging in (not just refreshing)
+        // However, usually keeping it simple is better. 
+        // We will keep the behavior: on auth change (login), go to dashboard.
         setActivePage('dashboard');
         try {
             const profile = await getProfile(session.user.id);
@@ -129,6 +133,39 @@ const App: React.FC = () => {
         subscription.unsubscribe();
     };
   }, []);
+
+  // Inactivity Timer Effect
+  useEffect(() => {
+      if (!session) return;
+
+      let timeoutId: ReturnType<typeof setTimeout>;
+
+      const handleLogout = async () => {
+          console.log("Sessão expirada por inatividade.");
+          await supabase.auth.signOut();
+          alert("Sua sessão expirou após 15 minutos de inatividade. Por favor, faça login novamente.");
+      };
+
+      const resetTimer = () => {
+          if (timeoutId) clearTimeout(timeoutId);
+          timeoutId = setTimeout(handleLogout, INACTIVITY_LIMIT);
+      };
+
+      // Events to track activity
+      const events = ['mousedown', 'mousemove', 'keydown', 'scroll', 'touchstart', 'click'];
+
+      // Setup listeners
+      events.forEach(event => document.addEventListener(event, resetTimer));
+      
+      // Start initial timer
+      resetTimer();
+
+      // Cleanup
+      return () => {
+          if (timeoutId) clearTimeout(timeoutId);
+          events.forEach(event => document.removeEventListener(event, resetTimer));
+      };
+  }, [session]);
 
   const renderPage = () => {
     if (!session) return null;
