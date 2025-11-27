@@ -1,3 +1,4 @@
+
 import React, { useRef, useEffect } from 'react';
 
 const AnimatedBackground: React.FC = () => {
@@ -11,10 +12,13 @@ const AnimatedBackground: React.FC = () => {
         if (!ctx) return;
 
         let animationFrameId: number;
+        let particlesArray: any[] = []; // Explicitly typed as any[] or a defined interface to avoid TS errors inside closure
 
         const resizeCanvas = () => {
-            canvas.width = window.innerWidth;
-            canvas.height = window.innerHeight;
+            if (canvas) {
+                canvas.width = window.innerWidth;
+                canvas.height = window.innerHeight;
+            }
         };
         
         resizeCanvas();
@@ -25,14 +29,18 @@ const AnimatedBackground: React.FC = () => {
             y: -1000,
         };
 
-        window.addEventListener('mousemove', (event) => {
+        const handleMouseMove = (event: MouseEvent) => {
             mouse.x = event.x;
             mouse.y = event.y;
-        });
-        window.addEventListener('mouseout', () => {
+        };
+
+        const handleMouseOut = () => {
              mouse.x = -1000;
              mouse.y = -1000;
-        })
+        };
+
+        window.addEventListener('mousemove', handleMouseMove);
+        window.addEventListener('mouseout', handleMouseOut);
 
         class Particle {
             x: number;
@@ -58,11 +66,14 @@ const AnimatedBackground: React.FC = () => {
             }
 
             update() {
-                if (this.x > canvas.width || this.x < 0) {
-                    this.speedX = -this.speedX;
-                }
-                if (this.y > canvas.height || this.y < 0) {
-                    this.speedY = -this.speedY;
+                // Check canvas bounds safely
+                if (canvas) {
+                    if (this.x > canvas.width || this.x < 0) {
+                        this.speedX = -this.speedX;
+                    }
+                    if (this.y > canvas.height || this.y < 0) {
+                        this.speedY = -this.speedY;
+                    }
                 }
                 this.x += this.speedX;
                 this.y += this.speedY;
@@ -78,11 +89,11 @@ const AnimatedBackground: React.FC = () => {
             }
         }
 
-        let particlesArray: Particle[] = [];
-        const numberOfParticles = (canvas.height * canvas.width) / 9000;
-        
-        function init() {
+        const init = () => {
             particlesArray = [];
+            if (!canvas) return;
+            const numberOfParticles = (canvas.height * canvas.width) / 9000;
+            
             for (let i = 0; i < numberOfParticles; i++) {
                 let size = Math.random() * 1.5 + 1;
                 let x = (Math.random() * ((innerWidth - size * 2) - (size * 2)) + size * 2);
@@ -93,8 +104,9 @@ const AnimatedBackground: React.FC = () => {
             }
         }
 
-        function animate() {
-            ctx.clearRect(0, 0, innerWidth, innerHeight);
+        const animate = () => {
+            if (!ctx || !canvas) return;
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
             for (let i = 0; i < particlesArray.length; i++) {
                 particlesArray[i].update();
                 particlesArray[i].draw();
@@ -103,7 +115,8 @@ const AnimatedBackground: React.FC = () => {
             animationFrameId = requestAnimationFrame(animate);
         }
 
-        function connect() {
+        const connect = () => {
+            if (!ctx || !canvas) return;
             let opacityValue = 1;
             for (let a = 0; a < particlesArray.length; a++) {
                 for (let b = a; b < particlesArray.length; b++) {
@@ -127,6 +140,8 @@ const AnimatedBackground: React.FC = () => {
 
         return () => {
             window.removeEventListener('resize', resizeCanvas);
+            window.removeEventListener('mousemove', handleMouseMove);
+            window.removeEventListener('mouseout', handleMouseOut);
             cancelAnimationFrame(animationFrameId);
         };
     }, []);

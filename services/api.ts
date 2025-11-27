@@ -1,3 +1,4 @@
+
 import { supabase } from './supabase';
 import type { AppUser, Transaction, Profile, CreditCard, Role } from '../types';
 
@@ -73,7 +74,7 @@ export const getCategories = async (userId: string): Promise<string[]> => {
         throw error;
     }
 
-    if (!data) return [];
+    if (!data || !Array.isArray(data)) return [];
 
     // Fix: Cast data to any[] to ensure map works and explicit casting in filter to return string[]
     const categories = (data as any[])
@@ -91,7 +92,10 @@ export const getProfile = async (userId: string): Promise<Profile | null> => {
         .eq('id', userId)
         .single();
     
-    if (error && error.code !== 'PGRST116') { // PGRST116 = no rows found
+    if (error) {
+         // PGRST116 = no rows found. This is expected for new users before profile is created.
+        if (error.code === 'PGRST116') return null;
+        
         console.error('Error fetching profile:', error.message);
         throw error;
     }

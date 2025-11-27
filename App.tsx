@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { supabase } from './services/supabase';
 import type { Session } from '@supabase/supabase-js';
@@ -21,25 +22,44 @@ const App: React.FC = () => {
   const [activePage, setActivePage] = useState<Page>('dashboard');
 
   useEffect(() => {
+    let mounted = true;
+
     const initApp = async () => {
-      const { data: { session } } = await supabase.auth.getSession();
-      setSession(session);
-      
-      if (session) {
-          try {
-              const profile = await getProfile(session.user.id);
-              if (profile) setUserRole(profile.role);
-          } catch (e) {
-              console.error("Error fetching user role", e);
+      // Safety timeout: If Supabase takes too long, stop loading
+      const loadingTimeout = setTimeout(() => {
+          if (mounted && loading) {
+              console.warn("App initialization timed out, forcing load.");
+              setLoading(false);
           }
+      }, 5000);
+
+      try {
+          const { data } = await supabase.auth.getSession();
+          
+          if (mounted) {
+              setSession(data.session);
+              
+              if (data.session) {
+                  try {
+                      const profile = await getProfile(data.session.user.id);
+                      if (profile) setUserRole(profile.role);
+                  } catch (e) {
+                      console.error("Error fetching user role", e);
+                  }
+              }
+          }
+      } catch (err) {
+          console.error("Initialization error:", err);
+      } finally {
+          clearTimeout(loadingTimeout);
+          if (mounted) setLoading(false);
       }
-      
-      setLoading(false);
     };
 
     initApp();
 
     const { data: { subscription } } = supabase.auth.onAuthStateChange(async (_event, session) => {
+      if (!mounted) return;
       setSession(session);
       if (session) {
         setActivePage('dashboard');
@@ -55,7 +75,10 @@ const App: React.FC = () => {
       }
     });
 
-    return () => subscription.unsubscribe();
+    return () => {
+        mounted = false;
+        subscription.unsubscribe();
+    };
   }, []);
 
   const renderPage = () => {
@@ -83,7 +106,7 @@ const App: React.FC = () => {
   if (loading) {
     return (
       <div className="flex items-center justify-center h-screen bg-background">
-        <div className="text-xl text-text-primary">Carregando...</div>
+        <div className="text-xl text-text-primary animate-pulse">Carregando FinzAI...</div>
       </div>
     );
   }
