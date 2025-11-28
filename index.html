@@ -72,6 +72,7 @@
       /* Prevent bounce on iOS */
       body {
         overscroll-behavior-y: none;
+        touch-action: pan-y; /* Added for explicit vertical scrolling on touch devices */
       }
       /* Scrollbar personalizada */
       .custom-scrollbar::-webkit-scrollbar {

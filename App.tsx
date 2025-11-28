@@ -261,7 +261,7 @@ const App: React.FC = () => {
                 />
                 
                 {/* Main Content Area - Scroll independente */}
-                <main className="flex-1 overflow-y-auto bg-background p-4 sm:p-6 lg:p-8 w-full custom-scrollbar relative">
+                <main className="flex-1 overflow-y-auto bg-background px-4 pt-4 sm:p-6 lg:p-8 w-full custom-scrollbar relative overscroll-behavior-y-contain pb-32 md:pb-8">
                     {renderPage()}
                 </main>
             </div>

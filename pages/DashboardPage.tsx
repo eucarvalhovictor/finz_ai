@@ -155,7 +155,7 @@ const DashboardPage: React.FC<DashboardPageProps> = ({ user }) => {
         </div>
         <button
           onClick={() => setIsModalOpen(true)}
-          className="flex items-center justify-center bg-brand-primary text-black font-bold py-2 px-4 rounded-xl text-sm shadow-md hover:shadow-glow hover:bg-brand-secondary transition-all transform hover:scale-105 duration-300 ease-in-out"
+          className="flex items-center justify-center bg-brand-primary text-black font-bold py-2 px-4 rounded-lg text-sm shadow-md hover:shadow-glow hover:bg-brand-secondary transition-all transform hover:scale-105 duration-300 ease-in-out"
         >
           <PlusIcon className="h-5 w-5 mr-2" />
           Adicionar

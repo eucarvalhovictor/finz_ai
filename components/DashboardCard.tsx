@@ -1,3 +1,4 @@
+
 import React from 'react';
 
 interface DashboardCardProps {
@@ -14,14 +15,14 @@ const DashboardCard: React.FC<DashboardCardProps> = ({ title, amount, icon, colo
   }).format(amount);
 
   return (
-    <div className="bg-card p-6 rounded-2xl border border-border">
+    <div className="bg-card p-4 md:p-6 rounded-2xl border border-border">
       <div className="flex items-center justify-between">
         <p className="text-text-secondary font-medium">{title}</p>
-        <div className={`p-2 rounded-full ${colorClass}`}>
+        <div className={`p-1.5 md:p-2 rounded-full ${colorClass}`}>
           {icon}
         </div>
       </div>
-      <p className="text-3xl font-bold text-text-primary mt-4">{formattedAmount}</p>
+      <p className="text-2xl md:text-3xl font-bold text-text-primary mt-4">{formattedAmount}</p>
     </div>
   );
 };
