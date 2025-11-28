@@ -1,7 +1,7 @@
 
 import React, { useState } from 'react';
 import { supabase } from '../services/supabase';
-import { WalletIcon, DashboardIcon, TransactionsIcon, InsightsIcon, LogoutIcon, InvestmentsIcon, CreditCardIcon, UserIcon, ChevronLeftIcon, ChevronRightIcon, ShieldIcon, CloseIcon } from './icons/Icons';
+import { DashboardIcon, TransactionsIcon, InsightsIcon, LogoutIcon, InvestmentsIcon, CreditCardIcon, UserIcon, ChevronLeftIcon, ChevronRightIcon, ShieldIcon, CloseIcon } from './icons/Icons';
 import type { Page, Role } from '../types';
 
 interface SidebarProps {
@@ -10,6 +10,8 @@ interface SidebarProps {
   userRole: Role;
   logoUrl?: string;
   siteName?: string;
+  isMobileOpen: boolean;
+  setIsMobileOpen: (isOpen: boolean) => void;
 }
 
 const NavItem: React.FC<{
@@ -33,9 +35,9 @@ const NavItem: React.FC<{
   </button>
 );
 
-const Sidebar: React.FC<SidebarProps> = ({ activePage, setActivePage, userRole, logoUrl, siteName }) => {
+const Sidebar: React.FC<SidebarProps> = ({ activePage, setActivePage, userRole, isMobileOpen, setIsMobileOpen }) => {
+  // Desktop defaults to collapsed (true)
   const [isCollapsed, setIsCollapsed] = useState(true);
-  const [isMobileOpen, setIsMobileOpen] = useState(false);
 
   const handleLogout = async () => {
     await supabase.auth.signOut();
@@ -43,10 +45,6 @@ const Sidebar: React.FC<SidebarProps> = ({ activePage, setActivePage, userRole, 
 
   const toggleSidebar = () => {
     setIsCollapsed(!isCollapsed);
-  }
-
-  const toggleMobileMenu = () => {
-      setIsMobileOpen(!isMobileOpen);
   }
 
   const handleNavClick = (page: Page) => {
@@ -57,30 +55,19 @@ const Sidebar: React.FC<SidebarProps> = ({ activePage, setActivePage, userRole, 
   const isAdmin = userRole === 'admin';
   const isProOrAdmin = userRole === 'pro' || userRole === 'admin';
 
+  // Lógica Crucial: 
+  // Se for Mobile e estiver aberto, NÃO está colapsado (mostra texto).
+  // Se for Desktop, respeita o estado `isCollapsed`.
+  // O menu mobile nunca deve aparecer recolhido (só ícones).
+  const isMobile = typeof window !== 'undefined' && window.innerWidth < 768;
+  const effectiveCollapsed = isMobileOpen ? false : isCollapsed;
+
   return (
     <>
-        {/* Mobile Header (Only visible on mobile) */}
-        <div className="md:hidden fixed top-0 left-0 right-0 h-16 bg-card border-b border-border flex items-center justify-between px-4 z-40 shadow-sm">
-             <div className="flex items-center">
-                {logoUrl ? (
-                    <img src={logoUrl} alt="Logo" className="h-8 w-8 object-contain" />
-                ) : (
-                    <WalletIcon className="h-8 w-8 text-brand-primary" />
-                )}
-                <span className="ml-2 font-bold text-lg text-text-primary">{siteName || 'FinzAI'}</span>
-             </div>
-             <button 
-                onClick={toggleMobileMenu}
-                className="text-text-primary font-bold bg-white/5 px-4 py-2 rounded-lg hover:bg-white/10"
-             >
-                 Menu
-             </button>
-        </div>
-
         {/* Mobile Overlay */}
         {isMobileOpen && (
             <div 
-                className="fixed inset-0 bg-black/80 z-40 md:hidden"
+                className="fixed inset-0 bg-black/80 z-40 md:hidden backdrop-blur-sm"
                 onClick={() => setIsMobileOpen(false)}
             />
         )}
@@ -88,27 +75,27 @@ const Sidebar: React.FC<SidebarProps> = ({ activePage, setActivePage, userRole, 
         {/* Sidebar Container */}
         <aside 
             className={`
-                fixed md:static inset-y-0 left-0 z-40
+                fixed md:static inset-y-0 left-0 z-50
                 bg-sidebar flex flex-col border-r border-border transition-all duration-300 ease-in-out
-                ${isMobileOpen ? 'translate-x-0 w-64 pt-20' : '-translate-x-full md:translate-x-0'}
+                ${isMobileOpen ? 'translate-x-0 w-64 pt-0 shadow-2xl' : '-translate-x-full md:translate-x-0'}
                 ${isCollapsed && !isMobileOpen ? 'md:w-24' : 'md:w-72'}
-                md:flex p-4 md:h-full md:overflow-hidden
+                md:flex md:h-full
             `}
         >
-        <div className="flex flex-col h-full">
+        <div className="flex flex-col h-full p-4">
             
-            {/* Mobile "Recolher Menu" Button */}
-            <div className="md:hidden w-full mb-4">
+            {/* Mobile "Fechar Menu" Header inside Sidebar */}
+            <div className="md:hidden flex justify-between items-center mb-6 pt-2">
+                 <h2 className="text-lg font-bold text-text-primary">Menu</h2>
                  <button 
                     onClick={() => setIsMobileOpen(false)}
-                    className="w-full flex items-center justify-center space-x-2 bg-white/5 text-text-secondary py-2 rounded-xl hover:bg-white/10"
+                    className="p-2 bg-white/5 rounded-lg text-text-secondary hover:text-white"
                 >
-                    <CloseIcon className="h-4 w-4" />
-                    <span className="text-sm font-medium">Recolher Menu</span>
+                    <CloseIcon className="h-5 w-5" />
                 </button>
             </div>
 
-            {/* Desktop Toggle Button - At the top for desktop */}
+            {/* Desktop Toggle Button */}
             <div className="hidden md:block mb-4">
                  <button 
                     onClick={toggleSidebar}
@@ -120,7 +107,7 @@ const Sidebar: React.FC<SidebarProps> = ({ activePage, setActivePage, userRole, 
             </div>
 
              {/* Plan Badge */}
-             {!isCollapsed && (
+             {!effectiveCollapsed && (
                 <div className="mb-6 bg-card/50 border border-white/5 rounded-xl p-3 flex flex-col items-center justify-center animate-fade-in-up">
                     <span className="text-xs text-text-secondary font-medium uppercase tracking-wider mb-1">Plano Atual</span>
                     <div className="bg-brand-primary/10 text-brand-primary px-3 py-1 rounded-lg text-sm font-bold uppercase tracking-widest border border-brand-primary/20 w-full text-center">
@@ -136,14 +123,14 @@ const Sidebar: React.FC<SidebarProps> = ({ activePage, setActivePage, userRole, 
                     label="Dashboard"
                     isActive={activePage === 'dashboard'}
                     onClick={() => handleNavClick('dashboard')}
-                    isCollapsed={isCollapsed}
+                    isCollapsed={effectiveCollapsed}
                 />
                 <NavItem
                     icon={<TransactionsIcon className="h-6 w-6" />}
                     label="Transações"
                     isActive={activePage === 'transactions'}
                     onClick={() => handleNavClick('transactions')}
-                    isCollapsed={isCollapsed}
+                    isCollapsed={effectiveCollapsed}
                 />
                 
                 {isProOrAdmin && (
@@ -152,7 +139,7 @@ const Sidebar: React.FC<SidebarProps> = ({ activePage, setActivePage, userRole, 
                         label="Investimentos"
                         isActive={activePage === 'investments'}
                         onClick={() => handleNavClick('investments')}
-                        isCollapsed={isCollapsed}
+                        isCollapsed={effectiveCollapsed}
                     />
                 )}
 
@@ -161,7 +148,7 @@ const Sidebar: React.FC<SidebarProps> = ({ activePage, setActivePage, userRole, 
                     label="Cartões"
                     isActive={activePage === 'credit-cards'}
                     onClick={() => handleNavClick('credit-cards')}
-                    isCollapsed={isCollapsed}
+                    isCollapsed={effectiveCollapsed}
                 />
                 
                 {isProOrAdmin && (
@@ -170,7 +157,7 @@ const Sidebar: React.FC<SidebarProps> = ({ activePage, setActivePage, userRole, 
                         label="Análise IA"
                         isActive={activePage === 'insights'}
                         onClick={() => handleNavClick('insights')}
-                        isCollapsed={isCollapsed}
+                        isCollapsed={effectiveCollapsed}
                     />
                 )}
 
@@ -180,7 +167,7 @@ const Sidebar: React.FC<SidebarProps> = ({ activePage, setActivePage, userRole, 
                         label="Admin"
                         isActive={activePage === 'admin'}
                         onClick={() => handleNavClick('admin')}
-                        isCollapsed={isCollapsed}
+                        isCollapsed={effectiveCollapsed}
                     />
                 )}
             </nav>
@@ -192,15 +179,15 @@ const Sidebar: React.FC<SidebarProps> = ({ activePage, setActivePage, userRole, 
                     label="Meu Perfil"
                     isActive={activePage === 'profile'}
                     onClick={() => handleNavClick('profile')}
-                    isCollapsed={isCollapsed}
+                    isCollapsed={effectiveCollapsed}
                 />
                 <button
                 onClick={handleLogout}
-                className={`flex items-center w-full px-4 py-3 text-red-500 hover:bg-red-500/10 rounded-xl transition-colors duration-200 group ${isCollapsed ? 'justify-center' : ''}`}
+                className={`flex items-center w-full px-4 py-3 text-red-500 hover:bg-red-500/10 rounded-xl transition-colors duration-200 group ${effectiveCollapsed ? 'justify-center' : ''}`}
                 title="Sair"
                 >
                 <LogoutIcon className="h-6 w-6 text-red-500 group-hover:text-red-400" />
-                {!isCollapsed && <span className="ml-4 font-medium">Sair</span>}
+                {!effectiveCollapsed && <span className="ml-4 font-medium">Sair</span>}
                 </button>
             </div>
         </div>

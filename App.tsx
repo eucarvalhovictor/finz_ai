@@ -25,6 +25,7 @@ const App: React.FC = () => {
   const [loading, setLoading] = useState(true);
   const [activePage, setActivePage] = useState<Page>('dashboard');
   const [appConfig, setAppConfig] = useState<AppConfig | null>(null);
+  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
 
   useEffect(() => {
     let mounted = true;
@@ -204,7 +205,7 @@ const App: React.FC = () => {
 
   if (loading) {
     return (
-      <div className="flex flex-col items-center justify-center h-screen bg-background space-y-4">
+      <div className="flex flex-col items-center justify-center h-[100dvh] bg-background space-y-4">
         <Spinner size="lg" />
         <p className="text-text-secondary animate-pulse text-sm">Carregando {appConfig?.site_name || 'FinzAI'}...</p>
       </div>
@@ -212,13 +213,31 @@ const App: React.FC = () => {
   }
 
   return (
-    <div className="font-sans min-h-screen bg-background text-text-primary">
+    <div className="font-sans h-[100dvh] bg-background text-text-primary flex flex-col overflow-hidden">
       {!session ? (
         <AuthComponent />
       ) : (
         <>
-            {/* Desktop Sticky Header */}
-            <header className="hidden md:flex fixed top-0 left-0 right-0 h-16 bg-card border-b border-border z-50 items-center justify-center shadow-md">
+            {/* Mobile Header - Visible only on mobile */}
+            <header className="md:hidden flex-none h-16 bg-card border-b border-border z-30 flex items-center justify-between px-4 shadow-sm">
+                 <div className="flex items-center">
+                    {appConfig?.site_logo ? (
+                        <img src={appConfig.site_logo} alt="Logo" className="h-8 w-8 object-contain" />
+                    ) : (
+                        <WalletIcon className="h-8 w-8 text-brand-primary" />
+                    )}
+                    <span className="ml-2 font-bold text-lg text-text-primary tracking-tight">{appConfig?.site_name || 'FinzAI'}</span>
+                 </div>
+                 <button 
+                    onClick={() => setIsMobileMenuOpen(true)}
+                    className="text-text-primary font-bold bg-white/5 px-4 py-2 rounded-lg hover:bg-white/10"
+                 >
+                     Menu
+                 </button>
+            </header>
+
+            {/* Desktop Header - Visible only on desktop */}
+            <header className="hidden md:flex flex-none h-16 bg-card border-b border-border z-30 items-center justify-center shadow-md">
                  <div className="flex items-center">
                     {appConfig?.site_logo ? (
                         <img src={appConfig.site_logo} alt="Logo" className="h-8 w-8 object-contain" />
@@ -229,17 +248,22 @@ const App: React.FC = () => {
                  </div>
             </header>
 
-            <div className="flex pt-0 md:pt-16 h-screen">
-            <Sidebar 
-                activePage={activePage} 
-                setActivePage={setActivePage} 
-                userRole={userRole} 
-                logoUrl={appConfig?.site_logo}
-                siteName={appConfig?.site_name}
-            />
-            <main className="flex-1 overflow-y-auto p-4 sm:p-6 lg:p-8 mt-16 md:mt-0 bg-background">
-                {renderPage()}
-            </main>
+            {/* Layout Wrapper: Sidebar + Content */}
+            <div className="flex flex-1 overflow-hidden relative">
+                <Sidebar 
+                    activePage={activePage} 
+                    setActivePage={setActivePage} 
+                    userRole={userRole} 
+                    logoUrl={appConfig?.site_logo}
+                    siteName={appConfig?.site_name}
+                    isMobileOpen={isMobileMenuOpen}
+                    setIsMobileOpen={setIsMobileMenuOpen}
+                />
+                
+                {/* Main Content Area - Scroll independente */}
+                <main className="flex-1 overflow-y-auto bg-background p-4 sm:p-6 lg:p-8 w-full custom-scrollbar relative">
+                    {renderPage()}
+                </main>
             </div>
         </>
       )}
