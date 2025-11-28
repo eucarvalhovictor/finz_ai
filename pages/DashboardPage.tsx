@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect, useMemo, useCallback } from 'react';
 import { getTransactions, getProfile, getCategories, getCreditCards, addTransaction } from '../services/api';
 import type { AppUser, Transaction, MonthlySummary, CreditCard } from '../types';
@@ -9,6 +8,7 @@ import Spinner from '../components/Spinner';
 import Modal from '../components/Modal';
 import TransactionForm from '../components/TransactionForm';
 import { TrendingUp, TrendingDown, DollarSign, PlusIcon, WalletIcon } from 'lucide-react';
+import PaymentMethodChart from '../components/charts/PaymentMethodChart'; // NOVO
 
 interface DashboardPageProps {
   user: AppUser;
@@ -198,6 +198,13 @@ const DashboardPage: React.FC<DashboardPageProps> = ({ user }) => {
         </div>
       </div>
       
+      {/* Novo Gráfico: Gastos por Meio de Pagamento */}
+      <div className="grid grid-cols-1 lg:grid-cols-1 gap-4 md:gap-6">
+        <div className="lg:col-span-1">
+            <PaymentMethodChart transactions={transactions} />
+        </div>
+      </div>
+
        <Modal
         isOpen={isModalOpen}
         onClose={() => setIsModalOpen(false)}

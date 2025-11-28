@@ -1,4 +1,3 @@
-
 import type { User } from '@supabase/supabase-js';
 
 export interface CreditCard {
@@ -8,6 +7,8 @@ export interface CreditCard {
   name: string;
   last_four_digits: string;
   bank: string;
+  limit_total: number;       // Novo: Limite total do cartão
+  limit_available: number;   // Novo: Limite disponível atual
 }
 
 export interface Transaction {
@@ -41,7 +42,7 @@ export interface MonthlySummary {
     expense: number;
 }
 
-export type Page = 'dashboard' | 'transactions' | 'insights' | 'investments' | 'credit-cards' | 'profile' | 'admin';
+export type Page = 'dashboard' | 'transactions' | 'investments' | 'credit-cards' | 'profile' | 'admin'; // 'insights' REMOVED
 
 export type Role = 'basic' | 'pro' | 'admin';
 

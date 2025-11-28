@@ -1,71 +1,14 @@
-
 import React, { useState, useEffect, useCallback } from 'react';
-import { getCreditCards, addCreditCard, deleteCreditCard, getProfile } from '../services/api';
+import { getCreditCards, addCreditCard, deleteCreditCard, getProfile, updateCreditCard, getTransactionsByCardIdAndMonth } from '../services/api';
 import type { AppUser, CreditCard, Role } from '../types';
 import { CreditCardIcon, PlusIcon, DeleteIcon } from '../components/icons/Icons';
 import Spinner from '../components/Spinner';
 import Modal from '../components/Modal';
+import CreditCardForm from '../components/CreditCardForm'; // Usar o CreditCardForm existente
+import PayCreditCardModal from '../components/PayCreditCardModal'; // NOVO COMPONENTE
 
 interface CreditCardsPageProps {
   user: AppUser;
-}
-
-interface CreditCardFormProps {
-    onSave: (card: Omit<CreditCard, 'id'|'created_at'|'user_id'>) => void;
-    onCancel: () => void;
-    isSubmitting: boolean;
-    error: string | null;
-}
-
-const CreditCardForm: React.FC<CreditCardFormProps> = ({ onSave, onCancel, isSubmitting, error }) => {
-    const [name, setName] = useState('');
-    const [lastFour, setLastFour] = useState('');
-    const [bank, setBank] = useState('');
-
-    const handleSubmit = (e: React.FormEvent) => {
-        e.preventDefault();
-        onSave({ name, last_four_digits: lastFour, bank });
-    };
-
-    return (
-        <form onSubmit={handleSubmit} className="space-y-4">
-            <div>
-                <label htmlFor="name" className="block text-xs font-medium text-text-secondary">Apelido do Cartão</label>
-                <input 
-                    type="text" id="name" value={name} onChange={e => setName(e.target.value)} required 
-                    placeholder="Ex: Nubank Principal"
-                    className="mt-1 block w-full bg-background border border-border rounded-xl p-2 md:p-3 text-sm text-text-primary focus:ring-brand-primary" 
-                />
-            </div>
-            <div>
-                <label htmlFor="lastFour" className="block text-xs font-medium text-text-secondary">Últimos 4 dígitos</label>
-                <input 
-                    type="text" id="lastFour" value={lastFour} onChange={e => setLastFour(e.target.value.replace(/\D/g, '').slice(0, 4))} maxLength={4} required placeholder="1234"
-                    className="mt-1 block w-full bg-background border border-border rounded-xl p-2 md:p-3 text-sm text-text-primary focus:ring-brand-primary" 
-                />
-            </div>
-            <div>
-                <label htmlFor="bank" className="block text-xs font-medium text-text-secondary">Banco Emissor</label>
-                <input 
-                    type="text" id="bank" value={bank} onChange={e => setBank(e.target.value)} required placeholder="Ex: Itaú, Nubank"
-                    className="mt-1 block w-full bg-background border border-border rounded-xl p-2 md:p-3 text-sm text-text-primary focus:ring-brand-primary" 
-                />
-            </div>
-            
-            {error && (
-                <div className="bg-red-500/10 border border-red-500/50 text-red-500 p-2 rounded-lg text-xs">
-                    {error}
-                </div>
-            )}
-
-            <div className="flex justify-end space-x-3 pt-2">
-                <button type="button" onClick={onCancel} disabled={isSubmitting} className="px-4 py-2 text-xs md:text-sm text-text-secondary hover:text-text-primary">Cancelar</button>
-                <button type="submit" disabled={isSubmitting} className="bg-brand-primary text-black font-bold py-2 px-6 rounded-xl text-sm disabled:opacity-50">
-                    {isSubmitting ? 'Salvando...' : 'Salvar'}
-                </button>
-            </div>
-        </form>
-    )
 }
 
 const CreditCardsPage: React.FC<CreditCardsPageProps> = ({ user }) => {
@@ -75,6 +18,9 @@ const CreditCardsPage: React.FC<CreditCardsPageProps> = ({ user }) => {
   const [userRole, setUserRole] = useState<Role>('basic');
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [formError, setFormError] = useState<string | null>(null);
+
+  const [isPayModalOpen, setIsPayModalOpen] = useState(false); // NOVO: Estado para modal de pagamento
+  const [selectedCardToPay, setSelectedCardToPay] = useState<CreditCard | null>(null); // NOVO: Cartão selecionado para pagar
 
   const fetchCards = useCallback(async () => {
     let isMounted = true;
@@ -104,11 +50,11 @@ const CreditCardsPage: React.FC<CreditCardsPageProps> = ({ user }) => {
     fetchCards();
   }, [fetchCards]);
 
-  const handleSaveCard = async (cardData: Omit<CreditCard, 'id'|'created_at'|'user_id'>) => {
+  const handleSaveCard = async (cardData: Omit<CreditCard, 'id'|'created_at'|'user_id'|'limit_available'> & {limit_total: number}) => {
     setIsSubmitting(true);
     setFormError(null);
     try {
-      await addCreditCard({ ...cardData, user_id: user.id });
+      await addCreditCard({ ...cardData, user_id: user.id }); // limit_available é inicializado na API
       setIsModalOpen(false);
       await fetchCards();
     } catch (error: any) {
@@ -141,6 +87,10 @@ const CreditCardsPage: React.FC<CreditCardsPageProps> = ({ user }) => {
       setIsModalOpen(true);
   }
 
+  const formatCurrency = (value: number) => {
+    return new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(value);
+  };
+
   return (
     <div className="space-y-4 md:space-y-6">
       <div className="flex justify-between items-center">
@@ -170,7 +120,15 @@ const CreditCardsPage: React.FC<CreditCardsPageProps> = ({ user }) => {
                   <p className="text-text-secondary text-xs mt-1 truncate">{card.bank}</p>
                   <p className="font-mono text-base text-text-primary mt-3 tracking-widest">**** **** **** {card.last_four_digits}</p>
                 </div>
-                <div className="text-right mt-3">
+                <div className="text-right mt-3 flex justify-end items-center gap-2"> {/* NOVO: Flex para botões */}
+                  <p className="text-xs text-text-secondary">Disponível: <span className="font-bold text-brand-primary">{formatCurrency(card.limit_available)}</span></p>
+                  <button
+                    onClick={(e) => { e.stopPropagation(); setSelectedCardToPay(card); setIsPayModalOpen(true); }}
+                    className="bg-brand-primary/10 text-brand-primary hover:bg-brand-primary/20 p-1.5 rounded-lg text-xs font-medium transition"
+                    title="Pagar Fatura"
+                  >
+                      Pagar Fatura
+                  </button>
                   <button onClick={() => handleDeleteCard(card.id)} className="text-red-400 hover:text-red-300 p-1.5 rounded-lg hover:bg-red-500/10 transition" title="Excluir">
                       <DeleteIcon className="h-4 w-4" />
                   </button>
@@ -197,6 +155,15 @@ const CreditCardsPage: React.FC<CreditCardsPageProps> = ({ user }) => {
             error={formError}
           />
       </Modal>
+
+      {/* NOVO: Modal para Pagamento de Fatura */}
+      <PayCreditCardModal
+        isOpen={isPayModalOpen}
+        onClose={() => setIsPayModalOpen(false)}
+        card={selectedCardToPay}
+        user={user}
+        onPaymentSuccess={fetchCards} // Refetch cards after successful payment
+      />
     </div>
   );
 };

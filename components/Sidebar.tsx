@@ -1,7 +1,6 @@
-
 import React, { useState } from 'react';
 import { supabase } from '../services/supabase';
-import { DashboardIcon, TransactionsIcon, InsightsIcon, LogoutIcon, InvestmentsIcon, CreditCardIcon, UserIcon, ChevronLeftIcon, ChevronRightIcon, ShieldIcon, CloseIcon } from './icons/Icons';
+import { DashboardIcon, TransactionsIcon, /* InsightsIcon, */ LogoutIcon, InvestmentsIcon, CreditCardIcon, UserIcon, ChevronLeftIcon, ChevronRightIcon, ShieldIcon, CloseIcon } from './icons/Icons';
 import type { Page, Role } from '../types';
 
 interface SidebarProps {
@@ -151,7 +150,7 @@ const Sidebar: React.FC<SidebarProps> = ({ activePage, setActivePage, userRole, 
                     isCollapsed={effectiveCollapsed}
                 />
                 
-                {isProOrAdmin && (
+                {/* {isProOrAdmin && ( // REMOVED
                     <NavItem
                         icon={<InsightsIcon className="h-6 w-6" />}
                         label="Análise IA"
@@ -159,7 +158,7 @@ const Sidebar: React.FC<SidebarProps> = ({ activePage, setActivePage, userRole, 
                         onClick={() => handleNavClick('insights')}
                         isCollapsed={effectiveCollapsed}
                     />
-                )}
+                )} */}
 
                 {isAdmin && (
                     <NavItem

@@ -1,14 +1,22 @@
-
 import { supabase } from './supabase';
 import type { AppUser, Transaction, Profile, CreditCard, Role, AppConfig, Investment } from '../types';
 
 // Fetch all transactions for the logged-in user
-export const getTransactions = async (userId: string): Promise<Transaction[]> => {
-  const { data, error } = await supabase
+export const getTransactions = async (userId: string, month?: number, year?: number): Promise<Transaction[]> => {
+  let query = supabase
     .from('transactions')
     .select('*')
-    .eq('user_id', userId)
-    .order('date', { ascending: false });
+    .eq('user_id', userId);
+
+  if (month !== undefined && year !== undefined) {
+    // Supabase expects 0-indexed month for Date object, but UI will likely pass 1-indexed.
+    const startDate = new Date(year, month - 1, 1).toISOString().split('T')[0];
+    const endDate = new Date(year, month, 0).toISOString().split('T')[0]; // last day of the month
+
+    query = query.gte('date', startDate).lte('date', endDate);
+  }
+
+  const { data, error } = await query.order('date', { ascending: false });
 
   if (error) {
     console.error('Error fetching transactions:', error);
@@ -29,6 +37,30 @@ export const addTransaction = async (transaction: Omit<Transaction, 'id' | 'crea
     console.error('Error adding transaction:', error);
     throw error;
   }
+
+  // NOVO: Atualizar o limite disponível do cartão de crédito se for uma despesa
+  if (data && data.type === 'EXPENSE' && data.payment_method === 'Cartão' && data.card_id) {
+    try {
+      const { data: card, error: cardError } = await supabase
+        .from('credit_cards')
+        .select('limit_available')
+        .eq('id', data.card_id)
+        .single();
+
+      if (cardError) throw cardError;
+      
+      if (card) {
+        const newAvailableLimit = card.limit_available - data.amount;
+        await supabase
+          .from('credit_cards')
+          .update({ limit_available: newAvailableLimit })
+          .eq('id', data.card_id);
+      }
+    } catch (cardUpdateError) {
+      console.error("Erro ao atualizar o limite do cartão de crédito após a transação:", cardUpdateError);
+    }
+  }
+
   return data;
 };
 
@@ -150,15 +182,31 @@ export const getCreditCards = async (userId: string): Promise<CreditCard[]> => {
     return data || [];
 };
 
-export const addCreditCard = async (card: Omit<CreditCard, 'id' | 'created_at'>): Promise<CreditCard> => {
+export const addCreditCard = async (card: Omit<CreditCard, 'id' | 'created_at' | 'limit_available'> & {limit_total: number}): Promise<CreditCard> => {
     const { data, error } = await supabase
         .from('credit_cards')
-        .insert([{ ...card, id: crypto.randomUUID() }])
+        .insert([{ ...card, id: crypto.randomUUID(), limit_available: card.limit_total }]) // Inicializa limit_available com limit_total
         .select()
         .single();
     
     if (error) {
         console.error('Error adding credit card:', error);
+        throw error;
+    }
+    return data;
+};
+
+// Nova função para atualizar um cartão de crédito (incluindo limites)
+export const updateCreditCard = async (id: string, updates: Partial<CreditCard>): Promise<CreditCard> => {
+    const { data, error } = await supabase
+        .from('credit_cards')
+        .update(updates)
+        .eq('id', id)
+        .select()
+        .single();
+
+    if (error) {
+        console.error('Error updating credit card:', error);
         throw error;
     }
     return data;
@@ -174,6 +222,28 @@ export const deleteCreditCard = async (cardId: string) => {
         console.error('Error deleting credit card:', error);
         throw error;
     }
+};
+
+// Nova função para obter transações de um cartão específico por mês
+export const getTransactionsByCardIdAndMonth = async (userId: string, cardId: string, month: number, year: number): Promise<Transaction[]> => {
+    const startDate = new Date(year, month - 1, 1).toISOString().split('T')[0];
+    const endDate = new Date(year, month, 0).toISOString().split('T')[0];
+
+    const { data, error } = await supabase
+        .from('transactions')
+        .select('*')
+        .eq('user_id', userId)
+        .eq('card_id', cardId)
+        .eq('type', 'EXPENSE')
+        .gte('date', startDate)
+        .lte('date', endDate)
+        .order('date', { ascending: false });
+
+    if (error) {
+        console.error('Error fetching card transactions for month:', error);
+        throw error;
+    }
+    return data || [];
 };
 
 // --- Investments API ---

@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { supabase } from './services/supabase';
 import type { Session } from '@supabase/supabase-js';
@@ -8,7 +7,7 @@ import AuthComponent from './components/Auth';
 import Sidebar from './components/Sidebar';
 import DashboardPage from './pages/DashboardPage';
 import TransactionsPage from './pages/TransactionsPage';
-import InsightsPage from './pages/InsightsPage';
+// import InsightsPage from './pages/InsightsPage'; // REMOVED
 import InvestmentsPage from './pages/InvestmentsPage';
 import CreditCardsPage from './pages/CreditCardsPage';
 import ProfilePage from './pages/ProfilePage';
@@ -188,8 +187,8 @@ const App: React.FC = () => {
         return <DashboardPage user={session.user} />;
       case 'transactions':
         return <TransactionsPage user={session.user} />;
-      case 'insights':
-        return <InsightsPage user={session.user} />;
+      // case 'insights': // REMOVED
+      //   return <InsightsPage user={session.user} />; // REMOVED
       case 'investments':
         return <InvestmentsPage user={session.user} />;
       case 'credit-cards':
