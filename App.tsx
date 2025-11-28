@@ -219,17 +219,17 @@ const App: React.FC = () => {
       ) : (
         <>
             {/* Mobile Header - Visible only on mobile */}
-            <header className="md:hidden flex-none h-16 bg-card border-b border-border z-30 flex items-center justify-between px-4 shadow-sm">
-                 <div className="flex items-center">
+            <header className="md:hidden flex-none h-16 bg-card border-b border-border z-30 flex items-center justify-end px-4 shadow-sm relative">
+                 <div className="absolute left-1/2 -translate-x-1/2 flex items-center">
                     {appConfig?.site_logo ? (
-                        <img src={appConfig.site_logo} alt="Logo" className="h-10 w-10 object-contain" />
+                        <img src={appConfig.site_logo} alt="Logo" className="h-12 w-12 object-contain" />
                     ) : (
-                        <WalletIcon className="h-10 w-10 text-brand-primary" />
+                        <WalletIcon className="h-12 w-12 text-brand-primary" />
                     )}
                  </div>
                  <button 
                     onClick={() => setIsMobileMenuOpen(true)}
-                    className="text-text-primary font-bold bg-white/5 px-4 py-2 rounded-lg hover:bg-white/10"
+                    className="text-text-primary font-bold bg-white/5 px-4 py-2 rounded-lg hover:bg-white/10 z-10"
                  >
                      Menu
                  </button>
@@ -239,9 +239,9 @@ const App: React.FC = () => {
             <header className="hidden md:flex flex-none h-16 bg-card border-b border-border z-30 items-center justify-center shadow-md">
                  <div className="flex items-center">
                     {appConfig?.site_logo ? (
-                        <img src={appConfig.site_logo} alt="Logo" className="h-10 w-10 object-contain" />
+                        <img src={appConfig.site_logo} alt="Logo" className="h-12 w-12 object-contain" />
                     ) : (
-                        <WalletIcon className="h-10 w-10 text-brand-primary" />
+                        <WalletIcon className="h-12 w-12 text-brand-primary" />
                     )}
                  </div>
             </header>
