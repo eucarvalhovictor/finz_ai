@@ -1,7 +1,7 @@
 
 import React, { useState, useEffect, useMemo, useCallback } from 'react';
-import { getTransactions, getProfile, getCategories, getCreditCards, addTransaction, updateTransaction } from '../services/api';
-import type { AppUser, Transaction, MonthlySummary, CreditCard, Profile } from '../types';
+import { getTransactions, getProfile, getCategories, getCreditCards, addTransaction } from '../services/api';
+import type { AppUser, Transaction, MonthlySummary, CreditCard } from '../types';
 import DashboardCard from '../components/DashboardCard';
 import MonthlySummaryChart from '../components/charts/MonthlySummaryChart';
 import RecentTransactionsList from '../components/RecentTransactionsList';
@@ -19,12 +19,10 @@ const DashboardPage: React.FC<DashboardPageProps> = ({ user }) => {
   const [userName, setUserName] = useState<string>('');
   const [loading, setLoading] = useState(true);
   
-  // State for the new transaction modal
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [categories, setCategories] = useState<string[]>([]);
   const [creditCards, setCreditCards] = useState<CreditCard[]>([]);
 
-  // Scroll to top on mount
   useEffect(() => {
     window.scrollTo(0, 0);
   }, []);
@@ -32,10 +30,8 @@ const DashboardPage: React.FC<DashboardPageProps> = ({ user }) => {
   const fetchDashboardData = useCallback(async () => {
     let isMounted = true;
     
-    // Safety timeout: if data fetching takes more than 8 seconds, force stop loading
     const safetyTimeout = setTimeout(() => {
         if (isMounted && loading) {
-            console.warn("Dashboard data fetch timed out.");
             setLoading(false);
         }
     }, 8000);
@@ -82,7 +78,7 @@ const DashboardPage: React.FC<DashboardPageProps> = ({ user }) => {
         const fullTransactionData = { ...transactionData, user_id: user.id };
         await addTransaction(fullTransactionData);
         setIsModalOpen(false);
-        await fetchDashboardData(); // Refetch all data
+        await fetchDashboardData(); 
     } catch (error) {
       console.error('Failed to save transaction from dashboard', error);
     }
@@ -98,8 +94,6 @@ const DashboardPage: React.FC<DashboardPageProps> = ({ user }) => {
         }
         acc.balance = acc.totalIncome - acc.totalExpenses;
 
-        // Calculate Net Worth based only on "Investimentos" category transactions
-        // Assuming Investment is an Expense flow that goes to an Asset
         if (t.category === 'Investimentos') {
             acc.totalInvestments += t.amount;
         }
@@ -153,50 +147,49 @@ const DashboardPage: React.FC<DashboardPageProps> = ({ user }) => {
   }
 
   return (
-    <div className="space-y-6 md:space-y-8">
-      <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-4">
+    <div className="space-y-4 md:space-y-6">
+      <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-3">
         <div>
-          <h1 className="text-2xl md:text-3xl font-bold text-text-primary">Dashboard</h1>
-          <p className="text-sm md:text-base text-text-secondary mt-1">Bem-vindo(a) de volta, {userName}!</p>
+          <h1 className="text-xl md:text-2xl lg:text-3xl font-bold text-text-primary">Dashboard</h1>
+          <p className="text-xs md:text-sm text-text-secondary mt-0.5">Olá, {userName}!</p>
         </div>
         <button
           onClick={() => setIsModalOpen(true)}
-          className="flex items-center justify-center bg-brand-primary text-black font-bold py-2 px-4 md:py-3 md:px-6 rounded-xl text-sm md:text-lg shadow-md hover:shadow-glow hover:bg-brand-secondary transition-all transform hover:scale-105 duration-300 ease-in-out"
+          className="flex items-center justify-center bg-brand-primary text-black font-bold py-2 px-4 rounded-xl text-sm shadow-md hover:shadow-glow hover:bg-brand-secondary transition-all transform hover:scale-105 duration-300 ease-in-out"
         >
-          <PlusIcon className="h-5 w-5 md:h-6 md:w-6 mr-2" />
-          Adicionar Transação
+          <PlusIcon className="h-5 w-5 mr-2" />
+          Adicionar
         </button>
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-4 md:gap-6">
+      <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-3 md:gap-4">
         <DashboardCard 
-            title="Patrimônio Líquido" 
+            title="Patrimônio" 
             amount={totalInvestments} 
-            icon={<WalletIcon size={24} className="text-brand-primary" />} 
+            icon={<WalletIcon size={20} className="text-brand-primary" />} 
             colorClass="bg-brand-primary/20" 
         />
         <DashboardCard 
             title="Saldo Total" 
             amount={balance} 
-            icon={<DollarSign size={24} className="text-blue-300" />} 
+            icon={<DollarSign size={20} className="text-blue-300" />} 
             colorClass="bg-blue-500/20" 
         />
         <DashboardCard 
-            title="Receitas Totais" 
+            title="Receitas" 
             amount={totalIncome} 
-            icon={<TrendingUp size={24} className="text-green-300" />} 
+            icon={<TrendingUp size={20} className="text-green-300" />} 
             colorClass="bg-green-500/20" 
         />
         <DashboardCard 
-            title="Despesas Totais" 
+            title="Despesas" 
             amount={totalExpenses} 
-            icon={<TrendingDown size={24} className="text-red-300" />} 
+            icon={<TrendingDown size={20} className="text-red-300" />} 
             colorClass="bg-red-500/20" 
         />
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-5 gap-6">
-        {/* Added min-w-0 to fix Recharts in grid issue */}
+      <div className="grid grid-cols-1 lg:grid-cols-5 gap-4 md:gap-6">
         <div className="lg:col-span-3 min-w-0">
           <MonthlySummaryChart data={monthlySummaryData} />
         </div>

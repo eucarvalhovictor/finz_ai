@@ -25,6 +25,16 @@ export interface Transaction {
   card_id?: string;
 }
 
+export interface Investment {
+  id: string;
+  user_id: string;
+  created_at: string;
+  name: string; // Ex: Nubank, MXRF11
+  type: string; // Ex: CDB, LCI, FII, Ação
+  amount: number;
+  date: string;
+}
+
 export interface MonthlySummary {
     month: string;
     income: number;

@@ -30,63 +30,37 @@ const CreditCardForm: React.FC<CreditCardFormProps> = ({ onSave, onCancel, isSub
     return (
         <form onSubmit={handleSubmit} className="space-y-4">
             <div>
-                <label htmlFor="name" className="block text-xs md:text-sm font-medium text-text-secondary">Apelido do Cartão</label>
+                <label htmlFor="name" className="block text-xs font-medium text-text-secondary">Apelido do Cartão</label>
                 <input 
-                    type="text" 
-                    id="name" 
-                    value={name} 
-                    onChange={e => setName(e.target.value)} 
-                    required 
+                    type="text" id="name" value={name} onChange={e => setName(e.target.value)} required 
                     placeholder="Ex: Nubank Principal"
-                    className="mt-1 block w-full bg-background border border-border rounded-xl shadow-sm focus:ring-2 focus:ring-brand-primary focus:border-brand-primary text-sm p-2 md:p-3 text-text-primary" 
+                    className="mt-1 block w-full bg-background border border-border rounded-xl p-2 md:p-3 text-sm text-text-primary focus:ring-brand-primary" 
                 />
             </div>
             <div>
-                <label htmlFor="lastFour" className="block text-xs md:text-sm font-medium text-text-secondary">Últimos 4 dígitos</label>
+                <label htmlFor="lastFour" className="block text-xs font-medium text-text-secondary">Últimos 4 dígitos</label>
                 <input 
-                    type="text" 
-                    id="lastFour" 
-                    value={lastFour} 
-                    onChange={e => setLastFour(e.target.value.replace(/\D/g, '').slice(0, 4))} 
-                    maxLength={4} 
-                    required 
-                    placeholder="1234"
-                    className="mt-1 block w-full bg-background border border-border rounded-xl shadow-sm focus:ring-2 focus:ring-brand-primary focus:border-brand-primary text-sm p-2 md:p-3 text-text-primary" 
+                    type="text" id="lastFour" value={lastFour} onChange={e => setLastFour(e.target.value.replace(/\D/g, '').slice(0, 4))} maxLength={4} required placeholder="1234"
+                    className="mt-1 block w-full bg-background border border-border rounded-xl p-2 md:p-3 text-sm text-text-primary focus:ring-brand-primary" 
                 />
             </div>
             <div>
-                <label htmlFor="bank" className="block text-xs md:text-sm font-medium text-text-secondary">Banco Emissor</label>
+                <label htmlFor="bank" className="block text-xs font-medium text-text-secondary">Banco Emissor</label>
                 <input 
-                    type="text" 
-                    id="bank" 
-                    value={bank} 
-                    onChange={e => setBank(e.target.value)} 
-                    required 
-                    placeholder="Ex: Itaú, Nubank"
-                    className="mt-1 block w-full bg-background border border-border rounded-xl shadow-sm focus:ring-2 focus:ring-brand-primary focus:border-brand-primary text-sm p-2 md:p-3 text-text-primary" 
+                    type="text" id="bank" value={bank} onChange={e => setBank(e.target.value)} required placeholder="Ex: Itaú, Nubank"
+                    className="mt-1 block w-full bg-background border border-border rounded-xl p-2 md:p-3 text-sm text-text-primary focus:ring-brand-primary" 
                 />
             </div>
             
             {error && (
-                <div className="bg-red-500/10 border border-red-500/50 text-red-500 p-3 rounded-lg text-sm">
+                <div className="bg-red-500/10 border border-red-500/50 text-red-500 p-2 rounded-lg text-xs">
                     {error}
                 </div>
             )}
 
             <div className="flex justify-end space-x-3 pt-2">
-                <button 
-                    type="button" 
-                    onClick={onCancel}
-                    disabled={isSubmitting}
-                    className="px-4 py-2 text-xs md:text-sm font-medium text-text-secondary hover:text-text-primary transition-colors"
-                >
-                    Cancelar
-                </button>
-                <button 
-                    type="submit" 
-                    disabled={isSubmitting}
-                    className="bg-brand-primary hover:bg-brand-secondary text-black font-bold py-2 px-4 md:px-6 rounded-xl text-sm transition-colors disabled:opacity-50 flex items-center"
-                >
+                <button type="button" onClick={onCancel} disabled={isSubmitting} className="px-4 py-2 text-xs md:text-sm text-text-secondary hover:text-text-primary">Cancelar</button>
+                <button type="submit" disabled={isSubmitting} className="bg-brand-primary text-black font-bold py-2 px-6 rounded-xl text-sm disabled:opacity-50">
                     {isSubmitting ? 'Salvando...' : 'Salvar'}
                 </button>
             </div>
@@ -99,8 +73,6 @@ const CreditCardsPage: React.FC<CreditCardsPageProps> = ({ user }) => {
   const [loading, setLoading] = useState(true);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [userRole, setUserRole] = useState<Role>('basic');
-  
-  // Form specific state
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [formError, setFormError] = useState<string | null>(null);
 
@@ -141,14 +113,14 @@ const CreditCardsPage: React.FC<CreditCardsPageProps> = ({ user }) => {
       await fetchCards();
     } catch (error: any) {
       console.error("Failed to save card", error);
-      setFormError(error.message || "Erro ao salvar cartão. Verifique sua conexão.");
+      setFormError(error.message || "Erro ao salvar cartão.");
     } finally {
       setIsSubmitting(false);
     }
   }
 
   const handleDeleteCard = async (cardId: string) => {
-      if (window.confirm("Tem certeza que deseja excluir este cartão? Todas as transações associadas a ele perderão o vínculo.")) {
+      if (window.confirm("Excluir este cartão?")) {
           try {
               await deleteCreditCard(cardId);
               await fetchCards();
@@ -162,7 +134,7 @@ const CreditCardsPage: React.FC<CreditCardsPageProps> = ({ user }) => {
   const handleAddCardClick = () => {
       const limit = userRole === 'basic' ? 1 : userRole === 'pro' ? 5 : 999;
       if (cards.length >= limit) {
-          alert(`Seu plano (${userRole.toUpperCase()}) permite apenas ${limit} cartão(ões). Atualize seu plano para adicionar mais.`);
+          alert(`Plano ${userRole.toUpperCase()} limita a ${limit} cartões.`);
           return;
       }
       setFormError(null);
@@ -170,50 +142,48 @@ const CreditCardsPage: React.FC<CreditCardsPageProps> = ({ user }) => {
   }
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-4 md:space-y-6">
       <div className="flex justify-between items-center">
         <div>
-            <h1 className="text-2xl md:text-3xl font-bold text-text-primary">Cartões</h1>
-            <p className="text-text-secondary text-xs md:text-sm mt-1">
+            <h1 className="text-xl md:text-2xl lg:text-3xl font-bold text-text-primary">Cartões</h1>
+            <p className="text-text-secondary text-xs mt-0.5">
                 Plano: <span className="font-bold text-brand-primary uppercase">{userRole}</span> 
                 ({cards.length}/{userRole === 'basic' ? 1 : userRole === 'pro' ? 5 : '∞'})
             </p>
         </div>
-        <button onClick={handleAddCardClick} className="flex items-center bg-brand-primary hover:bg-brand-secondary text-black font-bold py-2 px-3 md:px-4 rounded-lg text-sm md:text-base transition-colors">
-            <PlusIcon className="h-5 w-5 mr-1 md:mr-2" />
+        <button onClick={handleAddCardClick} className="flex items-center bg-brand-primary hover:bg-brand-secondary text-black font-bold py-2 px-3 rounded-lg text-sm transition-colors">
+            <PlusIcon className="h-4 w-4 mr-1" />
             Adicionar
         </button>
       </div>
       
       {loading ? <Spinner /> : (
         cards.length > 0 ? (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 md:gap-6">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
             {cards.map(card => (
-              <div key={card.id} className="bg-card p-4 md:p-6 rounded-2xl border border-border shadow-lg flex flex-col justify-between hover:border-brand-primary transition-colors">
+              <div key={card.id} className="bg-card p-4 rounded-xl border border-border shadow-lg flex flex-col justify-between hover:border-brand-primary transition-colors">
                 <div>
                   <div className="flex justify-between items-start">
-                    <h3 className="text-lg md:text-xl font-bold text-text-primary truncate">{card.name}</h3>
-                    <CreditCardIcon className="h-6 w-6 md:h-8 md:w-8 text-brand-primary flex-shrink-0" />
+                    <h3 className="text-base md:text-lg font-bold text-text-primary truncate">{card.name}</h3>
+                    <CreditCardIcon className="h-6 w-6 text-brand-primary flex-shrink-0" />
                   </div>
-                  <p className="text-text-secondary text-sm mt-1 truncate">{card.bank}</p>
-                  <p className="font-mono text-base md:text-lg text-text-primary mt-4 tracking-widest">**** **** **** {card.last_four_digits}</p>
+                  <p className="text-text-secondary text-xs mt-1 truncate">{card.bank}</p>
+                  <p className="font-mono text-base text-text-primary mt-3 tracking-widest">**** **** **** {card.last_four_digits}</p>
                 </div>
-                <div className="text-right mt-4">
-                  <button onClick={() => handleDeleteCard(card.id)} className="text-red-400 hover:text-red-300 p-2 rounded-lg hover:bg-red-500/10 transition" title="Excluir Cartão">
-                      <DeleteIcon className="h-5 w-5" />
+                <div className="text-right mt-3">
+                  <button onClick={() => handleDeleteCard(card.id)} className="text-red-400 hover:text-red-300 p-1.5 rounded-lg hover:bg-red-500/10 transition" title="Excluir">
+                      <DeleteIcon className="h-4 w-4" />
                   </button>
                 </div>
               </div>
             ))}
           </div>
         ) : (
-          <div className="bg-card p-6 rounded-xl border border-border shadow-lg min-h-[50vh] flex flex-col justify-center items-center">
+          <div className="bg-card p-6 rounded-xl border border-border shadow-lg min-h-[30vh] flex flex-col justify-center items-center">
             <div className="text-center text-text-secondary">
-              <CreditCardIcon className="h-16 w-16 mx-auto mb-4 text-brand-primary" />
-              <h2 className="text-xl font-bold text-text-primary">Nenhum cartão cadastrado</h2>
-              <p className="mt-2 max-w-xl mx-auto">
-                Adicione seus cartões de crédito para facilitar o lançamento de despesas.
-              </p>
+              <CreditCardIcon className="h-12 w-12 mx-auto mb-3 text-brand-primary" />
+              <h2 className="text-lg font-bold text-text-primary">Sem cartões</h2>
+              <p className="mt-1 text-sm max-w-xs mx-auto">Adicione cartões para gerenciar suas despesas.</p>
             </div>
           </div>
         )

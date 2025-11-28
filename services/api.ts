@@ -1,6 +1,6 @@
 
 import { supabase } from './supabase';
-import type { AppUser, Transaction, Profile, CreditCard, Role, AppConfig } from '../types';
+import type { AppUser, Transaction, Profile, CreditCard, Role, AppConfig, Investment } from '../types';
 
 // Fetch all transactions for the logged-in user
 export const getTransactions = async (userId: string): Promise<Transaction[]> => {
@@ -176,6 +176,53 @@ export const deleteCreditCard = async (cardId: string) => {
     }
 };
 
+// --- Investments API ---
+
+export const getInvestments = async (userId: string): Promise<Investment[]> => {
+    const { data, error } = await supabase
+        .from('investments')
+        .select('*')
+        .eq('user_id', userId)
+        .order('created_at', { ascending: false });
+
+    if (error) {
+        // Se a tabela não existir, retorna array vazio para não quebrar o app
+        if (error.code === '42P01') { 
+            console.warn("Tabela de investimentos não existe ainda.");
+            return [];
+        }
+        console.error('Error fetching investments:', error);
+        throw error;
+    }
+    return data || [];
+};
+
+export const addInvestment = async (investment: Omit<Investment, 'id' | 'created_at'>): Promise<Investment> => {
+    const { data, error } = await supabase
+        .from('investments')
+        .insert([{ ...investment, id: crypto.randomUUID() }])
+        .select()
+        .single();
+    
+    if (error) {
+        console.error('Error adding investment:', error);
+        throw error;
+    }
+    return data;
+};
+
+export const deleteInvestment = async (id: string) => {
+    const { error } = await supabase
+        .from('investments')
+        .delete()
+        .eq('id', id);
+    
+    if (error) {
+        console.error('Error deleting investment:', error);
+        throw error;
+    }
+};
+
 // --- Admin API ---
 
 export const getAllProfiles = async (): Promise<(Profile & { email?: string })[]> => {
@@ -241,7 +288,6 @@ export const getAppConfig = async (): Promise<AppConfig> => {
 }
 
 export const updateAppConfig = async (config: AppConfig) => {
-    // We update each key individually to ensure we only use UPDATE permissions
     const updates = [
         { key: 'site_name', value: config.site_name },
         { key: 'site_description', value: config.site_description },
@@ -253,19 +299,11 @@ export const updateAppConfig = async (config: AppConfig) => {
     ];
 
     for (const item of updates) {
-        // Simple update call. We assume rows exist. If new keys are added,
-        // an insert might be needed but for safety we stick to update here.
-        // A real production app would use upsert with a service role or proper policy.
-        // If the row doesn't exist, this does nothing, which prevents the error.
-        // To ensure rows exist, we could try an insert on ignore, but standard users can't insert.
-        // We will assume the initial migration inserted keys.
         const { error } = await supabase
             .from('app_config')
             .update({ value: item.value })
             .eq('key', item.key);
 
-         // If we get an error or no row updated, we might need to insert (requires admin policy)
-         // For now, silencing the error if row missing to prevent app crash
         if (error) {
             console.error(`Error updating app config for key ${item.key}:`, error);
         }

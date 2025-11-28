@@ -15,6 +15,7 @@ import ProfilePage from './pages/ProfilePage';
 import AdminPage from './pages/AdminPage';
 import { Page } from './types';
 import { WalletIcon } from './components/icons/Icons';
+import Spinner from './components/Spinner';
 
 const INACTIVITY_LIMIT = 15 * 60 * 1000; // 15 minutes in milliseconds
 
@@ -29,19 +30,17 @@ const App: React.FC = () => {
     let mounted = true;
 
     const initApp = async () => {
-      // 1. Configuração do listener de Auth (Executa imediatamente)
+      // 1. Configuração do listener de Auth
       const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
         if (!mounted) return;
         
         setSession(session);
         
         if (session) {
-          // Se estivermos apenas refrescando o token, não resetamos a página
           if (event === 'SIGNED_IN' || event === 'PASSWORD_RECOVERY') {
               setActivePage('dashboard');
           }
           
-          // Buscar role do usuário em background
           getProfile(session.user.id)
             .then(profile => {
                 if (mounted && profile) setUserRole(profile.role);
@@ -50,12 +49,10 @@ const App: React.FC = () => {
         } else {
             setUserRole('basic');
         }
-
-        // Se o AuthStateChange disparar, já sabemos o estado do usuário, então podemos parar o loading
         setLoading(false);
       });
 
-      // 2. Verificação inicial explícita e Carregamento de Config em Paralelo
+      // 2. Verificação inicial e Carregamento de Config
       try {
         const [configResult, sessionResult] = await Promise.allSettled([
             getAppConfig(),
@@ -64,7 +61,7 @@ const App: React.FC = () => {
 
         if (!mounted) return;
 
-        // Tratar Configurações
+        // Tratar Configurações e aplicar imediatamente
         if (configResult.status === 'fulfilled') {
             const config = configResult.value;
             setAppConfig(config);
@@ -74,11 +71,8 @@ const App: React.FC = () => {
         // Tratar Sessão Inicial
         if (sessionResult.status === 'fulfilled') {
             const { data } = sessionResult.value;
-            // Se houver sessão, o onAuthStateChange vai lidar com isso, 
-            // mas definimos aqui para garantir rapidez na primeira renderização
             if (data.session) {
                 setSession(data.session);
-                // Fetch role immediately if session exists
                 try {
                     const profile = await getProfile(data.session.user.id);
                     if (mounted && profile) setUserRole(profile.role);
@@ -106,7 +100,9 @@ const App: React.FC = () => {
 
   // Helper function for SEO updates
   const applySiteConfig = (config: AppConfig) => {
-      if (config.site_name) document.title = config.site_name;
+      if (config.site_name) {
+          document.title = config.site_name;
+      }
       
       const updateMeta = (name: string, content: string | undefined) => {
           if (!content) return;
@@ -138,15 +134,24 @@ const App: React.FC = () => {
       updateOg('og:image', config.site_og_image);
 
       if (config.site_favicon) {
-           let link = document.querySelector("link[rel~='icon']") as HTMLLinkElement;
-           if (!link) {
-               link = document.createElement('link');
-               link.rel = 'icon';
-               document.head.appendChild(link);
-           }
+           // Remove existing icons to force update
+           const existingIcons = document.querySelectorAll("link[rel*='icon']");
+           existingIcons.forEach(el => el.remove());
+
+           const link = document.createElement('link');
+           link.type = 'image/x-icon';
+           link.rel = 'icon';
            link.href = config.site_favicon;
+           document.head.appendChild(link);
       }
   };
+
+  // Re-apply config if it changes
+  useEffect(() => {
+      if (appConfig) {
+          applySiteConfig(appConfig);
+      }
+  }, [appConfig]);
 
   // Inactivity Timer Effect
   useEffect(() => {
@@ -199,8 +204,9 @@ const App: React.FC = () => {
 
   if (loading) {
     return (
-      <div className="flex items-center justify-center h-screen bg-background">
-        <div className="text-xl text-text-primary animate-pulse">Carregando {appConfig?.site_name || 'FinzAI'}...</div>
+      <div className="flex flex-col items-center justify-center h-screen bg-background space-y-4">
+        <Spinner size="lg" />
+        <p className="text-text-secondary animate-pulse text-sm">Carregando {appConfig?.site_name || 'FinzAI'}...</p>
       </div>
     );
   }
