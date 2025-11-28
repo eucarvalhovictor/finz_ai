@@ -222,11 +222,10 @@ const App: React.FC = () => {
             <header className="md:hidden flex-none h-16 bg-card border-b border-border z-30 flex items-center justify-between px-4 shadow-sm">
                  <div className="flex items-center">
                     {appConfig?.site_logo ? (
-                        <img src={appConfig.site_logo} alt="Logo" className="h-8 w-8 object-contain" />
+                        <img src={appConfig.site_logo} alt="Logo" className="h-10 w-10 object-contain" />
                     ) : (
-                        <WalletIcon className="h-8 w-8 text-brand-primary" />
+                        <WalletIcon className="h-10 w-10 text-brand-primary" />
                     )}
-                    <span className="ml-2 font-bold text-lg text-text-primary tracking-tight">{appConfig?.site_name || 'FinzAI'}</span>
                  </div>
                  <button 
                     onClick={() => setIsMobileMenuOpen(true)}
@@ -240,11 +239,10 @@ const App: React.FC = () => {
             <header className="hidden md:flex flex-none h-16 bg-card border-b border-border z-30 items-center justify-center shadow-md">
                  <div className="flex items-center">
                     {appConfig?.site_logo ? (
-                        <img src={appConfig.site_logo} alt="Logo" className="h-8 w-8 object-contain" />
+                        <img src={appConfig.site_logo} alt="Logo" className="h-10 w-10 object-contain" />
                     ) : (
-                        <WalletIcon className="h-8 w-8 text-brand-primary" />
+                        <WalletIcon className="h-10 w-10 text-brand-primary" />
                     )}
-                    <span className="ml-2 font-bold text-xl text-text-primary tracking-tight">{appConfig?.site_name || 'FinzAI'}</span>
                  </div>
             </header>
 
