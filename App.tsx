@@ -12,12 +12,16 @@ import InvestmentsPage from './pages/InvestmentsPage';
 import CreditCardsPage from './pages/CreditCardsPage';
 import ProfilePage from './pages/ProfilePage';
 import AdminPage from './pages/AdminPage';
-import LandingPage from './pages/LandingPage'; // NOVO: Importa a LandingPage
+import LandingPage from './pages/LandingPage';
+import TermsPage from './pages/TermsPage';
+import PrivacyPage from './pages/PrivacyPage';
 import { Page } from './types';
 import { WalletIcon } from './components/icons/Icons';
 import Spinner from './components/Spinner';
 
 const INACTIVITY_LIMIT = 15 * 60 * 1000; // 15 minutes in milliseconds
+
+type ViewMode = 'landing' | 'auth' | 'app' | 'terms' | 'privacy';
 
 const App: React.FC = () => {
   const [session, setSession] = useState<Session | null>(null);
@@ -26,30 +30,38 @@ const App: React.FC = () => {
   const [activePage, setActivePage] = useState<Page>('dashboard');
   const [appConfig, setAppConfig] = useState<AppConfig | null>(null);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
-  const [showLandingPage, setShowLandingPage] = useState(true); // NOVO: Estado para controlar a exibição da Landing Page
-  const [authMode, setAuthMode] = useState<AuthMode>('login'); // NOVO: Estado para o modo de autenticação (login/signup)
+  const [viewMode, setViewMode] = useState<ViewMode>('landing');
+  const [authMode, setAuthMode] = useState<AuthMode>('login');
 
   useEffect(() => {
-    // Log para depuração de carregamento
     console.log("App.tsx loaded and rendered.");
     
     let mounted = true;
 
     const initApp = async () => {
-      // 1. Configuração do listener de Auth
+      // 1. Fetch Config FIRST to avoid logo flicker
+      let config: AppConfig | null = null;
+      try {
+        config = await getAppConfig();
+        if (mounted && config) {
+             setAppConfig(config);
+             applySiteConfig(config);
+        }
+      } catch (err) {
+        console.error("Config fetch error:", err);
+      }
+
+      // 2. Then check Session
       const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
         if (!mounted) return;
         
         setSession(session);
         
         if (session) {
-          // Se houver sessão, NÃO pular a landing page automaticamente. 
-          // O usuário deve interagir com a Landing Page primeiro.
-          // setShowLandingPage(false); <--- REMOVIDO PARA FORÇAR LANDING PAGE
-          
           if (event === 'SIGNED_IN' || event === 'PASSWORD_RECOVERY') {
               setActivePage('dashboard');
           }
+          setViewMode('app'); // Go to app if session exists
           
           getProfile(session.user.id)
             .then(profile => {
@@ -58,45 +70,29 @@ const App: React.FC = () => {
             .catch(e => console.error("Error fetching user role", e));
         } else {
             setUserRole('basic');
-            // Se não houver sessão, mostrar a landing page
-            setShowLandingPage(true); 
+            // If no session, show landing (unless already in terms/privacy/auth)
+            setViewMode(prev => (prev === 'terms' || prev === 'privacy' || prev === 'auth') ? prev : 'landing');
         }
         setLoading(false);
       });
 
-      // 2. Verificação inicial e Carregamento de Config
+      // Initial Session Check
       try {
-        const [configResult, sessionResult] = await Promise.allSettled([
-            getAppConfig(),
-            supabase.auth.getSession()
-        ]);
-
+        const { data } = await supabase.auth.getSession();
         if (!mounted) return;
 
-        // Tratar Configurações e aplicar imediatamente
-        if (configResult.status === 'fulfilled') {
-            const config = configResult.value;
-            setAppConfig(config);
-            applySiteConfig(config);
+        if (data.session) {
+            setSession(data.session);
+            setViewMode('app');
+            try {
+                const profile = await getProfile(data.session.user.id);
+                if (mounted && profile) setUserRole(profile.role);
+            } catch (e) { console.error(e); }
+        } else {
+             // Stay on landing (default)
         }
-
-        // Tratar Sessão Inicial
-        if (sessionResult.status === 'fulfilled') {
-            const { data } = sessionResult.value;
-            if (data.session) {
-                setSession(data.session);
-                // setShowLandingPage(false); // <--- REMOVIDO: Landing page é sempre a inicial
-                try {
-                    const profile = await getProfile(data.session.user.id);
-                    if (mounted && profile) setUserRole(profile.role);
-                } catch (e) { console.error(e); }
-            } else {
-                setShowLandingPage(true);
-            }
-        }
-
       } catch (err) {
-          console.error("Initialization error:", err);
+          console.error("Session check error:", err);
       } finally {
           if (mounted) setLoading(false);
       }
@@ -149,7 +145,6 @@ const App: React.FC = () => {
       updateOg('og:image', config.site_og_image);
 
       if (config.site_favicon) {
-           // Remove existing icons to force update
            const existingIcons = document.querySelectorAll("link[rel*='icon']");
            existingIcons.forEach(el => el.remove());
 
@@ -161,14 +156,12 @@ const App: React.FC = () => {
       }
   };
 
-  // Re-apply config if it changes
   useEffect(() => {
       if (appConfig) {
           applySiteConfig(appConfig);
       }
   }, [appConfig]);
 
-  // Inactivity Timer Effect
   useEffect(() => {
       if (!session) return;
 
@@ -178,7 +171,7 @@ const App: React.FC = () => {
           console.log("Sessão expirada por inatividade.");
           await supabase.auth.signOut();
           alert("Sua sessão expirou após 15 minutos de inatividade. Por favor, faça login novamente.");
-          setShowLandingPage(true); // Retorna para landing page ao expirar
+          setViewMode('landing');
       };
 
       const resetTimer = () => {
@@ -197,7 +190,6 @@ const App: React.FC = () => {
   }, [session]);
 
   const renderPage = () => {
-    // Se não houver sessão, não renderiza páginas internas
     if (!session) return null;
 
     switch (activePage) {
@@ -205,8 +197,6 @@ const App: React.FC = () => {
         return <DashboardPage user={session.user} />;
       case 'transactions':
         return <TransactionsPage user={session.user} />;
-      // case 'insights': // REMOVED
-      //   return <InsightsPage user={session.user} />; // REMOVED
       case 'investments':
         return <InvestmentsPage user={session.user} />;
       case 'credit-cards':
@@ -220,80 +210,88 @@ const App: React.FC = () => {
     }
   };
 
+  const handleStartAuth = (mode: AuthMode) => {
+    setAuthMode(mode);
+    setViewMode('auth');
+  };
+
   if (loading) {
     return (
       <div className="flex flex-col items-center justify-center h-[100dvh] bg-background space-y-4">
         <Spinner size="lg" />
-        <p className="text-text-secondary animate-pulse text-sm">Carregando {appConfig?.site_name || 'FinzAI'}...</p>
+        <p className="text-text-secondary animate-pulse text-sm">Carregando...</p>
       </div>
     );
   }
 
-  const handleStartAuth = (mode: AuthMode) => {
-    setAuthMode(mode);
-    setShowLandingPage(false);
-  };
-
-  // Lógica de Renderização Principal:
-  // 1. Landing Page (Prioridade Máxima)
-  // 2. Auth (Login/Signup se não tiver sessão)
-  // 3. Dashboard (Se tiver sessão)
+  // Routing Logic based on viewMode
+  if (viewMode === 'terms') {
+      return <TermsPage appConfig={appConfig} onBack={() => setViewMode('landing')} />;
+  }
+  if (viewMode === 'privacy') {
+      return <PrivacyPage appConfig={appConfig} onBack={() => setViewMode('landing')} />;
+  }
   
+  if (viewMode === 'landing') {
+      return <LandingPage 
+                appConfig={appConfig} 
+                onStartAuth={handleStartAuth} 
+                onViewTerms={() => setViewMode('terms')}
+                onViewPrivacy={() => setViewMode('privacy')}
+             />;
+  }
+
+  if (viewMode === 'auth' && !session) {
+      return <AuthComponent appConfig={appConfig} defaultMode={authMode} />;
+  }
+
+  // App View (Dashboard)
   return (
     <div className="font-sans h-[100dvh] bg-background text-text-primary flex flex-col">
-      {showLandingPage ? (
-          <LandingPage appConfig={appConfig} onStartAuth={handleStartAuth} />
-      ) : !session ? (
-          <AuthComponent appConfig={appConfig} defaultMode={authMode} />
-      ) : (
-        <>
-            {/* Mobile Header - Visible only on mobile */}
-            <header className="md:hidden flex-none h-16 bg-card border-b border-border z-30 flex items-center justify-end px-4 shadow-sm relative">
-                 <div className="absolute left-1/2 -translate-x-1/2 flex items-center">
-                    {appConfig?.site_logo ? (
-                        <img src={appConfig.site_logo} alt="Logo" className="h-12 w-12 object-contain" />
-                    ) : (
-                        <WalletIcon className="h-12 w-12 text-brand-primary" />
-                    )}
-                 </div>
-                 <button 
-                    onClick={() => setIsMobileMenuOpen(true)}
-                    className="text-text-primary font-bold bg-white/5 px-4 py-2 rounded-lg hover:bg-white/10 z-10"
-                 >
-                     Menu
-                 </button>
-            </header>
+        {/* Mobile Header */}
+        <header className="md:hidden flex-none h-16 bg-card border-b border-border z-30 flex items-center justify-end px-4 shadow-sm relative">
+                <div className="absolute left-1/2 -translate-x-1/2 flex items-center">
+                {appConfig?.site_logo ? (
+                    <img src={appConfig.site_logo} alt="Logo" className="h-12 w-12 object-contain" />
+                ) : (
+                    <WalletIcon className="h-12 w-12 text-brand-primary" />
+                )}
+                </div>
+                <button 
+                onClick={() => setIsMobileMenuOpen(true)}
+                className="text-text-primary font-bold bg-white/5 px-4 py-2 rounded-lg hover:bg-white/10 z-10"
+                >
+                    Menu
+                </button>
+        </header>
 
-            {/* Desktop Header - Visible only on desktop */}
-            <header className="hidden md:flex flex-none h-16 bg-card border-b border-border z-30 items-center justify-center shadow-md">
-                 <div className="flex items-center">
-                    {appConfig?.site_logo ? (
-                        <img src={appConfig.site_logo} alt="Logo" className="h-12 w-12 object-contain" />
-                    ) : (
-                        <WalletIcon className="h-12 w-12 text-brand-primary" />
-                    )}
-                 </div>
-            </header>
+        {/* Desktop Header */}
+        <header className="hidden md:flex flex-none h-16 bg-card border-b border-border z-30 items-center justify-center shadow-md">
+                <div className="flex items-center">
+                {appConfig?.site_logo ? (
+                    <img src={appConfig.site_logo} alt="Logo" className="h-12 w-12 object-contain" />
+                ) : (
+                    <WalletIcon className="h-12 w-12 text-brand-primary" />
+                )}
+                </div>
+        </header>
 
-            {/* Layout Wrapper: Sidebar + Content */}
-            <div className="flex flex-1 overflow-hidden relative">
-                <Sidebar 
-                    activePage={activePage} 
-                    setActivePage={setActivePage} 
-                    userRole={userRole} 
-                    logoUrl={appConfig?.site_logo}
-                    siteName={appConfig?.site_name}
-                    isMobileOpen={isMobileMenuOpen}
-                    setIsMobileOpen={setIsMobileMenuOpen}
-                />
-                
-                {/* Main Content Area - Scroll independente */}
-                <main className="flex-1 overflow-y-auto bg-background px-4 pt-4 sm:p-6 lg:p-8 w-full custom-scrollbar relative overscroll-behavior-y-contain pb-32 md:pb-8">
-                    {renderPage()}
-                </main>
-            </div>
-        </>
-      )}
+        {/* Layout Wrapper */}
+        <div className="flex flex-1 overflow-hidden relative">
+            <Sidebar 
+                activePage={activePage} 
+                setActivePage={setActivePage} 
+                userRole={userRole} 
+                logoUrl={appConfig?.site_logo}
+                siteName={appConfig?.site_name}
+                isMobileOpen={isMobileMenuOpen}
+                setIsMobileOpen={setIsMobileMenuOpen}
+            />
+            
+            <main className="flex-1 overflow-y-auto bg-background px-4 pt-4 sm:p-6 lg:p-8 w-full custom-scrollbar relative overscroll-behavior-y-contain pb-32 md:pb-8">
+                {renderPage()}
+            </main>
+        </div>
     </div>
   );
 };

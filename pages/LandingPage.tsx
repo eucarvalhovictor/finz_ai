@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
-import AnimatedBackground from '../components/AnimatedBackground';
+import AnimatedBackground from '../components/AnimatedBackground'; // Used for footer/other sections if needed, but removed from hero
 import { AppConfig, AuthMode } from '../types';
+import CookieConsent from '../components/CookieConsent';
 import {
     WalletIcon,
     DashboardIcon,
@@ -18,9 +19,10 @@ import {
 interface LandingPageProps {
     appConfig: AppConfig | null;
     onStartAuth: (mode: AuthMode) => void;
+    onViewTerms: () => void;
+    onViewPrivacy: () => void;
 }
 
-// Hook for scroll animation
 const useOnScreen = (ref: React.RefObject<HTMLElement | null>, rootMargin = "0px") => {
     const [isIntersecting, setIntersecting] = useState(false);
     useEffect(() => {
@@ -28,7 +30,7 @@ const useOnScreen = (ref: React.RefObject<HTMLElement | null>, rootMargin = "0px
             ([entry]) => {
                 if (entry.isIntersecting) {
                     setIntersecting(true);
-                    observer.disconnect(); // Only trigger once
+                    observer.disconnect(); 
                 }
             },
             { rootMargin }
@@ -58,8 +60,6 @@ const RevealOnScroll: React.FC<{ children: React.ReactNode; className?: string; 
     );
 };
 
-
-// Mock Data
 const benefits = [
     {
         icon: <DashboardIcon className="h-8 w-8 text-brand-primary mx-auto mb-3" />,
@@ -152,10 +152,9 @@ const faqItems = [
     },
 ];
 
-const LandingPage: React.FC<LandingPageProps> = ({ appConfig, onStartAuth }) => {
+const LandingPage: React.FC<LandingPageProps> = ({ appConfig, onStartAuth, onViewTerms, onViewPrivacy }) => {
     const [openFaq, setOpenFaq] = useState<number | null>(null);
 
-    // Adiciona log para depuração
     useEffect(() => {
         console.log("LandingPage.tsx loaded and rendered.");
     }, []);
@@ -169,17 +168,16 @@ const LandingPage: React.FC<LandingPageProps> = ({ appConfig, onStartAuth }) => 
 
     return (
         <div className="bg-background flex flex-col items-center relative custom-scrollbar overflow-y-auto overflow-x-hidden scroll-smooth h-full">
-            <AnimatedBackground />
-
+            <CookieConsent />
+            
             {/* Fixed Header */}
-            <header className="fixed top-0 left-0 right-0 z-50 bg-card/80 backdrop-blur-md border-b border-white/5 py-4 px-6 flex items-center justify-between shadow-2xl transition-all duration-300">
+            <header className="fixed top-0 left-0 right-0 z-50 bg-sidebar/90 backdrop-blur-md border-b border-white/5 py-4 px-6 flex items-center justify-between shadow-2xl transition-all duration-300">
                 <div className="flex items-center cursor-pointer" onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })}>
                     {appConfig?.site_logo ? (
                         <img src={appConfig.site_logo} alt="Logo" className="h-10 w-10 object-contain hover:scale-110 transition-transform" />
                     ) : (
                         <WalletIcon className="h-10 w-10 text-brand-primary hover:scale-110 transition-transform" />
                     )}
-                    {/* Title Removed as requested */}
                 </div>
 
                 {/* Desktop Nav */}
@@ -198,21 +196,21 @@ const LandingPage: React.FC<LandingPageProps> = ({ appConfig, onStartAuth }) => 
                 <div className="flex items-center gap-3">
                     <button
                         onClick={() => onStartAuth('login')}
-                        className="text-text-primary hover:text-brand-primary font-bold py-2 px-4 text-sm transition-colors"
+                        className="text-text-primary hover:text-brand-primary font-bold py-2 px-4 text-sm transition-colors rounded-lg"
                     >
                         Entrar
                     </button>
                     <button
                         onClick={() => onStartAuth('signup')}
-                        className="bg-brand-primary hover:bg-brand-secondary text-black font-bold py-2.5 px-5 rounded-full text-sm transition-all shadow-[0_0_15px_rgba(64,255,0,0.3)] hover:shadow-[0_0_25px_rgba(64,255,0,0.5)] transform hover:-translate-y-0.5"
+                        className="bg-brand-primary hover:bg-brand-secondary text-black font-bold py-2.5 px-5 rounded-lg text-sm transition-all shadow-glow hover:shadow-[0_0_25px_rgba(64,255,0,0.5)] transform hover:-translate-y-0.5"
                     >
                         Começar
                     </button>
                 </div>
             </header>
 
-            {/* Hero Section */}
-            <section className="relative w-full min-h-screen flex flex-col justify-center items-center z-10 px-4 pt-20">
+            {/* Hero Section - Solid Background (Darkest) */}
+            <section className="relative w-full min-h-screen flex flex-col justify-center items-center z-10 px-4 pt-20 bg-[#050505]">
                 <RevealOnScroll className="w-full max-w-4xl flex flex-col items-center text-center">
                     {appConfig?.site_logo ? (
                         <img src={appConfig.site_logo} alt="Logo" className="h-32 w-32 object-contain mx-auto mb-8 drop-shadow-[0_0_15px_rgba(64,255,0,0.3)]" />
@@ -220,8 +218,9 @@ const LandingPage: React.FC<LandingPageProps> = ({ appConfig, onStartAuth }) => 
                         <WalletIcon className="h-32 w-32 text-brand-primary mx-auto mb-8 drop-shadow-[0_0_15px_rgba(64,255,0,0.3)]" />
                     )}
                     
-                    <h1 className="text-5xl md:text-7xl font-black text-text-primary mb-6 leading-tight tracking-tight">
-                        <span className="bg-clip-text text-transparent bg-gradient-to-r from-[#40ff00] via-[#00c49f] to-[#40ff00] bg-[length:200%_auto] animate-gradient">Domine Suas Finanças</span><br className="hidden md:block" /> Com Inteligência.
+                    {/* H1 Radley Font */}
+                    <h1 className="font-radley text-5xl md:text-7xl font-normal text-text-primary mb-6 leading-tight tracking-tight">
+                        <span className="bg-clip-text text-transparent bg-gradient-to-r from-[#40ff00] via-[#00c49f] to-[#40ff00] bg-[length:200%_auto] animate-gradient font-bold">Domine Suas Finanças</span><br className="hidden md:block" /> Com Inteligência.
                     </h1>
                     
                     <p className="text-lg md:text-2xl text-text-secondary mb-10 max-w-2xl leading-relaxed">
@@ -231,13 +230,13 @@ const LandingPage: React.FC<LandingPageProps> = ({ appConfig, onStartAuth }) => 
                     <div className="flex flex-col sm:flex-row gap-5 w-full justify-center">
                         <button
                             onClick={() => onStartAuth('signup')}
-                            className="bg-brand-primary hover:bg-brand-secondary text-black font-extrabold py-4 px-10 rounded-full text-lg transition-all transform hover:scale-105 shadow-[0_0_30px_rgba(64,255,0,0.4)] hover:shadow-[0_0_50px_rgba(64,255,0,0.6)]"
+                            className="bg-brand-primary hover:bg-brand-secondary text-black font-extrabold py-4 px-10 rounded-lg text-lg transition-all transform hover:scale-105 shadow-[0_0_30px_rgba(64,255,0,0.4)] hover:shadow-[0_0_50px_rgba(64,255,0,0.6)]"
                         >
                             Assuma o Controle Agora
                         </button>
                         <button
                             onClick={() => scrollToSection('beneficios')}
-                            className="bg-white/5 hover:bg-white/10 text-text-primary border border-white/10 font-bold py-4 px-10 rounded-full text-lg transition-all transform hover:scale-105 backdrop-blur-sm flex items-center justify-center gap-2"
+                            className="bg-white/5 hover:bg-white/10 text-text-primary border border-white/10 font-bold py-4 px-10 rounded-lg text-lg transition-all transform hover:scale-105 backdrop-blur-sm flex items-center justify-center gap-2"
                         >
                             <PlayIcon className="h-6 w-6" />
                             Ver Demonstração
@@ -245,14 +244,13 @@ const LandingPage: React.FC<LandingPageProps> = ({ appConfig, onStartAuth }) => 
                     </div>
                 </RevealOnScroll>
                 
-                {/* Scroll Down Indicator */}
                 <div className="absolute bottom-10 animate-bounce">
                     <ChevronRightIcon className="h-8 w-8 text-text-secondary rotate-90" />
                 </div>
             </section>
 
-            {/* Why Choose Finz? Section */}
-            <section id="beneficios" className="relative w-full min-h-screen flex flex-col justify-center items-center bg-background z-10 px-4 py-20 scroll-mt-20">
+            {/* Why Choose Finz? - Complementary Dark BG */}
+            <section id="beneficios" className="relative w-full min-h-screen flex flex-col justify-center items-center bg-[#0a0a0a] z-10 px-4 py-20 scroll-mt-20 border-t border-white/5">
                 <div className="max-w-7xl mx-auto text-center">
                     <RevealOnScroll>
                         <h2 className="text-3xl md:text-5xl font-bold text-text-primary mb-6">
@@ -266,8 +264,8 @@ const LandingPage: React.FC<LandingPageProps> = ({ appConfig, onStartAuth }) => 
                     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
                         {benefits.map((benefit, index) => (
                             <RevealOnScroll key={index} delay={index * 100} className="h-full">
-                                <div className="group bg-card p-8 rounded-3xl border border-border hover:border-brand-primary/50 transition-all duration-300 hover:shadow-[0_0_30px_rgba(64,255,0,0.1)] hover:-translate-y-2 h-full flex flex-col items-center">
-                                    <div className="p-4 bg-white/5 rounded-2xl mb-6 group-hover:bg-brand-primary/20 transition-colors">
+                                <div className="group bg-[#121212] p-8 rounded-2xl border border-border hover:border-brand-primary/50 transition-all duration-300 hover:shadow-[0_0_30px_rgba(64,255,0,0.1)] hover:-translate-y-2 h-full flex flex-col items-center">
+                                    <div className="p-4 bg-white/5 rounded-xl mb-6 group-hover:bg-brand-primary/20 transition-colors">
                                         {benefit.icon}
                                     </div>
                                     <h3 className="text-2xl font-bold text-text-primary mb-4 group-hover:text-brand-primary transition-colors">
@@ -283,8 +281,8 @@ const LandingPage: React.FC<LandingPageProps> = ({ appConfig, onStartAuth }) => 
                 </div>
             </section>
 
-            {/* Plans Section */}
-            <section id="planos" className="relative w-full min-h-screen flex flex-col justify-center items-center bg-black/20 z-10 px-4 py-20 scroll-mt-20">
+            {/* Plans Section - Slightly Lighter/Different Dark BG */}
+            <section id="planos" className="relative w-full min-h-screen flex flex-col justify-center items-center bg-[#111] z-10 px-4 py-20 scroll-mt-20 border-t border-white/5">
                  <div className="max-w-7xl mx-auto text-center w-full">
                     <RevealOnScroll>
                         <h2 className="text-3xl md:text-5xl font-bold text-text-primary mb-6">
@@ -298,9 +296,9 @@ const LandingPage: React.FC<LandingPageProps> = ({ appConfig, onStartAuth }) => 
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-8 max-w-4xl mx-auto">
                         {plans.map((plan, index) => (
                             <RevealOnScroll key={index} delay={index * 150} className="h-full">
-                                <div className={`relative flex flex-col h-full p-8 rounded-3xl border transition-all duration-300 hover:-translate-y-2 ${plan.highlight ? 'bg-card border-brand-primary shadow-[0_0_40px_rgba(64,255,0,0.15)] scale-105 z-10' : 'bg-card/50 border-border hover:border-white/20'}`}>
+                                <div className={`relative flex flex-col h-full p-8 rounded-2xl border transition-all duration-300 hover:-translate-y-2 ${plan.highlight ? 'bg-[#151515] border-brand-primary shadow-[0_0_40px_rgba(64,255,0,0.15)] scale-105 z-10' : 'bg-[#151515]/50 border-border hover:border-white/20'}`}>
                                     {plan.highlight && (
-                                        <div className="absolute top-0 left-1/2 -translate-x-1/2 -translate-y-1/2 bg-brand-primary text-black font-bold px-4 py-1 rounded-full text-sm uppercase tracking-wider flex items-center gap-2">
+                                        <div className="absolute top-0 left-1/2 -translate-x-1/2 -translate-y-1/2 bg-brand-primary text-black font-bold px-4 py-1 rounded-lg text-sm uppercase tracking-wider flex items-center gap-2">
                                             <CrownIcon className="h-4 w-4" />
                                             Mais Popular
                                         </div>
@@ -320,7 +318,7 @@ const LandingPage: React.FC<LandingPageProps> = ({ appConfig, onStartAuth }) => 
                                     </ul>
                                     <button
                                         onClick={() => onStartAuth('signup')}
-                                        className={`w-full py-4 rounded-xl font-bold transition-all ${
+                                        className={`w-full py-4 rounded-lg font-bold transition-all ${
                                             plan.highlight 
                                             ? 'bg-brand-primary hover:bg-brand-secondary text-black shadow-lg hover:shadow-brand-primary/50' 
                                             : 'bg-white/10 hover:bg-white/20 text-text-primary'
@@ -335,8 +333,8 @@ const LandingPage: React.FC<LandingPageProps> = ({ appConfig, onStartAuth }) => 
                 </div>
             </section>
 
-            {/* Testimonials Section */}
-            <section id="depoimentos" className="relative w-full min-h-screen flex flex-col justify-center items-center bg-background z-10 px-4 py-20 scroll-mt-20">
+            {/* Testimonials Section - Back to Darkest */}
+            <section id="depoimentos" className="relative w-full min-h-screen flex flex-col justify-center items-center bg-[#050505] z-10 px-4 py-20 scroll-mt-20 border-t border-white/5">
                 <div className="max-w-7xl mx-auto text-center">
                     <RevealOnScroll>
                         <h2 className="text-3xl md:text-5xl font-bold text-text-primary mb-4">
@@ -357,7 +355,7 @@ const LandingPage: React.FC<LandingPageProps> = ({ appConfig, onStartAuth }) => 
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
                         {testimonials.map((testimonial, index) => (
                             <RevealOnScroll key={index} delay={index * 100}>
-                                <div className="bg-card p-8 rounded-3xl border border-border text-left hover:border-brand-primary/30 transition-all duration-300 hover:shadow-lg hover:-translate-y-1 h-full flex flex-col">
+                                <div className="bg-[#121212] p-8 rounded-2xl border border-border text-left hover:border-brand-primary/30 transition-all duration-300 hover:shadow-lg hover:-translate-y-1 h-full flex flex-col">
                                     <div className="flex-1">
                                         <div className="mb-6 opacity-30">
                                             <svg className="h-10 w-10 text-brand-primary" fill="currentColor" viewBox="0 0 24 24"><path d="M14.017 21L14.017 18C14.017 16.896 14.321 15.923 14.929 15.081C15.537 14.239 16.29 13.565 17.189 13.058C18.089 12.551 19.062 12.298 20.108 12.298V9C18.735 9.07 17.472 9.563 16.319 10.479C15.166 11.395 14.399 12.569 14.017 14V9H11V21H14.017ZM8.017 21L8.017 18C8.017 16.896 8.321 15.923 8.929 15.081C9.537 14.239 10.29 13.565 11.189 13.058C12.089 12.551 13.062 12.298 14.108 12.298V9C12.735 9.07 11.472 9.563 10.319 10.479C9.166 11.395 8.399 12.569 8.017 14V9H5V21H8.017Z"/></svg>
@@ -380,8 +378,8 @@ const LandingPage: React.FC<LandingPageProps> = ({ appConfig, onStartAuth }) => 
                 </div>
             </section>
 
-            {/* FAQ Section */}
-            <section id="faq" className="relative w-full min-h-screen flex flex-col justify-center items-center bg-background z-10 px-4 py-20 scroll-mt-20">
+            {/* FAQ Section - Complementary BG */}
+            <section id="faq" className="relative w-full min-h-screen flex flex-col justify-center items-center bg-[#0a0a0a] z-10 px-4 py-20 scroll-mt-20 border-t border-white/5">
                 <div className="max-w-4xl mx-auto w-full">
                     <RevealOnScroll className="text-center mb-16">
                         <h2 className="text-3xl md:text-5xl font-bold text-text-primary mb-4">
@@ -393,7 +391,7 @@ const LandingPage: React.FC<LandingPageProps> = ({ appConfig, onStartAuth }) => 
                     <div className="space-y-4">
                         {faqItems.map((item, index) => (
                             <RevealOnScroll key={index} delay={index * 50}>
-                                <div className="bg-card border border-border rounded-2xl overflow-hidden hover:border-brand-primary/30 transition-colors">
+                                <div className="bg-[#121212] border border-border rounded-xl overflow-hidden hover:border-brand-primary/30 transition-colors">
                                     <button
                                         className="flex justify-between items-center w-full p-6 text-left"
                                         onClick={() => setOpenFaq(openFaq === index ? null : index)}
@@ -427,8 +425,8 @@ const LandingPage: React.FC<LandingPageProps> = ({ appConfig, onStartAuth }) => 
                         <span className="ml-3 text-text-secondary text-sm">&copy; {new Date().getFullYear()} {appConfig?.site_name || 'FinzAI'}.</span>
                     </div>
                     <div className="flex gap-6 text-sm text-text-secondary">
-                        <a href="#" className="hover:text-brand-primary transition-colors">Termos de Uso</a>
-                        <a href="#" className="hover:text-brand-primary transition-colors">Privacidade</a>
+                        <button onClick={onViewTerms} className="hover:text-brand-primary transition-colors">Termos de Uso</button>
+                        <button onClick={onViewPrivacy} className="hover:text-brand-primary transition-colors">Privacidade</button>
                         <a href="#" className="hover:text-brand-primary transition-colors">Suporte</a>
                     </div>
                 </div>
