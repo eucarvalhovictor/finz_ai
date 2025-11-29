@@ -36,7 +36,7 @@ const App: React.FC = () => {
   const [session, setSession] = useState<Session | null>(null);
   const [userRole, setUserRole] = useState<Role | null>(null);
   const [loading, setLoading] = useState(true);
-  const [activePage, setActivePage] = useState<Page>('dashboard');
+  // const [activePage, setActivePage] = useState<Page>('dashboard'); // REMOVIDO: Agora a página é derivada do location
   const [appConfig, setAppConfig] = useState<AppConfig | null>(null);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   
@@ -208,15 +208,40 @@ const App: React.FC = () => {
       };
   }, [session, navigate]); 
 
-  const renderPage = () => {
-    // Only render internal pages if session and userRole are ready and not null
-    // FIX: This function will now only be called if userRole is NOT 'onboarding'
-    if (!session || !userRole || userRole === 'onboarding') { 
-        console.log("[App.renderPage] Not rendering internal page: session, role not ready, or user is 'onboarding'.");
-        return null; 
+  // NOVO: Função para determinar a página atual baseada na URL
+  const getCurrentPageFromLocation = (path: string): Page => {
+    switch (path) {
+      case '/dashboard':
+        return 'dashboard';
+      case '/transactions':
+        return 'transactions';
+      case '/investments':
+        return 'investments';
+      case '/credit-cards':
+        return 'credit-cards';
+      case '/profile':
+        return 'profile';
+      case '/admin':
+        return 'admin';
+      default:
+        // Se a rota não for uma página interna conhecida, mas o usuário está logado, default para dashboard
+        return 'dashboard'; 
     }
+  };
 
-    switch (activePage) {
+  // NOVO: Função para renderizar as páginas internas com base na localização atual
+  const renderInternalPageContent = (currentLocation: string) => {
+    if (!session || !userRole || userRole === 'onboarding') {
+        // Isso não deve ser chamado se o userRole for 'onboarding' ou se não houver sessão,
+        // pois a lógica externa já redirecionou.
+        console.warn("[App.renderInternalPageContent] Called without valid session/role or with onboarding role.");
+        return null;
+    }
+    
+    // Converte a string da rota em um tipo Page
+    const pageToRender: Page = getCurrentPageFromLocation(currentLocation);
+
+    switch (pageToRender) {
       case 'dashboard':
         return <DashboardPage user={session.user} />;
       case 'transactions':
@@ -230,40 +255,18 @@ const App: React.FC = () => {
       case 'admin':
         return <AdminPage user={session.user} />;
       default:
+        // Fallback para dashboard se a rota interna não for reconhecida, mas o usuário estiver autenticado e não-onboarding.
         return <DashboardPage user={session.user} />;
     }
   };
   
   const handleCheckoutSuccess = async () => {
     if (session) {
-      console.log("[App.handleCheckoutSuccess] Checkout completed. Refetching profile.");
-      setLoading(true);
-      try {
-          const profile = await getProfile(session.user.id);
-          if (profile && profile.role) {
-            if (mounted.current) {
-                // FIX: Set actual role from DB, App component logic will handle redirection if still 'onboarding'
-                setUserRole(profile.role);
-                console.log("[App.handleCheckoutSuccess] Profile updated. Navigating to /dashboard.");
-                navigate('/dashboard');
-            }
-          } else {
-              console.warn("[App.handleCheckoutSuccess] Role was not updated after checkout. Navigating to /dashboard anyway.");
-              if (mounted.current) {
-                setUserRole(profile?.role || 'onboarding'); // Default to onboarding if role is unexpectedly null
-                navigate('/dashboard'); 
-              }
-          }
-      } catch (e) {
-          console.error("[App.handleCheckoutSuccess] Erro ao atualizar role após checkout", e);
-          if (mounted.current) {
-            setUserRole('onboarding'); // Default to onboarding on error
-            navigate('/dashboard'); 
-          }
-      } finally {
-          if (mounted.current) setLoading(false);
-          console.log("[App.handleCheckoutSuccess] Loading set to false.");
-      }
+      console.log("[App.handleCheckoutSuccess] Checkout completed. Navigating to /dashboard.");
+      // O fetchUserAndProfile no onAuthStateChange eventualmente atualizará a role
+      // e a re-renderização do App.tsx levará ao Dashboard ou Checkout se a role ainda for 'onboarding'.
+      // Chamamos navigate para forçar a mudança de rota.
+      navigate('/dashboard'); 
     }
   };
 
@@ -307,7 +310,7 @@ const App: React.FC = () => {
   if (session && userRole) {
       console.log(`[App] User ${session.user.id} is authenticated with role '${userRole}'. Current location: '${location}'.`);
       
-      // If an authenticated user is on a public auth path, redirect them to a valid internal path based on their role.
+      // Se um usuário autenticado está em uma rota pública de autenticação, redirecionar.
       if (['/', '/login', '/signup'].includes(location)) {
           if (userRole === 'onboarding') {
               console.log("[App] Authenticated 'onboarding' user on public auth path. Redirecting to '/checkout'.");
@@ -320,14 +323,14 @@ const App: React.FC = () => {
           }
       }
 
-      // FIX: Explicitly force 'onboarding' users to the checkout page.
+      // NOVO: Força usuários 'onboarding' para a página de checkout
       if (userRole === 'onboarding' && location !== '/checkout') {
           console.log("[App] Authenticated 'onboarding' user attempting to access restricted path. Redirecting to '/checkout'.");
           navigate('/checkout');
           return null;
       }
 
-      // Handle rendering for specific pages accessible to all authenticated users (even 'onboarding' if it's not the main app)
+      // Lidar com páginas específicas acessíveis a todos os usuários autenticados (incluindo 'onboarding')
       if (location === '/checkout') {
          console.log("[App] Authenticated user accessing '/checkout'. Displaying checkout page.");
          return <CheckoutPage user={session.user} appConfig={appConfig} onSuccess={handleCheckoutSuccess} />;
@@ -339,7 +342,7 @@ const App: React.FC = () => {
         return <PrivacyPage appConfig={appConfig} onBack={() => navigate('/dashboard')} />;
       }
 
-      // FIX: Only render the main application structure if the user is NOT 'onboarding'
+      // FIX: Só renderiza a estrutura principal do aplicativo se o usuário NÃO for 'onboarding'
       if (userRole !== 'onboarding') { 
           console.log("[App] Rendering main application for authenticated user with valid role (not onboarding).");
           return (
@@ -372,8 +375,8 @@ const App: React.FC = () => {
 
                 <div className="flex flex-1 overflow-hidden relative">
                     <Sidebar 
-                        activePage={activePage} 
-                        setActivePage={setActivePage} 
+                        activePage={getCurrentPageFromLocation(location)} // Passa a página atual derivada da URL
+                        navigate={navigate} // Passa a função navigate para o Sidebar
                         userRole={userRole} 
                         logoUrl={appConfig?.site_logo}
                         siteName={appConfig?.site_name}
@@ -382,7 +385,7 @@ const App: React.FC = () => {
                     />
                     
                     <main className="flex-1 overflow-y-auto bg-background px-4 pt-4 sm:p-6 lg:p-8 w-full custom-scrollbar relative overscroll-behavior-y-contain pb-32 md:pb-8">
-                        {renderPage()}
+                        {renderInternalPageContent(location)} {/* Renderiza o conteúdo da página interna baseado na location */}
                     </main>
                 </div>
             </div>

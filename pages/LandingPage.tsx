@@ -103,7 +103,7 @@ const plans = [
     },
     {
         name: 'Pro',
-        price: 'R$ 39,90', // MODIFICADO: Preço atualizado
+        price: 'R$ 29,90', // MODIFICADO: Preço atualizado
         period: '/mês',
         features: ['Tudo do Básico', 'Cartões de Crédito Ilimitados', 'Módulo de Investimentos', 'Relatórios Avançados', 'Suporte Prioritário'],
         highlight: true

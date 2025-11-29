@@ -4,8 +4,8 @@ import { DashboardIcon, TransactionsIcon, /* InsightsIcon, */ LogoutIcon, Invest
 import type { Page, Role } from '../types';
 
 interface SidebarProps {
-  activePage: Page;
-  setActivePage: (page: Page) => void;
+  activePage: Page; // Agora este é o valor real da página ativa, derivada da URL
+  navigate: (path: string) => void; // NOVO: Função para navegar
   userRole: Role;
   logoUrl?: string;
   siteName?: string;
@@ -17,7 +17,7 @@ const NavItem: React.FC<{
   icon: React.ReactNode;
   label: string;
   isActive: boolean;
-  onClick: () => void;
+  onClick: () => void; // Agora aceita qualquer função onClick, que será navigate
   isCollapsed: boolean;
 }> = ({ icon, label, isActive, onClick, isCollapsed }) => (
   <button
@@ -34,9 +34,13 @@ const NavItem: React.FC<{
   </button>
 );
 
-const Sidebar: React.FC<SidebarProps> = ({ activePage, setActivePage, userRole, isMobileOpen, setIsMobileOpen }) => {
+const Sidebar: React.FC<SidebarProps> = ({ activePage, navigate, userRole, isMobileOpen, setIsMobileOpen }) => {
   // Desktop defaults to collapsed (true)
   const [isCollapsed, setIsCollapsed] = useState(true);
+
+  // Add definitions for isProOrAdmin and isAdmin based on userRole
+  const isProOrAdmin = userRole === 'pro' || userRole === 'admin';
+  const isAdmin = userRole === 'admin';
 
   const handleLogout = async () => {
     await supabase.auth.signOut();
@@ -45,14 +49,6 @@ const Sidebar: React.FC<SidebarProps> = ({ activePage, setActivePage, userRole, 
   const toggleSidebar = () => {
     setIsCollapsed(!isCollapsed);
   }
-
-  const handleNavClick = (page: Page) => {
-      setActivePage(page);
-      setIsMobileOpen(false); // Close mobile menu on navigate
-  }
-
-  const isAdmin = userRole === 'admin';
-  const isProOrAdmin = userRole === 'pro' || userRole === 'admin';
 
   // Lógica Crucial: 
   // Se for Mobile e estiver aberto, NÃO está colapsado (mostra texto).
@@ -121,14 +117,14 @@ const Sidebar: React.FC<SidebarProps> = ({ activePage, setActivePage, userRole, 
                     icon={<DashboardIcon className="h-6 w-6" />}
                     label="Dashboard"
                     isActive={activePage === 'dashboard'}
-                    onClick={() => handleNavClick('dashboard')}
+                    onClick={() => { navigate('/dashboard'); setIsMobileOpen(false); }}
                     isCollapsed={effectiveCollapsed}
                 />
                 <NavItem
                     icon={<TransactionsIcon className="h-6 w-6" />}
                     label="Transações"
                     isActive={activePage === 'transactions'}
-                    onClick={() => handleNavClick('transactions')}
+                    onClick={() => { navigate('/transactions'); setIsMobileOpen(false); }}
                     isCollapsed={effectiveCollapsed}
                 />
                 
@@ -137,7 +133,7 @@ const Sidebar: React.FC<SidebarProps> = ({ activePage, setActivePage, userRole, 
                         icon={<InvestmentsIcon className="h-6 w-6" />}
                         label="Investimentos"
                         isActive={activePage === 'investments'}
-                        onClick={() => handleNavClick('investments')}
+                        onClick={() => { navigate('/investments'); setIsMobileOpen(false); }}
                         isCollapsed={effectiveCollapsed}
                     />
                 )}
@@ -146,7 +142,7 @@ const Sidebar: React.FC<SidebarProps> = ({ activePage, setActivePage, userRole, 
                     icon={<CreditCardIcon className="h-6 w-6" />}
                     label="Cartões"
                     isActive={activePage === 'credit-cards'}
-                    onClick={() => handleNavClick('credit-cards')}
+                    onClick={() => { navigate('/credit-cards'); setIsMobileOpen(false); }}
                     isCollapsed={effectiveCollapsed}
                 />
                 
@@ -155,7 +151,7 @@ const Sidebar: React.FC<SidebarProps> = ({ activePage, setActivePage, userRole, 
                         icon={<InsightsIcon className="h-6 w-6" />}
                         label="Análise IA"
                         isActive={activePage === 'insights'}
-                        onClick={() => handleNavClick('insights')}
+                        onClick={() => { navigate('/insights'); setIsMobileOpen(false); }}
                         isCollapsed={effectiveCollapsed}
                     />
                 )} */}
@@ -165,7 +161,7 @@ const Sidebar: React.FC<SidebarProps> = ({ activePage, setActivePage, userRole, 
                         icon={<ShieldIcon className="h-6 w-6" />}
                         label="Admin"
                         isActive={activePage === 'admin'}
-                        onClick={() => handleNavClick('admin')}
+                        onClick={() => { navigate('/admin'); setIsMobileOpen(false); }}
                         isCollapsed={effectiveCollapsed}
                     />
                 )}
@@ -177,7 +173,7 @@ const Sidebar: React.FC<SidebarProps> = ({ activePage, setActivePage, userRole, 
                     icon={<UserIcon className="h-6 w-6" />}
                     label="Meu Perfil"
                     isActive={activePage === 'profile'}
-                    onClick={() => handleNavClick('profile')}
+                    onClick={() => { navigate('/profile'); setIsMobileOpen(false); }}
                     isCollapsed={effectiveCollapsed}
                 />
                 <button

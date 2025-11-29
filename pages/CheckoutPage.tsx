@@ -23,8 +23,8 @@ const plans = [
     {
         name: 'Pro',
         role: 'pro' as Role,
-        price: 39.90, // PREÇO ATUALIZADO
-        priceFormatted: 'R$ 39,90', // PREÇO ATUALIZADO
+        price: 29.90, // PREÇO ATUALIZADO
+        priceFormatted: 'R$ 29,90', // PREÇO ATUALIZADO
         period: '/mês',
         features: ['Tudo do Básico', 'Cartões de Crédito Ilimitados', 'Módulo de Investimentos', 'Relatórios Avançados', 'Suporte Prioritário'],
         highlight: true
@@ -219,7 +219,7 @@ const CheckoutPage: React.FC<CheckoutPageProps> = ({ user, appConfig, onSuccess 
                                          <label className="block text-xs font-medium text-text-secondary mb-1">Número *</label>
                                         <input type="text" required placeholder="123" value={numero} onChange={(e) => setNumero(e.target.value)} className="w-full bg-background border border-border rounded-xl p-3 text-text-primary focus:ring-brand-primary text-sm"/>
                                     </div>
-                                </div>
+                                }
                                  <div>
                                     <label className="block text-xs font-medium text-text-secondary mb-1">Complemento</label>
                                     <input type="text" placeholder="Apartamento, bloco, etc. (opcional)" value={complemento} onChange={(e) => setComplemento(e.target.value)} className="w-full bg-background border border-border rounded-xl p-3 text-text-primary focus:ring-brand-primary text-sm"/>
