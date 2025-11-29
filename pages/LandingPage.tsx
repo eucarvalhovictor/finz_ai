@@ -219,8 +219,8 @@ const LandingPage: React.FC<LandingPageProps> = ({ appConfig, onStartAuth, onVie
                     )}
                     
                     {/* H1 Radley Font */}
-                    <h1 className="font-radley text-4xl sm:text-5xl md:text-7xl font-normal text-text-primary mb-4 md:mb-6 leading-tight tracking-tight">
-                        <span className="bg-clip-text text-transparent bg-gradient-to-r from-[#40ff00] via-[#00c49f] to-[#40ff00] bg-[length:200%_auto] animate-gradient font-bold block sm:inline">Domine Suas Finanças</span>{' '}
+                    <h1 className="font-radley text-4xl sm:text-5xl md:text-7xl font-bold text-text-primary mb-4 md:mb-6 leading-tight tracking-tight">
+                        <span className="bg-clip-text text-transparent bg-gradient-to-r from-brand-secondary via-brand-primary to-green-400 bg-[length:200%_auto] animate-gradient font-bold block sm:inline">Domine Suas Finanças</span>{' '}
                         <span className="block mt-2 sm:mt-0 sm:inline">Com Inteligência.</span>
                     </h1>
                     
@@ -254,7 +254,7 @@ const LandingPage: React.FC<LandingPageProps> = ({ appConfig, onStartAuth, onVie
             <section id="beneficios" className="relative w-full h-auto md:min-h-screen flex flex-col justify-center items-center bg-[#0a0a0a] z-10 px-4 py-16 md:py-20 scroll-mt-16 border-t border-white/5">
                 <div className="max-w-7xl mx-auto text-center w-full">
                     <RevealOnScroll>
-                        <h2 className="text-3xl md:text-5xl font-bold text-text-primary mb-6 md:mb-8 leading-tight">
+                        <h2 className="font-radley text-3xl md:text-5xl font-bold text-text-primary mb-6 md:mb-8 leading-tight">
                             Por que o Finz é <span className="text-brand-primary">melhor?</span>
                         </h2>
                         <p className="text-base md:text-lg text-text-secondary mb-12 md:mb-16 max-w-3xl mx-auto px-2">
@@ -286,7 +286,7 @@ const LandingPage: React.FC<LandingPageProps> = ({ appConfig, onStartAuth, onVie
             <section id="planos" className="relative w-full h-auto md:min-h-screen flex flex-col justify-center items-center bg-[#111] z-10 px-4 py-16 md:py-20 scroll-mt-16 border-t border-white/5">
                  <div className="max-w-7xl mx-auto text-center w-full">
                     <RevealOnScroll>
-                        <h2 className="text-3xl md:text-5xl font-bold text-text-primary mb-6 md:mb-8">
+                        <h2 className="font-radley text-3xl md:text-5xl font-bold text-text-primary mb-6 md:mb-8">
                             Planos que Cabem no <span className="text-brand-primary block sm:inline">seu Bolso</span>
                         </h2>
                         <p className="text-base md:text-lg text-text-secondary mb-12 md:mb-16 max-w-2xl mx-auto">
@@ -338,7 +338,7 @@ const LandingPage: React.FC<LandingPageProps> = ({ appConfig, onStartAuth, onVie
             <section id="depoimentos" className="relative w-full h-auto md:min-h-screen flex flex-col justify-center items-center bg-[#050505] z-10 px-4 py-16 md:py-20 scroll-mt-16 border-t border-white/5">
                 <div className="max-w-7xl mx-auto text-center w-full">
                     <RevealOnScroll>
-                        <h2 className="text-3xl md:text-5xl font-bold text-text-primary mb-4 leading-tight">
+                        <h2 className="font-radley text-3xl md:text-5xl font-bold text-text-primary mb-4 leading-tight">
                             Aprovado por <span className="text-brand-primary block sm:inline">+100 clientes</span>
                         </h2>
                         <div className="flex flex-col items-center justify-center mb-12 md:mb-16">
@@ -383,7 +383,7 @@ const LandingPage: React.FC<LandingPageProps> = ({ appConfig, onStartAuth, onVie
             <section id="faq" className="relative w-full h-auto md:min-h-screen flex flex-col justify-center items-center bg-[#0a0a0a] z-10 px-4 py-16 md:py-20 scroll-mt-16 border-t border-white/5">
                 <div className="max-w-4xl mx-auto w-full">
                     <RevealOnScroll className="text-center mb-12 md:mb-16">
-                        <h2 className="text-3xl md:text-5xl font-bold text-text-primary mb-4">
+                        <h2 className="font-radley text-3xl md:text-5xl font-bold text-text-primary mb-4">
                             Perguntas <span className="text-brand-primary">Frequentes</span>
                         </h2>
                         <p className="text-text-secondary text-sm md:text-base">Tire suas dúvidas e comece com confiança.</p>
