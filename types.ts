@@ -44,7 +44,7 @@ export interface MonthlySummary {
 
 export type Page = 'dashboard' | 'transactions' | 'investments' | 'credit-cards' | 'profile' | 'admin'; // 'insights' REMOVED
 
-export type Role = 'basic' | 'pro' | 'admin';
+export type Role = 'basic' | 'pro' | 'admin' | 'onboarding'; // MODIFICADO: Adicionado 'onboarding'
 
 export type AuthMode = 'login' | 'signup'; // NOVO: Tipo para o modo de autenticação
 

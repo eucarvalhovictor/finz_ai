@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { supabase } from './services/supabase';
 import type { Session } from '@supabase/supabase-js';
 import { getProfile, getAppConfig } from './services/api';
@@ -14,22 +14,18 @@ import AdminPage from './pages/AdminPage';
 import LandingPage from './pages/LandingPage';
 import TermsPage from './pages/TermsPage';
 import PrivacyPage from './pages/PrivacyPage';
-import CheckoutPage from './pages/CheckoutPage'; // NOVO
+import CheckoutPage from './pages/CheckoutPage'; 
 import { Page } from './types';
 import { WalletIcon } from './components/icons/Icons';
 import Spinner from './components/Spinner';
 
 const INACTIVITY_LIMIT = 15 * 60 * 1000; // 15 minutes in milliseconds
 
-// Helper para obter a localização do hash da URL
 const getLocationFromHash = () => {
-    // Get the part after #
     let path = window.location.hash.substring(1); 
-    // If it's empty, default to '/'
     if (!path) {
         return '/';
     }
-    // Ensure it starts with a '/'
     if (!path.startsWith('/')) {
         path = '/' + path;
     }
@@ -44,89 +40,104 @@ const App: React.FC = () => {
   const [appConfig, setAppConfig] = useState<AppConfig | null>(null);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   
-  // Roteamento baseado em Hash
   const [location, setLocation] = useState(getLocationFromHash());
+  const mounted = useRef(true); 
 
-  // Função de navegação via Hash
-  const navigate = (path: string) => {
+  const navigate = useCallback((path: string) => {
     const newPath = path.startsWith('/') ? path : '/' + path;
+    console.log(`[App.navigate] Attempting to set hash to '${newPath}'. Current hash: '${window.location.hash}'`);
     if (`#${newPath}` !== window.location.hash) {
       window.location.hash = newPath;
     } else {
-      setLocation(newPath);
+      setLocation(newPath); // Still update internal state even if hash didn't change
     }
-  };
+  }, []); 
   
-  // Listener para o evento 'hashchange'
   useEffect(() => {
     const handleHashChange = () => {
-      setLocation(getLocationFromHash());
+      const newLocation = getLocationFromHash();
+      console.log(`[App.handleHashChange] Hash changed from '${location}' to '${newLocation}'`);
+      setLocation(newLocation);
     };
     window.addEventListener('hashchange', handleHashChange);
     return () => {
       window.removeEventListener('hashchange', handleHashChange);
     };
-  }, []);
+  }, [location]); // Dependência adicionada para registrar 'location' corretamente
 
+  const fetchUserAndProfile = useCallback(async (currentSession: Session | null) => {
+    if (!mounted.current) return;
+    console.log("[App.fetchUserAndProfile] Initiating fetch for session:", currentSession?.user?.id ? "authenticated" : "unauthenticated");
+    setLoading(true); // Sempre setar loading como true ao iniciar a busca
+    if (currentSession) {
+      try {
+        const profileData = await getProfile(currentSession.user.id);
+        if (mounted.current) setUserRole(profileData?.role || null);
+        console.log("[App.fetchUserAndProfile] User role fetched:", profileData?.role);
+      } catch (e) {
+        console.error("[App.fetchUserAndProfile] Error fetching user role", e);
+        if (mounted.current) setUserRole(null); // Resetar role em caso de erro
+      } finally {
+        if (mounted.current) setLoading(false); // Finalizar loading após a busca (sucesso ou falha)
+        console.log("[App.fetchUserAndProfile] Loading set to false.");
+      }
+    } else {
+      if (mounted.current) {
+        setUserRole(null);
+        const currentPath = getLocationFromHash();
+        console.log("[App.fetchUserAndProfile] User unauthenticated. Current path:", currentPath);
+        if (!['/', '/login', '/signup', '/terms', '/privacy'].includes(currentPath)) {
+            console.log("[App.fetchUserAndProfile] Redirecting unauthenticated user to '/'");
+            navigate('/');
+        }
+        setLoading(false); // Finalizar loading para usuários deslogados
+        console.log("[App.fetchUserAndProfile] Loading set to false for unauthenticated user.");
+      }
+    }
+  }, [navigate]); // navigate é uma dependência
 
   useEffect(() => {
-    let mounted = true;
-    
+    mounted.current = true; 
+    console.log("[App] Component mounted. Starting initial data fetch.");
+
     getAppConfig().then(config => {
-        if(mounted && config) {
+        if(mounted.current && config) {
             setAppConfig(config);
             applySiteConfig(config);
         }
-    }).catch(err => console.error("Config fetch error:", err));
+    }).catch(err => console.error("[App] Config fetch error:", err));
 
-    const { data: { subscription } } = supabase.auth.onAuthStateChange(async (_event, newSession) => {
-        if (!mounted) return;
-        
-        // Se mudou a sessão (login ou logout), define loading como true para evitar flash de conteúdo incorreto
-        if (session?.user.id !== newSession?.user.id) {
-             setLoading(true);
-        }
-
-        setSession(newSession);
-        
-        if (newSession) {
-            getProfile(newSession.user.id)
-                .then(profile => {
-                    if (mounted) setUserRole(profile?.role || null);
-                })
-                .catch(e => console.error("Error fetching user role", e))
-                .finally(() => { if (mounted) setLoading(false) });
-        } else {
-            setUserRole(null);
-            const currentPath = getLocationFromHash();
-            if (!['/', '/login', '/signup', '/terms', '/privacy'].includes(currentPath)) {
-                navigate('/');
-            }
-            setLoading(false);
-        }
+    supabase.auth.getSession().then(async ({ data }) => {
+        if (!mounted.current) return;
+        console.log("[App] Initial getSession data:", data.session ? `authenticated (${data.session.user.id})` : "unauthenticated");
+        // Apenas setar a sessão. O onAuthStateChange será disparado com a sessão inicial.
+        setSession(data.session);
     });
 
-    // Check inicial da sessão
-    supabase.auth.getSession().then(({ data }) => {
-        if (!mounted) return;
-        if (data.session) {
-            setSession(data.session);
-            getProfile(data.session.user.id)
-                .then(profile => { if(mounted) setUserRole(profile?.role || null) })
-                .catch(e => console.error(e))
-                .finally(() => { if (mounted) setLoading(false) });
-        } else {
-           setLoading(false);
-        }
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(async (_event, newSession) => {
+      if (!mounted.current) return;
+      console.log(`[App.onAuthStateChange] Event: ${_event}, newSession user: ${newSession?.user?.id || 'null'}`);
+      
+      const oldUserId = session?.user?.id;
+      const newUserId = newSession?.user?.id;
+
+      // Se a sessão de usuário mudou ou houve uma transição de/para autenticado
+      if (oldUserId !== newUserId || (!session && newSession) || (session && !newSession)) {
+          setSession(newSession); 
+          await fetchUserAndProfile(newSession);
+      } else {
+          // Se a sessão não mudou de usuário (ex: token refresh), apenas atualiza o objeto session
+          setSession(newSession);
+      }
     });
 
     return () => {
-      mounted = false;
+      mounted.current = false;
       subscription.unsubscribe();
+      console.log("[App] Component unmounted. Cleaning up.");
     };
-  }, []);
+  }, [fetchUserAndProfile, session?.user?.id]); // Adiciona session?.user?.id como dependência
 
-  // Helper function for SEO updates
   const applySiteConfig = (config: AppConfig) => {
       if (config.site_name) document.title = config.site_name;
       const updateMeta = (name: string, content: string | undefined) => {
@@ -174,7 +185,7 @@ const App: React.FC = () => {
       if (!session) return;
       let timeoutId: ReturnType<typeof setTimeout>;
       const handleLogout = async () => {
-          console.log("Sessão expirada por inatividade.");
+          console.log("[App.inactivity] Sessão expirada por inatividade.");
           await supabase.auth.signOut();
           alert("Sua sessão expirou após 15 minutos de inatividade. Por favor, faça login novamente.");
           navigate('/');
@@ -190,10 +201,13 @@ const App: React.FC = () => {
           if (timeoutId) clearTimeout(timeoutId);
           events.forEach(event => document.removeEventListener(event, resetTimer));
       };
-  }, [session]);
+  }, [session, navigate]); 
 
   const renderPage = () => {
-    if (!session || !userRole) return null;
+    if (!session || !userRole || userRole === 'onboarding') {
+        console.log("[App.renderPage] Not rendering internal page: session or role not ready/onboarding.");
+        return null; 
+    }
 
     switch (activePage) {
       case 'dashboard':
@@ -215,17 +229,38 @@ const App: React.FC = () => {
   
   const handleCheckoutSuccess = async () => {
     if (session) {
+      console.log("[App.handleCheckoutSuccess] Checkout completed. Refetching profile.");
       setLoading(true);
-      const profile = await getProfile(session.user.id);
-      if (profile) {
-        setUserRole(profile.role);
+      try {
+          const profile = await getProfile(session.user.id);
+          if (profile && profile.role && profile.role !== 'onboarding') {
+            if (mounted.current) {
+                setUserRole(profile.role);
+                console.log("[App.handleCheckoutSuccess] Profile updated to non-onboarding role. Navigating to /dashboard.");
+                navigate('/dashboard');
+            }
+          } else {
+              console.warn("[App.handleCheckoutSuccess] Role was not updated to a paid plan after checkout. Staying on checkout flow.");
+              if (mounted.current) {
+                setUserRole(profile?.role || null); // Atualiza o estado local mesmo que seja onboarding/null
+                navigate('/checkout'); // Garante que fique no checkout se a atualização falhou
+              }
+          }
+      } catch (e) {
+          console.error("[App.handleCheckoutSuccess] Erro ao atualizar role após checkout", e);
+          if (mounted.current) {
+            setUserRole(null); // Em caso de erro, força o estado de sem role para tentar novamente
+            navigate('/checkout'); // Em caso de erro, volta para o checkout
+          }
+      } finally {
+          if (mounted.current) setLoading(false);
+          console.log("[App.handleCheckoutSuccess] Loading set to false.");
       }
-      // A navegação será tratada pelo re-render do App.tsx quando userRole for atualizado
-      setLoading(false);
     }
   };
 
   if (loading) {
+    console.log("[App] Displaying spinner (loading).");
     return (
       <div className="flex flex-col items-center justify-center h-[100dvh] bg-background space-y-4">
         <Spinner size="lg" />
@@ -236,6 +271,7 @@ const App: React.FC = () => {
 
   // Rota 1: Usuários não autenticados
   if (!session) {
+      console.log("[App] User is NOT authenticated. Current location:", location);
       switch(location) {
           case '/login':
               return <AuthComponent appConfig={appConfig} defaultMode="login" navigate={navigate} />;
@@ -253,30 +289,40 @@ const App: React.FC = () => {
                         onViewPrivacy={() => navigate('/privacy')}
                      />;
           default:
-              // Se tentar acessar uma rota protegida sem estar logado
+              console.log("[App] Unauthenticated user trying to access restricted path. Redirecting to '/'.");
               navigate('/');
               return null;
       }
   }
 
-  // Rota 2: Usuário autenticado, mas sem plano (precisa fazer checkout)
-  if (session && !userRole) {
+  // Rota 2: Usuário autenticado, mas em onboarding (precisa fazer checkout)
+  if (session && (!userRole || userRole === 'onboarding')) {
+      console.log(`[App] User ${session.user.id} is authenticated but has role '${userRole}'. Forcing checkout.`);
       if (location === '/checkout') {
+          console.log("[App] Displaying CheckoutPage for user in onboarding state.");
           return <CheckoutPage user={session.user} appConfig={appConfig} onSuccess={handleCheckoutSuccess} />;
       }
-      // Para qualquer outra rota, força o checkout
+      console.log("[App] User in onboarding state is not on /checkout. Redirecting to /checkout.");
       navigate('/checkout');
       return null;
   }
 
-  // Rota 3: Usuário autenticado e com plano definido
-  if (session && userRole) {
-      // Redireciona de páginas públicas ou de checkout se já tiver plano
-      if (['/', '/login', '/signup', '/checkout'].includes(location)) {
+  // Rota 3: Usuário autenticado e com plano definido (basic, pro, admin)
+  if (session && userRole && userRole !== 'onboarding') { 
+      console.log(`[App] User ${session.user.id} is authenticated with role '${userRole}'. Current location: '${location}'.`);
+      if (['/', '/login', '/signup'].includes(location)) {
+        console.log("[App] Authenticated user on public auth path. Redirecting to '/dashboard'.");
         navigate('/dashboard');
-        return null; 
+        return null;
       }
       
+      // Permitimos que o usuário acesse o checkout se quiser (ex: upgrade),
+      // mas o fluxo de onboarding forçado é tratado na Rota 2.
+      if (location === '/checkout') {
+         console.log("[App] Authenticated user with paid plan accessing '/checkout'. Displaying checkout page.");
+         return <CheckoutPage user={session.user} appConfig={appConfig} onSuccess={handleCheckoutSuccess} />;
+      }
+
       if (location === '/terms') {
         return <TermsPage appConfig={appConfig} onBack={() => navigate('/dashboard')} />;
       }
@@ -284,7 +330,7 @@ const App: React.FC = () => {
         return <PrivacyPage appConfig={appConfig} onBack={() => navigate('/dashboard')} />;
       }
 
-      // Renderiza a aplicação principal
+      console.log("[App] Rendering main application for authenticated user with valid role.");
       return (
         <div className="font-sans h-[100dvh] bg-background text-text-primary flex flex-col">
             <header className="md:hidden flex-none h-16 bg-card border-b border-border z-30 flex items-center justify-end px-4 shadow-sm relative">
@@ -332,7 +378,7 @@ const App: React.FC = () => {
       );
   }
 
-  // Fallback final, não deve ser alcançado
+  console.log("[App] Fallback: Displaying spinner. This state should ideally not be reached.");
   return <Spinner />;
 };
 

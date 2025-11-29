@@ -103,7 +103,7 @@ const plans = [
     },
     {
         name: 'Pro',
-        price: 'R$ 29,90',
+        price: 'R$ 39,90', // MODIFICADO: Preço atualizado
         period: '/mês',
         features: ['Tudo do Básico', 'Cartões de Crédito Ilimitados', 'Módulo de Investimentos', 'Relatórios Avançados', 'Suporte Prioritário'],
         highlight: true
@@ -182,14 +182,15 @@ const LandingPage: React.FC<LandingPageProps> = ({ appConfig, onStartAuth, onVie
 
                 {/* Desktop Nav */}
                 <nav className="hidden md:flex items-center gap-8">
-                    {['Benefícios', 'Planos', 'Depoimentos', 'FAQ'].map((item) => (
-                        <button 
-                            key={item}
-                            onClick={() => scrollToSection(item.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, ""))}
-                            className="text-text-secondary hover:text-brand-primary font-medium transition-colors text-sm uppercase tracking-wider"
-                        >
-                            {item}
-                        </button>
+                    {['Benefícios', 'Planos', 'Depoimentos', 'Faq'].map((item) => ( 
+                        <React.Fragment key={item}>
+                            <button 
+                                onClick={() => scrollToSection(item.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, ""))}
+                                className="text-text-secondary hover:text-brand-primary font-medium transition-colors text-sm uppercase tracking-wider"
+                            >
+                                {item}
+                            </button>
+                        </React.Fragment>
                     ))}
                 </nav>
 
@@ -425,6 +426,7 @@ const LandingPage: React.FC<LandingPageProps> = ({ appConfig, onStartAuth, onVie
                         )}
                         <span className="ml-3 text-text-secondary text-xs md:text-sm">&copy; {new Date().getFullYear()} {appConfig?.site_name || 'FinzAI'}.</span>
                     </div>
+                    {/* Fix: Wrap the navigation links in a common parent element (e.g., a div) */}
                     <div className="flex flex-wrap justify-center gap-4 md:gap-6 text-xs md:text-sm text-text-secondary">
                         <button onClick={onViewTerms} className="hover:text-brand-primary transition-colors">Termos de Uso</button>
                         <button onClick={onViewPrivacy} className="hover:text-brand-primary transition-colors">Privacidade</button>

@@ -3,11 +3,12 @@ import { supabase } from '../services/supabase';
 import { WalletIcon } from './icons/Icons';
 import AnimatedBackground from './AnimatedBackground';
 import { AppConfig, AuthMode } from '../types';
+import { updateProfile } from '../services/api'; 
 
 interface AuthComponentProps {
     appConfig?: AppConfig | null;
     defaultMode?: AuthMode;
-    navigate: (path: string) => void; // NOVO: Prop para navegação
+    navigate: (path: string) => void; 
 }
 
 const AuthComponent: React.FC<AuthComponentProps> = ({ appConfig, defaultMode = 'login', navigate }) => {
@@ -17,13 +18,13 @@ const AuthComponent: React.FC<AuthComponentProps> = ({ appConfig, defaultMode = 
   const [confirmPassword, setConfirmPassword] = useState('');
   const [firstName, setFirstName] = useState('');
   const [lastName, setLastName] = useState('');
+  const [agreedToTerms, setAgreedToTerms] = useState(false); 
 
   const [isLogin, setIsLogin] = useState(defaultMode === 'login');
   const [isForgotPasswordMode, setIsForgotPasswordMode] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [message, setMessage] = useState<string | null>(null);
 
-  // Reage a mudanças na URL (via prop defaultMode) para resetar o estado do formulário
   useEffect(() => {
       setIsLogin(defaultMode === 'login');
       setIsForgotPasswordMode(false);
@@ -34,6 +35,7 @@ const AuthComponent: React.FC<AuthComponentProps> = ({ appConfig, defaultMode = 
       setConfirmPassword('');
       setFirstName('');
       setLastName('');
+      setAgreedToTerms(false); 
   }, [defaultMode]);
 
 
@@ -47,7 +49,6 @@ const AuthComponent: React.FC<AuthComponentProps> = ({ appConfig, defaultMode = 
       if (isLogin) {
         const { error } = await supabase.auth.signInWithPassword({ email, password });
         if (error) throw error;
-        // The onAuthStateChange in App.tsx will handle the navigation to /dashboard
       } else {
         if (password !== confirmPassword) {
           throw new Error('As senhas não coincidem.');
@@ -55,27 +56,32 @@ const AuthComponent: React.FC<AuthComponentProps> = ({ appConfig, defaultMode = 
         if (!firstName) {
             throw new Error('O campo "Nome" é obrigatório.');
         }
+        if (!agreedToTerms) { 
+            throw new Error('Você deve aceitar os Termos de Uso e a Política de Privacidade.');
+        }
+
         const { data, error } = await supabase.auth.signUp({ 
             email, 
             password,
             options: {
                 data: {
                     first_name: firstName,
-                    last_name: lastName || null
+                    last_name: lastName || null,
                 }
             }
         });
         if (error) throw error;
         
-        // On successful signup, navigate to the checkout page.
-        // The onAuthStateChange will create the session and App.tsx will render the CheckoutPage.
         if (data.user) {
-             navigate('/checkout');
+            console.log("AuthComponent: User signed up successfully. Updating profile role to 'onboarding'.");
+            await updateProfile(data.user.id, { role: 'onboarding' }); 
+            navigate('/checkout'); 
         } else {
              setMessage('Cadastro realizado! Verifique seu e-mail para confirmação.');
         }
       }
     } catch (error: any) {
+      console.error("AuthComponent: Auth error:", error);
       setError(error.error_description || error.message);
     } finally {
       setLoading(false);
@@ -95,6 +101,7 @@ const AuthComponent: React.FC<AuthComponentProps> = ({ appConfig, defaultMode = 
       if (error) throw error;
       setMessage('Link de recuperação de senha enviado! Verifique seu e-mail.');
     } catch (error: any) {
+      console.error("AuthComponent: Forgot password error:", error);
       setError(error.error_description || error.message);
     } finally {
       setLoading(false);
@@ -107,7 +114,6 @@ const AuthComponent: React.FC<AuthComponentProps> = ({ appConfig, defaultMode = 
       } else if (mode === 'signup') {
           navigate('/signup');
       } else if (mode === 'forgotPassword') {
-          // Forgot password é um estado interno, não uma rota separada
           setError(null);
           setMessage(null);
           setEmail('');
@@ -164,7 +170,7 @@ const AuthComponent: React.FC<AuthComponentProps> = ({ appConfig, defaultMode = 
                 <button
                   type="button"
                   onClick={() => switchMode('login')}
-                  className="font-bold text-brand-primary hover:text-brand-secondary ml-1"
+                  className="font-bold text-brand-primary hover:text-brand-primary ml-1"
                 >
                   Faça login
                 </button>
@@ -237,6 +243,25 @@ const AuthComponent: React.FC<AuthComponentProps> = ({ appConfig, defaultMode = 
                     />
                 </div>
             )}
+             {!isLogin && (
+                <div className="mb-6">
+                    <label className="flex items-start space-x-3 cursor-pointer">
+                        <input
+                            type="checkbox"
+                            checked={agreedToTerms}
+                            onChange={(e) => setAgreedToTerms(e.target.checked)}
+                            className="h-5 w-5 text-brand-primary bg-background border-border rounded mt-0.5 focus:ring-brand-primary"
+                            required 
+                        />
+                        <span className="text-text-secondary text-sm">
+                            Eu li e concordo com os{' '}
+                            <button type="button" onClick={() => navigate('/terms')} className="text-brand-primary hover:underline">Termos de Uso</button>
+                            {' '}e a{' '}
+                            <button type="button" onClick={() => navigate('/privacy')} className="text-brand-primary hover:underline">Política de Privacidade</button>.
+                        </span>
+                    </label>
+                </div>
+            )}
             {isLogin && (
                 <div className="text-right mb-4">
                     <button
@@ -252,7 +277,7 @@ const AuthComponent: React.FC<AuthComponentProps> = ({ appConfig, defaultMode = 
               <button
                 className="bg-brand-primary hover:bg-brand-secondary text-black font-bold py-3 px-4 rounded-xl focus:outline-none focus:shadow-outline w-full disabled:opacity-50 transition-colors"
                 type="submit"
-                disabled={loading}
+                disabled={loading || (!isLogin && !agreedToTerms)} 
               >
                 {loading ? 'Carregando...' : (isLogin ? 'Entrar' : 'Cadastrar')}
               </button>
@@ -269,7 +294,7 @@ const AuthComponent: React.FC<AuthComponentProps> = ({ appConfig, defaultMode = 
               <button
                 type="button"
                 onClick={() => switchMode(isLogin ? 'signup' : 'login')}
-                className="font-bold text-brand-primary hover:text-brand-secondary ml-1"
+                className="font-bold text-brand-primary hover:text-brand-primary ml-1"
               >
                 {isLogin ? 'Cadastre-se' : 'Faça login'}
               </button>
