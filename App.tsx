@@ -2,7 +2,7 @@ import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { supabase } from './services/supabase';
 import type { Session } from '@supabase/supabase-js';
 import { getProfile, getAppConfig } from './services/api';
-import type { Role, AppConfig } from './types';
+import type { Role, AppConfig, Page } from './types';
 import AuthComponent from './components/Auth';
 import Sidebar from './components/Sidebar';
 import DashboardPage from './pages/DashboardPage';
@@ -15,7 +15,6 @@ import LandingPage from './pages/LandingPage';
 import TermsPage from './pages/TermsPage';
 import PrivacyPage from './pages/PrivacyPage';
 import CheckoutPage from './pages/CheckoutPage'; 
-import { Page } from './types';
 import { WalletIcon } from './components/icons/Icons';
 import Spinner from './components/Spinner';
 
@@ -71,23 +70,60 @@ const App: React.FC = () => {
     if (!mounted.current) return;
     console.log("[App.fetchUserAndProfile] Initiating fetch for session:", currentSession?.user?.id ? "authenticated" : "unauthenticated");
     setLoading(true); // Sempre setar loading como true ao iniciar a busca
+    
     if (currentSession) {
-      try {
-        const profileData = await getProfile(currentSession.user.id);
-        if (mounted.current) {
-            // If profileData exists but role is null, or if fetching fails, default to 'onboarding' for authenticated users.
-            // AuthComponent now explicitly sets role to 'onboarding' on signup, preventing premature 'basic'.
-            setUserRole(profileData?.role || 'onboarding');
-        }
-        console.log("[App.fetchUserAndProfile] User role fetched:", profileData?.role, "-> set to", profileData?.role || 'onboarding');
-      } catch (e) {
-        console.error("[App.fetchUserAndProfile] Error fetching user role", e);
-        if (mounted.current) setUserRole('onboarding'); // Default to 'onboarding' on error to prevent infinite loading.
-      } finally {
-        if (mounted.current) setLoading(false); // Finalizar loading após a busca (sucesso ou falha)
-        console.log("[App.fetchUserAndProfile] Loading set to false.");
+      let profileData = null;
+      let retries = 0;
+      const maxRetries = 5; 
+      const retryDelay = 700; // milliseconds
+
+      while (retries < maxRetries) {
+          try {
+              profileData = await getProfile(currentSession.user.id);
+              // If profile is found and role is not null, AND it's not 'basic' (meaning it's onboarding/pro/admin)
+              // OR if it's explicitly 'onboarding', we are good.
+              if (profileData && profileData.role && profileData.role !== 'basic') {
+                  console.log(`[App.fetchUserAndProfile] Profile with role '${profileData.role}' found after ${retries} tries.`);
+                  break; 
+              }
+              if (profileData && profileData.role === 'basic' && retries < maxRetries -1) {
+                  // If it's 'basic' but we expect 'onboarding' (new user), retry
+                  console.warn(`[App.fetchUserAndProfile] Profile role is 'basic' (unexpected for new user). Retrying in ${retryDelay}ms...`);
+                  await new Promise(res => setTimeout(res, retryDelay));
+              } else if (!profileData || profileData.role === null) {
+                  // Profile not found or role is null, retry assuming latency
+                  console.warn(`[App.fetchUserAndProfile] Profile data or role is null. Retrying in ${retryDelay}ms...`);
+                  await new Promise(res => setTimeout(res, retryDelay));
+              } else {
+                  // If it's 'basic' and max retries reached, or it's already a valid role, break.
+                  break;
+              }
+          } catch (e: any) {
+              console.error(`[App.fetchUserAndProfile] Error fetching profile (retry ${retries + 1}/${maxRetries}):`, e);
+              if (e.code === 'PGRST116') { // Profile not found (often happens for new users before initial profile record is created by Supabase trigger)
+                  console.warn("[App.fetchUserAndProfile] Profile record not found yet. Retrying in case of latency...");
+                  await new Promise(res => setTimeout(res, retryDelay));
+              } else {
+                  // Other errors, don't retry, just treat as missing profile and default to onboarding.
+                  profileData = null; 
+                  break;
+              }
+          }
+          retries++;
       }
-    } else {
+
+      if (mounted.current) {
+          let determinedRole: Role;
+          if (profileData && profileData.role && profileData.role !== 'basic') {
+              determinedRole = profileData.role;
+          } else {
+              determinedRole = 'onboarding'; // Default to onboarding if profile or role is still null/basic after retries
+          }
+          setUserRole(determinedRole);
+          console.log("[App.fetchUserAndProfile] Final determined user role:", determinedRole);
+      }
+
+    } else { // User is not authenticated
       if (mounted.current) {
         setUserRole(null);
         const currentPath = getLocationFromHash();
@@ -96,11 +132,11 @@ const App: React.FC = () => {
             console.log("[App.fetchUserAndProfile] Redirecting unauthenticated user to '/'");
             navigate('/');
         }
-        setLoading(false); // Finalizar loading para usuários deslogados
-        console.log("[App.fetchUserAndProfile] Loading set to false for unauthenticated user.");
       }
     }
-  }, [navigate]); // navigate é uma dependência
+    if (mounted.current) setLoading(false); // Finalizar loading após a busca (sucesso ou falha, autenticado ou não)
+    console.log("[App.fetchUserAndProfile] Loading set to false.");
+  }, [navigate]); 
 
   useEffect(() => {
     mounted.current = true; 
@@ -261,6 +297,52 @@ const App: React.FC = () => {
     }
   };
   
+  // NOVO: Função para renderizar o layout principal do aplicativo (com sidebar)
+  const renderMainAppLayout = (currentPage: Page) => (
+    <div className="font-sans h-[100dvh] bg-background text-text-primary flex flex-col">
+        <header className="md:hidden flex-none h-16 bg-card border-b border-border z-30 flex items-center justify-end px-4 shadow-sm relative">
+                <div className="absolute left-1/2 -translate-x-1/2 flex items-center">
+                {appConfig?.site_logo ? (
+                    <img src={appConfig.site_logo} alt="Logo" className="h-12 w-12 object-contain" />
+                ) : (
+                    <WalletIcon className="h-12 w-12 text-brand-primary" />
+                )}
+                </div>
+                <button 
+                onClick={() => setIsMobileMenuOpen(true)}
+                className="text-text-primary font-bold bg-white/5 px-4 py-2 rounded-lg hover:bg-white/10 z-10"
+                >
+                    Menu
+                </button>
+        </header>
+
+        <header className="hidden md:flex flex-none h-16 bg-card border-b border-border z-30 items-center justify-center shadow-md">
+                <div className="flex items-center">
+                {appConfig?.site_logo ? (
+                    <img src={appConfig.site_logo} alt="Logo" className="h-12 w-12 object-contain" />
+                ) : (
+                    <WalletIcon className="h-12 w-12 text-brand-primary" />
+                )}
+                </div>
+        </header>
+
+        <div className="flex flex-1 overflow-hidden relative">
+            <Sidebar 
+                activePage={currentPage} 
+                navigate={navigate} 
+                userRole={userRole as Role} // userRole is guaranteed not null here
+                logoUrl={appConfig?.site_logo}
+                siteName={appConfig?.site_name}
+                isMobileOpen={isMobileMenuOpen}
+                setIsMobileOpen={setIsMobileMenuOpen}
+            />
+            <main className="flex-1 overflow-y-auto bg-background px-4 pt-4 sm:p-6 lg:p-8 w-full custom-scrollbar relative overscroll-behavior-y-contain pb-32 md:pb-8">
+                {renderInternalPageContent(location)}
+            </main>
+        </div>
+    </div>
+  );
+
   const handleCheckoutSuccess = async () => {
     if (session) {
       console.log("[App.handleCheckoutSuccess] Checkout completed. Navigating to /dashboard.");
@@ -280,6 +362,8 @@ const App: React.FC = () => {
       </div>
     );
   }
+
+  // --- Lógica de Roteamento ---
 
   // Rota 1: Usuários não autenticados
   if (!session) {
@@ -303,97 +387,59 @@ const App: React.FC = () => {
           default:
               console.log("[App] Unauthenticated user trying to access restricted path. Redirecting to '/'.");
               navigate('/');
-              return null;
+              return null; // Retorna null para que a próxima renderização já seja com o novo location
       }
   }
 
-  // Rota 2: Usuário autenticado com role definida
+  // Rota 2: Usuário autenticado (com session e userRole definidos)
   if (session && userRole) {
       console.log(`[App] User ${session.user.id} is authenticated with role '${userRole}'. Current location: '${location}'.`);
       
-      // Se um usuário autenticado está em uma rota pública de autenticação, redirecionar.
-      if (['/', '/login', '/signup'].includes(location)) {
-          if (userRole === 'onboarding') {
-              console.log("[App] Authenticated 'onboarding' user on public auth path. Redirecting to '/checkout'.");
-              navigate('/checkout');
-              return null;
-          } else {
+      let targetLocation = location; // A localização que vamos tentar renderizar
+
+      // Redirecionamento para usuários 'onboarding' ou em rotas públicas de autenticação
+      const isPublicAuthPath = ['/', '/login', '/signup'].includes(location);
+
+      if (userRole === 'onboarding') {
+          if (isPublicAuthPath || location !== '/checkout') {
+              console.log("[App] Authenticated 'onboarding' user on public path or restricted path. Redirecting to '/checkout'.");
+              targetLocation = '/checkout';
+              if (location !== targetLocation) {
+                  navigate(targetLocation);
+              }
+          }
+      } else { // userRole is 'basic', 'pro', or 'admin'
+          if (isPublicAuthPath) {
               console.log("[App] Authenticated user with valid role on public auth path. Redirecting to '/dashboard'.");
-              navigate('/dashboard');
-              return null;
+              targetLocation = '/dashboard';
+              if (location !== targetLocation) {
+                  navigate(targetLocation);
+              }
           }
       }
 
-      // NOVO: Força usuários 'onboarding' para a página de checkout
-      if (userRole === 'onboarding' && location !== '/checkout') {
-          console.log("[App] Authenticated 'onboarding' user attempting to access restricted path. Redirecting to '/checkout'.");
-          navigate('/checkout');
-          return null;
-      }
-
-      // Lidar com páginas específicas acessíveis a todos os usuários autenticados (incluindo 'onboarding')
-      if (location === '/checkout') {
-         console.log("[App] Authenticated user accessing '/checkout'. Displaying checkout page.");
-         return <CheckoutPage user={session.user} appConfig={appConfig} onSuccess={handleCheckoutSuccess} />;
-      }
-      if (location === '/terms') {
-        return <TermsPage appConfig={appConfig} onBack={() => navigate('/dashboard')} />;
-      }
-      if (location === '/privacy') {
-        return <PrivacyPage appConfig={appConfig} onBack={() => navigate('/dashboard')} />;
-      }
-
-      // FIX: Só renderiza a estrutura principal do aplicativo se o usuário NÃO for 'onboarding'
-      if (userRole !== 'onboarding') { 
-          console.log("[App] Rendering main application for authenticated user with valid role (not onboarding).");
-          return (
-            <div className="font-sans h-[100dvh] bg-background text-text-primary flex flex-col">
-                <header className="md:hidden flex-none h-16 bg-card border-b border-border z-30 flex items-center justify-end px-4 shadow-sm relative">
-                        <div className="absolute left-1/2 -translate-x-1/2 flex items-center">
-                        {appConfig?.site_logo ? (
-                            <img src={appConfig.site_logo} alt="Logo" className="h-12 w-12 object-contain" />
-                        ) : (
-                            <WalletIcon className="h-12 w-12 text-brand-primary" />
-                        )}
-                        </div>
-                        <button 
-                        onClick={() => setIsMobileMenuOpen(true)}
-                        className="text-text-primary font-bold bg-white/5 px-4 py-2 rounded-lg hover:bg-white/10 z-10"
-                        >
-                            Menu
-                        </button>
-                </header>
-
-                <header className="hidden md:flex flex-none h-16 bg-card border-b border-border z-30 items-center justify-center shadow-md">
-                        <div className="flex items-center">
-                        {appConfig?.site_logo ? (
-                            <img src={appConfig.site_logo} alt="Logo" className="h-12 w-12 object-contain" />
-                        ) : (
-                            <WalletIcon className="h-12 w-12 text-brand-primary" />
-                        )}
-                        </div>
-                </header>
-
-                <div className="flex flex-1 overflow-hidden relative">
-                    <Sidebar 
-                        activePage={getCurrentPageFromLocation(location)} // Passa a página atual derivada da URL
-                        navigate={navigate} // Passa a função navigate para o Sidebar
-                        userRole={userRole} 
-                        logoUrl={appConfig?.site_logo}
-                        siteName={appConfig?.site_name}
-                        isMobileOpen={isMobileMenuOpen}
-                        setIsMobileOpen={setIsMobileMenuOpen}
-                    />
-                    
-                    <main className="flex-1 overflow-y-auto bg-background px-4 pt-4 sm:p-6 lg:p-8 w-full custom-scrollbar relative overscroll-behavior-y-contain pb-32 md:pb-8">
-                        {renderInternalPageContent(location)} {/* Renderiza o conteúdo da página interna baseado na location */}
-                    </main>
-                </div>
-            </div>
-          );
+      // Agora, renderiza o componente baseado na targetLocation final
+      switch (targetLocation) {
+          case '/checkout':
+              return <CheckoutPage user={session.user} appConfig={appConfig} onSuccess={handleCheckoutSuccess} />;
+          case '/terms':
+              return <TermsPage appConfig={appConfig} onBack={() => navigate('/dashboard')} />;
+          case '/privacy':
+              return <PrivacyPage appConfig={appConfig} onBack={() => navigate('/dashboard')} />;
+          default:
+              // Se o usuário não é 'onboarding', renderiza o layout principal.
+              // Se fosse 'onboarding', já teria sido redirecionado e renderizado '/checkout'.
+              if (userRole !== 'onboarding') {
+                  return renderMainAppLayout(getCurrentPageFromLocation(targetLocation));
+              }
+              // Caso contrário, deve ser um estado de transição ou erro
+              console.warn("[App] Authenticated user in unexpected state. Displaying spinner.", { userRole, location: targetLocation });
+              return <Spinner />;
       }
   }
 
+  // Fallback final: se por algum motivo não cair em nenhuma das condições acima,
+  // exibe um spinner. Isso deve ser evitado com a lógica de roteamento robusta.
   console.log("[App] Fallback: Displaying spinner. This state should ideally not be reached.");
   return <Spinner />;
 };
