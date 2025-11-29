@@ -21,7 +21,19 @@ import Spinner from './components/Spinner';
 const INACTIVITY_LIMIT = 15 * 60 * 1000; // 15 minutes in milliseconds
 
 // Helper para obter a localização do hash da URL
-const getLocationFromHash = () => window.location.hash.substring(1) || '/';
+const getLocationFromHash = () => {
+    // Get the part after #
+    let path = window.location.hash.substring(1); 
+    // If it's empty, default to '/'
+    if (!path) {
+        return '/';
+    }
+    // Ensure it starts with a '/'
+    if (!path.startsWith('/')) {
+        path = '/' + path;
+    }
+    return path;
+};
 
 const App: React.FC = () => {
   const [session, setSession] = useState<Session | null>(null);
@@ -36,13 +48,12 @@ const App: React.FC = () => {
 
   // Função de navegação via Hash
   const navigate = (path: string) => {
-    // A mudança do hash aciona o listener 'hashchange' que atualiza o estado
     if (`#${path}` !== window.location.hash) {
       window.location.hash = path;
     }
   };
   
-  // Listener para o evento 'hashchange' (navegação por setas do navegador)
+  // Listener para o evento 'hashchange'
   useEffect(() => {
     const handleHashChange = () => {
       setLocation(getLocationFromHash());
