@@ -73,9 +73,8 @@ const App: React.FC = () => {
       try {
         const profileData = await getProfile(currentSession.user.id);
         if (mounted.current) {
-            // Treat 'onboarding' role as 'basic' for navigation purposes.
-            // New signups now go directly to 'basic' role, but this handles legacy or direct DB manipulation.
-            setUserRole(profileData?.role === 'onboarding' ? 'basic' : profileData?.role || null);
+            // FIX: Revert 'onboarding' role to its actual value, do not map to 'basic' here.
+            setUserRole(profileData?.role || null);
         }
         console.log("[App.fetchUserAndProfile] User role fetched:", profileData?.role);
       } catch (e) {
@@ -209,8 +208,9 @@ const App: React.FC = () => {
 
   const renderPage = () => {
     // Only render internal pages if session and userRole are ready and not null
-    if (!session || !userRole) { // Simplified check
-        console.log("[App.renderPage] Not rendering internal page: session or role not ready.");
+    // FIX: This function will now only be called if userRole is NOT 'onboarding'
+    if (!session || !userRole || userRole === 'onboarding') { 
+        console.log("[App.renderPage] Not rendering internal page: session, role not ready, or user is 'onboarding'.");
         return null; 
     }
 
@@ -238,25 +238,25 @@ const App: React.FC = () => {
       setLoading(true);
       try {
           const profile = await getProfile(session.user.id);
-          if (profile && profile.role && profile.role !== 'onboarding') {
+          if (profile && profile.role) {
             if (mounted.current) {
+                // FIX: Set actual role from DB, App component logic will handle redirection if still 'onboarding'
                 setUserRole(profile.role);
-                console.log("[App.handleCheckoutSuccess] Profile updated to non-onboarding role. Navigating to /dashboard.");
+                console.log("[App.handleCheckoutSuccess] Profile updated. Navigating to /dashboard.");
                 navigate('/dashboard');
             }
           } else {
-              console.warn("[App.handleCheckoutSuccess] Role was not updated to a paid plan after checkout. Staying on checkout flow or navigating to dashboard if 'onboarding' is now allowed.");
+              console.warn("[App.handleCheckoutSuccess] Role was not updated after checkout. Navigating to /dashboard anyway.");
               if (mounted.current) {
-                // If it's still 'onboarding', treat as 'basic' as per the new rule
-                setUserRole(profile?.role === 'onboarding' ? 'basic' : profile?.role || null); 
-                navigate('/dashboard'); // Go to dashboard, even if role is 'onboarding' (now treated as basic)
+                setUserRole(profile?.role || null); 
+                navigate('/dashboard'); 
               }
           }
       } catch (e) {
           console.error("[App.handleCheckoutSuccess] Erro ao atualizar role após checkout", e);
           if (mounted.current) {
             setUserRole(null); 
-            navigate('/dashboard'); // In case of error, redirect to dashboard.
+            navigate('/dashboard'); 
           }
       } finally {
           if (mounted.current) setLoading(false);
@@ -301,21 +301,35 @@ const App: React.FC = () => {
       }
   }
 
-  // Rota 2: Usuário autenticado com role definida (basic, pro, admin, ou 'onboarding' que agora é tratada como 'basic')
-  if (session && userRole) { // Simplified condition
+  // Rota 2: Usuário autenticado com role definida
+  if (session && userRole) {
       console.log(`[App] User ${session.user.id} is authenticated with role '${userRole}'. Current location: '${location}'.`);
-      if (['/', '/login', '/signup'].includes(location)) {
-        console.log("[App] Authenticated user on public auth path. Redirecting to '/dashboard'.");
-        navigate('/dashboard');
-        return null;
-      }
       
-      // Allow authenticated users to access checkout if they want (e.g., upgrade)
-      if (location === '/checkout') {
-         console.log("[App] Authenticated user with valid role accessing '/checkout'. Displaying checkout page.");
-         return <CheckoutPage user={session.user} appConfig={appConfig} onSuccess={handleCheckoutSuccess} />;
+      // If an authenticated user is on a public auth path, redirect them to a valid internal path based on their role.
+      if (['/', '/login', '/signup'].includes(location)) {
+          if (userRole === 'onboarding') {
+              console.log("[App] Authenticated 'onboarding' user on public auth path. Redirecting to '/checkout'.");
+              navigate('/checkout');
+              return null;
+          } else {
+              console.log("[App] Authenticated user with valid role on public auth path. Redirecting to '/dashboard'.");
+              navigate('/dashboard');
+              return null;
+          }
       }
 
+      // FIX: Explicitly force 'onboarding' users to the checkout page.
+      if (userRole === 'onboarding' && location !== '/checkout') {
+          console.log("[App] Authenticated 'onboarding' user attempting to access restricted path. Redirecting to '/checkout'.");
+          navigate('/checkout');
+          return null;
+      }
+
+      // Handle rendering for specific pages accessible to all authenticated users (even 'onboarding' if it's not the main app)
+      if (location === '/checkout') {
+         console.log("[App] Authenticated user accessing '/checkout'. Displaying checkout page.");
+         return <CheckoutPage user={session.user} appConfig={appConfig} onSuccess={handleCheckoutSuccess} />;
+      }
       if (location === '/terms') {
         return <TermsPage appConfig={appConfig} onBack={() => navigate('/dashboard')} />;
       }
@@ -323,52 +337,55 @@ const App: React.FC = () => {
         return <PrivacyPage appConfig={appConfig} onBack={() => navigate('/dashboard')} />;
       }
 
-      console.log("[App] Rendering main application for authenticated user with valid role.");
-      return (
-        <div className="font-sans h-[100dvh] bg-background text-text-primary flex flex-col">
-            <header className="md:hidden flex-none h-16 bg-card border-b border-border z-30 flex items-center justify-end px-4 shadow-sm relative">
-                    <div className="absolute left-1/2 -translate-x-1/2 flex items-center">
-                    {appConfig?.site_logo ? (
-                        <img src={appConfig.site_logo} alt="Logo" className="h-12 w-12 object-contain" />
-                    ) : (
-                        <WalletIcon className="h-12 w-12 text-brand-primary" />
-                    )}
-                    </div>
-                    <button 
-                    onClick={() => setIsMobileMenuOpen(true)}
-                    className="text-text-primary font-bold bg-white/5 px-4 py-2 rounded-lg hover:bg-white/10 z-10"
-                    >
-                        Menu
-                    </button>
-            </header>
+      // FIX: Only render the main application structure if the user is NOT 'onboarding'
+      if (userRole !== 'onboarding') { 
+          console.log("[App] Rendering main application for authenticated user with valid role (not onboarding).");
+          return (
+            <div className="font-sans h-[100dvh] bg-background text-text-primary flex flex-col">
+                <header className="md:hidden flex-none h-16 bg-card border-b border-border z-30 flex items-center justify-end px-4 shadow-sm relative">
+                        <div className="absolute left-1/2 -translate-x-1/2 flex items-center">
+                        {appConfig?.site_logo ? (
+                            <img src={appConfig.site_logo} alt="Logo" className="h-12 w-12 object-contain" />
+                        ) : (
+                            <WalletIcon className="h-12 w-12 text-brand-primary" />
+                        )}
+                        </div>
+                        <button 
+                        onClick={() => setIsMobileMenuOpen(true)}
+                        className="text-text-primary font-bold bg-white/5 px-4 py-2 rounded-lg hover:bg-white/10 z-10"
+                        >
+                            Menu
+                        </button>
+                </header>
 
-            <header className="hidden md:flex flex-none h-16 bg-card border-b border-border z-30 items-center justify-center shadow-md">
-                    <div className="flex items-center">
-                    {appConfig?.site_logo ? (
-                        <img src={appConfig.site_logo} alt="Logo" className="h-12 w-12 object-contain" />
-                    ) : (
-                        <WalletIcon className="h-12 w-12 text-brand-primary" />
-                    )}
-                    </div>
-            </header>
+                <header className="hidden md:flex flex-none h-16 bg-card border-b border-border z-30 items-center justify-center shadow-md">
+                        <div className="flex items-center">
+                        {appConfig?.site_logo ? (
+                            <img src={appConfig.site_logo} alt="Logo" className="h-12 w-12 object-contain" />
+                        ) : (
+                            <WalletIcon className="h-12 w-12 text-brand-primary" />
+                        )}
+                        </div>
+                </header>
 
-            <div className="flex flex-1 overflow-hidden relative">
-                <Sidebar 
-                    activePage={activePage} 
-                    setActivePage={setActivePage} 
-                    userRole={userRole} 
-                    logoUrl={appConfig?.site_logo}
-                    siteName={appConfig?.site_name}
-                    isMobileOpen={isMobileMenuOpen}
-                    setIsMobileOpen={setIsMobileMenuOpen}
-                />
-                
-                <main className="flex-1 overflow-y-auto bg-background px-4 pt-4 sm:p-6 lg:p-8 w-full custom-scrollbar relative overscroll-behavior-y-contain pb-32 md:pb-8">
-                    {renderPage()}
-                </main>
+                <div className="flex flex-1 overflow-hidden relative">
+                    <Sidebar 
+                        activePage={activePage} 
+                        setActivePage={setActivePage} 
+                        userRole={userRole} 
+                        logoUrl={appConfig?.site_logo}
+                        siteName={appConfig?.site_name}
+                        isMobileOpen={isMobileMenuOpen}
+                        setIsMobileOpen={setIsMobileMenuOpen}
+                    />
+                    
+                    <main className="flex-1 overflow-y-auto bg-background px-4 pt-4 sm:p-6 lg:p-8 w-full custom-scrollbar relative overscroll-behavior-y-contain pb-32 md:pb-8">
+                        {renderPage()}
+                    </main>
+                </div>
             </div>
-        </div>
-      );
+          );
+      }
   }
 
   console.log("[App] Fallback: Displaying spinner. This state should ideally not be reached.");
