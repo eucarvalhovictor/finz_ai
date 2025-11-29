@@ -2,8 +2,13 @@ import React, { useState } from 'react';
 import { supabase } from '../services/supabase';
 import { WalletIcon } from './icons/Icons';
 import AnimatedBackground from './AnimatedBackground';
+import { AppConfig } from '../types'; // Import AppConfig type
 
-const AuthComponent: React.FC = () => {
+interface AuthComponentProps {
+    appConfig?: AppConfig | null;
+}
+
+const AuthComponent: React.FC<AuthComponentProps> = ({ appConfig }) => {
   const [loading, setLoading] = useState(false);
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -12,6 +17,7 @@ const AuthComponent: React.FC = () => {
   const [lastName, setLastName] = useState('');
 
   const [isLogin, setIsLogin] = useState(true);
+  const [isForgotPasswordMode, setIsForgotPasswordMode] = useState(false); // NOVO: Estado para "Esqueceu a Senha"
   const [error, setError] = useState<string | null>(null);
   const [message, setMessage] = useState<string | null>(null);
 
@@ -52,20 +58,102 @@ const AuthComponent: React.FC = () => {
     }
   };
 
+  // NOVO: Handler para recuperar senha
+  const handleForgotPassword = async (event: React.FormEvent) => {
+    event.preventDefault();
+    setLoading(true);
+    setError(null);
+    setMessage(null);
+
+    try {
+      const { error } = await supabase.auth.resetPasswordForEmail(email, {
+        redirectTo: window.location.origin + window.location.pathname, // Redirect back to this page
+      });
+      if (error) throw error;
+      setMessage('Link de recuperação de senha enviado! Verifique seu e-mail.');
+    } catch (error: any) {
+      setError(error.error_description || error.message);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // Reset states when switching between modes
+  const switchMode = (mode: 'login' | 'signup' | 'forgotPassword') => {
+      setError(null);
+      setMessage(null);
+      setEmail('');
+      setPassword('');
+      setConfirmPassword('');
+      setFirstName('');
+      setLastName('');
+
+      if (mode === 'login') {
+          setIsLogin(true);
+          setIsForgotPasswordMode(false);
+      } else if (mode === 'signup') {
+          setIsLogin(false);
+          setIsForgotPasswordMode(false);
+      } else if (mode === 'forgotPassword') {
+          setIsLogin(false); // Not login mode
+          setIsForgotPasswordMode(true);
+      }
+  }
+
   return (
     <div className="min-h-screen bg-background flex flex-col justify-center items-center p-4 relative overflow-hidden">
       <AnimatedBackground />
       <div className="w-full max-w-md z-10">
         <div className="text-center mb-8">
-          <WalletIcon className="h-12 w-12 text-brand-primary mx-auto" />
-          <h1 className="text-3xl font-bold text-text-primary mt-4">Bem-vindo ao FinzAI</h1>
+          {appConfig?.site_logo ? (
+              <img src={appConfig.site_logo} alt="Logo" className="h-12 w-12 object-contain mx-auto" />
+          ) : (
+              <WalletIcon className="h-12 w-12 text-brand-primary mx-auto" />
+          )}
+          <h1 className="text-3xl font-bold text-text-primary mt-4">Bem-Vindo ao Finz.</h1>
           <p className="text-text-secondary mt-2">
-            {isLogin ? 'Faça login para acessar seu dashboard.' : 'Crie sua conta para começar.'}
+            {isForgotPasswordMode ? 'Recupere sua senha.' : (isLogin ? 'Faça login para acessar seu dashboard.' : 'Crie sua conta para começar.')}
           </p>
         </div>
         
         <div className="bg-card/80 backdrop-blur-sm p-8 rounded-2xl border border-border">
-          <form onSubmit={handleAuth}>
+          {isForgotPasswordMode ? ( // NOVO: Formulário de recuperação de senha
+            <form onSubmit={handleForgotPassword}>
+              <div className="mb-4">
+                <label className="block text-text-secondary text-sm font-bold mb-2" htmlFor="email">
+                  E-mail
+                </label>
+                <input
+                  className="w-full px-4 py-3 text-text-primary bg-background border border-border rounded-xl focus:outline-none focus:ring-2 focus:ring-brand-primary"
+                  id="email"
+                  type="email"
+                  placeholder="seu@email.com"
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                  required
+                />
+              </div>
+              <div className="flex items-center justify-between">
+                <button
+                  className="bg-brand-primary hover:bg-brand-secondary text-black font-bold py-3 px-4 rounded-xl focus:outline-none focus:shadow-outline w-full disabled:opacity-50 transition-colors"
+                  type="submit"
+                  disabled={loading}
+                >
+                  {loading ? 'Enviando...' : 'Enviar link de recuperação'}
+                </button>
+              </div>
+              <p className="text-center text-text-secondary text-sm mt-6">
+                Lembrou da senha?
+                <button
+                  onClick={() => switchMode('login')}
+                  className="font-bold text-brand-primary hover:text-brand-secondary ml-1"
+                >
+                  Faça login
+                </button>
+              </p>
+            </form>
+          ) : ( // Formulários de Login/Cadastro existentes
+            <form onSubmit={handleAuth}>
             {!isLogin && (
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
                      <div>
@@ -131,6 +219,17 @@ const AuthComponent: React.FC = () => {
                     />
                 </div>
             )}
+            {isLogin && ( // NOVO: Link "Esqueceu sua senha?"
+                <div className="text-right mb-4">
+                    <button
+                        type="button"
+                        onClick={() => switchMode('forgotPassword')}
+                        className="font-bold text-text-secondary hover:text-brand-primary text-sm"
+                    >
+                        Esqueceu sua senha?
+                    </button>
+                </div>
+            )}
             <div className="flex items-center justify-between">
               <button
                 className="bg-brand-primary hover:bg-brand-secondary text-black font-bold py-3 px-4 rounded-xl focus:outline-none focus:shadow-outline w-full disabled:opacity-50 transition-colors"
@@ -141,23 +240,22 @@ const AuthComponent: React.FC = () => {
               </button>
             </div>
           </form>
+          )}
 
           {error && <p className="mt-4 text-center text-red-400 text-sm">{error}</p>}
           {message && <p className="mt-4 text-center text-green-400 text-sm">{message}</p>}
 
-          <p className="text-center text-text-secondary text-sm mt-6">
-            {isLogin ? 'Não tem uma conta?' : 'Já tem uma conta?'}
-            <button
-              onClick={() => {
-                setIsLogin(!isLogin);
-                setError(null);
-                setMessage(null);
-              }}
-              className="font-bold text-brand-primary hover:text-brand-secondary ml-1"
-            >
-              {isLogin ? 'Cadastre-se' : 'Faça login'}
-            </button>
-          </p>
+          {!isForgotPasswordMode && ( // Esconde esta seção no modo "Esqueceu a Senha"
+            <p className="text-center text-text-secondary text-sm mt-6">
+              {isLogin ? 'Não tem uma conta?' : 'Já tem uma conta?'}
+              <button
+                onClick={() => switchMode(isLogin ? 'signup' : 'login')}
+                className="font-bold text-brand-primary hover:text-brand-secondary ml-1"
+              >
+                {isLogin ? 'Cadastre-se' : 'Faça login'}
+              </button>
+            </p>
+          )}
         </div>
       </div>
     </div>

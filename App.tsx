@@ -214,7 +214,7 @@ const App: React.FC = () => {
   return (
     <div className="font-sans h-[100dvh] bg-background text-text-primary flex flex-col overflow-hidden">
       {!session ? (
-        <AuthComponent />
+        <AuthComponent appConfig={appConfig} />
       ) : (
         <>
             {/* Mobile Header - Visible only on mobile */}
