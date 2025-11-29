@@ -74,9 +74,13 @@ const AuthComponent: React.FC<AuthComponentProps> = ({ appConfig, defaultMode = 
         
         if (data.user) {
             console.log("AuthComponent: User signed up successfully.");
-            // Role will be handled by App.tsx, defaulting to 'onboarding' for new users.
-            // The CheckoutPage will then set the actual plan role ('basic' or 'pro').
-            // Do NOT update profile role or navigate here. App.tsx's onAuthStateChange will handle routing.
+            // Explicitly set the role to 'onboarding' in the database right after signup.
+            // This ensures that the user is forced through the checkout flow,
+            // even if the Supabase 'profiles' table has a default role (e.g., 'basic').
+            await updateProfile(data.user.id, { role: 'onboarding' });
+            console.log("AuthComponent: User role set to 'onboarding' in DB.");
+            // The App.tsx's onAuthStateChange will now correctly fetch this 'onboarding' role
+            // and redirect to checkout.
         } else {
              setMessage('Cadastro realizado! Verifique seu e-mail para confirmação.');
         }

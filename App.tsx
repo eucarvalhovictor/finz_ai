@@ -36,7 +36,6 @@ const App: React.FC = () => {
   const [session, setSession] = useState<Session | null>(null);
   const [userRole, setUserRole] = useState<Role | null>(null);
   const [loading, setLoading] = useState(true);
-  // const [activePage, setActivePage] = useState<Page>('dashboard'); // REMOVIDO: Agora a página é derivada do location
   const [appConfig, setAppConfig] = useState<AppConfig | null>(null);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   
@@ -48,22 +47,25 @@ const App: React.FC = () => {
     console.log(`[App.navigate] Attempting to set hash to '${newPath}'. Current hash: '${window.location.hash}'`);
     if (`#${newPath}` !== window.location.hash) {
       window.location.hash = newPath;
-    } else {
-      setLocation(newPath); // Still update internal state even if hash didn't change
-    }
+    } 
+    // Always update internal state immediately, even if hash didn't change (e.g., if already on the path).
+    // This ensures consistency and helps prevent infinite re-renders or missed state updates.
+    setLocation(newPath); 
   }, []); 
   
   useEffect(() => {
+    // This useEffect should only set up the hashchange listener once.
+    // The listener's callback should directly update `location` state.
     const handleHashChange = () => {
       const newLocation = getLocationFromHash();
-      console.log(`[App.handleHashChange] Hash changed from '${location}' to '${newLocation}'`);
-      setLocation(newLocation);
+      console.log(`[App.handleHashChange] Hash changed to '${newLocation}'`);
+      setLocation(newLocation); // This update will trigger a re-render
     };
     window.addEventListener('hashchange', handleHashChange);
     return () => {
       window.removeEventListener('hashchange', handleHashChange);
     };
-  }, [location]); // Dependência adicionada para registrar 'location' corretamente
+  }, []); // NO DEPENDENCIES here. Listener is set up once.
 
   const fetchUserAndProfile = useCallback(async (currentSession: Session | null) => {
     if (!mounted.current) return;
@@ -73,10 +75,9 @@ const App: React.FC = () => {
       try {
         const profileData = await getProfile(currentSession.user.id);
         if (mounted.current) {
-            // FIX: Revert 'onboarding' role to its actual value, do not map to 'basic' here.
             // If profileData exists but role is null, or if fetching fails, default to 'onboarding' for authenticated users.
-            // This ensures the app handles new users or users with transient profile fetch issues and directs them to a path.
-            setUserRole(profileData?.role || 'onboarding'); // Default to 'onboarding' if role is not explicitly set or fetch fails.
+            // AuthComponent now explicitly sets role to 'onboarding' on signup, preventing premature 'basic'.
+            setUserRole(profileData?.role || 'onboarding');
         }
         console.log("[App.fetchUserAndProfile] User role fetched:", profileData?.role, "-> set to", profileData?.role || 'onboarding');
       } catch (e) {
