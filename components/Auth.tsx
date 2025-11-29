@@ -73,9 +73,9 @@ const AuthComponent: React.FC<AuthComponentProps> = ({ appConfig, defaultMode = 
         if (error) throw error;
         
         if (data.user) {
-            console.log("AuthComponent: User signed up successfully. Updating profile role to 'onboarding'.");
-            await updateProfile(data.user.id, { role: 'onboarding' }); 
-            navigate('/checkout'); 
+            console.log("AuthComponent: User signed up successfully. Updating profile role to 'basic'. Redirecting to dashboard.");
+            await updateProfile(data.user.id, { role: 'basic' }); // New users start as 'basic'
+            navigate('/dashboard'); // Redirect to dashboard
         } else {
              setMessage('Cadastro realizado! Verifique seu e-mail para confirmação.');
         }

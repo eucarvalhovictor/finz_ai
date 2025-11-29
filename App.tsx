@@ -72,7 +72,11 @@ const App: React.FC = () => {
     if (currentSession) {
       try {
         const profileData = await getProfile(currentSession.user.id);
-        if (mounted.current) setUserRole(profileData?.role || null);
+        if (mounted.current) {
+            // Treat 'onboarding' role as 'basic' for navigation purposes.
+            // New signups now go directly to 'basic' role, but this handles legacy or direct DB manipulation.
+            setUserRole(profileData?.role === 'onboarding' ? 'basic' : profileData?.role || null);
+        }
         console.log("[App.fetchUserAndProfile] User role fetched:", profileData?.role);
       } catch (e) {
         console.error("[App.fetchUserAndProfile] Error fetching user role", e);
@@ -204,8 +208,9 @@ const App: React.FC = () => {
   }, [session, navigate]); 
 
   const renderPage = () => {
-    if (!session || !userRole || userRole === 'onboarding') {
-        console.log("[App.renderPage] Not rendering internal page: session or role not ready/onboarding.");
+    // Only render internal pages if session and userRole are ready and not null
+    if (!session || !userRole) { // Simplified check
+        console.log("[App.renderPage] Not rendering internal page: session or role not ready.");
         return null; 
     }
 
@@ -240,17 +245,18 @@ const App: React.FC = () => {
                 navigate('/dashboard');
             }
           } else {
-              console.warn("[App.handleCheckoutSuccess] Role was not updated to a paid plan after checkout. Staying on checkout flow.");
+              console.warn("[App.handleCheckoutSuccess] Role was not updated to a paid plan after checkout. Staying on checkout flow or navigating to dashboard if 'onboarding' is now allowed.");
               if (mounted.current) {
-                setUserRole(profile?.role || null); // Atualiza o estado local mesmo que seja onboarding/null
-                navigate('/checkout'); // Garante que fique no checkout se a atualização falhou
+                // If it's still 'onboarding', treat as 'basic' as per the new rule
+                setUserRole(profile?.role === 'onboarding' ? 'basic' : profile?.role || null); 
+                navigate('/dashboard'); // Go to dashboard, even if role is 'onboarding' (now treated as basic)
               }
           }
       } catch (e) {
           console.error("[App.handleCheckoutSuccess] Erro ao atualizar role após checkout", e);
           if (mounted.current) {
-            setUserRole(null); // Em caso de erro, força o estado de sem role para tentar novamente
-            navigate('/checkout'); // Em caso de erro, volta para o checkout
+            setUserRole(null); 
+            navigate('/dashboard'); // In case of error, redirect to dashboard.
           }
       } finally {
           if (mounted.current) setLoading(false);
@@ -295,20 +301,8 @@ const App: React.FC = () => {
       }
   }
 
-  // Rota 2: Usuário autenticado, mas em onboarding (precisa fazer checkout)
-  if (session && (!userRole || userRole === 'onboarding')) {
-      console.log(`[App] User ${session.user.id} is authenticated but has role '${userRole}'. Forcing checkout.`);
-      if (location === '/checkout') {
-          console.log("[App] Displaying CheckoutPage for user in onboarding state.");
-          return <CheckoutPage user={session.user} appConfig={appConfig} onSuccess={handleCheckoutSuccess} />;
-      }
-      console.log("[App] User in onboarding state is not on /checkout. Redirecting to /checkout.");
-      navigate('/checkout');
-      return null;
-  }
-
-  // Rota 3: Usuário autenticado e com plano definido (basic, pro, admin)
-  if (session && userRole && userRole !== 'onboarding') { 
+  // Rota 2: Usuário autenticado com role definida (basic, pro, admin, ou 'onboarding' que agora é tratada como 'basic')
+  if (session && userRole) { // Simplified condition
       console.log(`[App] User ${session.user.id} is authenticated with role '${userRole}'. Current location: '${location}'.`);
       if (['/', '/login', '/signup'].includes(location)) {
         console.log("[App] Authenticated user on public auth path. Redirecting to '/dashboard'.");
@@ -316,10 +310,9 @@ const App: React.FC = () => {
         return null;
       }
       
-      // Permitimos que o usuário acesse o checkout se quiser (ex: upgrade),
-      // mas o fluxo de onboarding forçado é tratado na Rota 2.
+      // Allow authenticated users to access checkout if they want (e.g., upgrade)
       if (location === '/checkout') {
-         console.log("[App] Authenticated user with paid plan accessing '/checkout'. Displaying checkout page.");
+         console.log("[App] Authenticated user with valid role accessing '/checkout'. Displaying checkout page.");
          return <CheckoutPage user={session.user} appConfig={appConfig} onSuccess={handleCheckoutSuccess} />;
       }
 
