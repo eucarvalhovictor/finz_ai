@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import AnimatedBackground from '../components/AnimatedBackground';
 import { AppConfig, AuthMode } from '../types';
 import {
@@ -9,6 +9,8 @@ import {
     ShieldIcon,
     PlusIcon,
     ChevronRightIcon,
+    StarIcon,
+    CheckIcon
 } from '../components/icons/Icons';
 
 interface LandingPageProps {
@@ -16,242 +18,415 @@ interface LandingPageProps {
     onStartAuth: (mode: AuthMode) => void;
 }
 
-// Mock Data para as novas seções
+// Hook for scroll animation
+const useOnScreen = (ref: React.RefObject<HTMLElement | null>, rootMargin = "0px") => {
+    const [isIntersecting, setIntersecting] = useState(false);
+    useEffect(() => {
+        const observer = new IntersectionObserver(
+            ([entry]) => {
+                if (entry.isIntersecting) {
+                    setIntersecting(true);
+                    observer.disconnect(); // Only trigger once
+                }
+            },
+            { rootMargin }
+        );
+        if (ref.current) {
+            observer.observe(ref.current);
+        }
+        return () => {
+            observer.disconnect();
+        };
+    }, [ref, rootMargin]);
+    return isIntersecting;
+};
+
+const RevealOnScroll: React.FC<{ children: React.ReactNode; className?: string; delay?: number }> = ({ children, className = "", delay = 0 }) => {
+    const ref = useRef<HTMLDivElement>(null);
+    const isVisible = useOnScreen(ref, "-100px");
+
+    return (
+        <div
+            ref={ref}
+            className={`transition-all duration-1000 ease-out transform ${isVisible ? "opacity-100 translate-y-0" : "opacity-0 translate-y-10"} ${className}`}
+            style={{ transitionDelay: `${delay}ms` }}
+        >
+            {children}
+        </div>
+    );
+};
+
+
+// Mock Data
 const benefits = [
     {
         icon: <DashboardIcon className="h-8 w-8 text-brand-primary mx-auto mb-3" />,
         title: 'Controle Total',
-        description: 'Gerencie suas receitas e despesas em um único lugar, de forma intuitiva e eficiente.',
+        description: 'Gerencie receitas e despesas em um painel unificado, intuitivo e poderoso.',
     },
     {
         icon: <TrendingUp className="h-8 w-8 text-brand-primary mx-auto mb-3" />,
-        title: 'Crescimento Inteligente',
-        description: 'Visualize seus hábitos de gastos e identifique oportunidades para economizar e investir melhor.',
+        title: 'Crescimento Real',
+        description: 'Identifique gargalos financeiros e otimize seus gastos para investir mais.',
     },
     {
         icon: <CreditCardIcon className="h-8 w-8 text-brand-primary mx-auto mb-3" />,
-        title: 'Cartões na Mão',
-        description: 'Acompanhe seus cartões de crédito, limites e faturas, evitando surpresas no fim do mês.',
+        title: 'Gestão de Cartões',
+        description: 'Acompanhe limites e faturas em tempo real. Nunca mais estoure o orçamento.',
     },
     {
         icon: <ShieldIcon className="h-8 w-8 text-brand-primary mx-auto mb-3" />,
-        title: 'Segurança Garantida',
-        description: 'Seus dados financeiros são protegidos com as mais avançadas tecnologias de segurança.',
+        title: 'Segurança Militar',
+        description: 'Criptografia de ponta a ponta para proteger seus dados financeiros mais sensíveis.',
     },
     {
         icon: <PlusIcon className="h-8 w-8 text-brand-primary mx-auto mb-3" />,
-        title: 'Simples e Rápido',
-        description: 'Adicione transações em segundos e veja seu impacto financeiro em tempo real.',
+        title: 'Lançamentos Rápidos',
+        description: 'Adicione transações em segundos, categorizando tudo automaticamente.',
     },
     {
         icon: <WalletIcon className="h-8 w-8 text-brand-primary mx-auto mb-3" />,
-        title: 'Seu Dinheiro, Suas Regras',
-        description: 'Personalize categorias e acompanhe metas para alcançar seus objetivos financeiros.',
+        title: 'Metas Claras',
+        description: 'Defina objetivos e acompanhe seu progresso visualmente rumo à liberdade.',
     },
+];
+
+const plans = [
+    {
+        name: 'Básico',
+        price: 'Grátis',
+        features: ['Dashboard Completo', '1 Cartão de Crédito', 'Controle de Receitas/Despesas', 'Suporte Básico'],
+        highlight: false
+    },
+    {
+        name: 'Pro',
+        price: 'R$ 29,90',
+        period: '/mês',
+        features: ['Tudo do Básico', 'Até 5 Cartões de Crédito', 'Módulo de Investimentos', 'Relatórios Avançados', 'Suporte Prioritário'],
+        highlight: true
+    },
+    {
+        name: 'Enterprise',
+        price: 'Sob Consulta',
+        features: ['Múltiplos Usuários', 'Cartões Ilimitados', 'API Dedicada', 'Gestor de Conta Exclusivo', 'Customização White-label'],
+        highlight: false
+    }
 ];
 
 const testimonials = [
     {
-        quote: "O FinzAI mudou a forma como eu lido com meu dinheiro. Agora tenho total controle e consigo planejar meu futuro com mais segurança!",
+        quote: "O FinzAI não é apenas um app, é meu CFO pessoal. Consegui dobrar meus investimentos em 6 meses apenas organizando a bagunça.",
         author: "Ana Clara S.",
+        role: "Empreendedora"
     },
     {
-        quote: "Sempre tive dificuldade em acompanhar minhas despesas. Com o FinzAI, tudo se tornou mais simples e visual. Recomendo muito!",
+        quote: "A interface é absurdamente limpa. Finalmente um app financeiro que não parece uma planilha de Excel chata dos anos 90.",
         author: "Marcos V.",
+        role: "Designer"
     },
     {
-        quote: "A interface é limpa e intuitiva. Conseguir ver meus gastos por categoria e meio de pagamento me ajudou a tomar decisões melhores.",
-        author: "Fernanda L.",
-    },
-    {
-        quote: "Pagamento de fatura e controle de limite de cartão de crédito em um só lugar? Essencial para quem usa muito cartão como eu!",
+        quote: "Controle de cartão de crédito integrado ao fluxo de caixa é o 'killer feature'. Pagar a fatura e ver o limite voltar é mágico.",
         author: "Carlos P.",
+        role: "Engenheiro de Software"
     },
+    {
+        quote: "Uso o plano Pro e a parte de investimentos me dá uma visão consolidada que nenhum banco me oferece.",
+        author: "Fernanda L.",
+        role: "Médica"
+    }
 ];
 
 const faqItems = [
     {
-        question: 'O FinzAI é gratuito?',
-        answer: 'Sim, o FinzAI possui um plano Básico gratuito com funcionalidades essenciais para o controle financeiro. Oferecemos também planos Pro e Admin com recursos avançados.',
+        question: 'O FinzAI é realmente gratuito?',
+        answer: 'Sim! Nosso plano Básico é gratuito para sempre e oferece todas as ferramentas essenciais para você organizar suas finanças sem custo algum.',
     },
     {
-        question: 'Meus dados são seguros?',
-        answer: 'Absolutamente. Utilizamos criptografia de ponta e as melhores práticas de segurança para proteger todas as suas informações financeiras. Seu controle e privacidade são nossa prioridade.',
+        question: 'Meus dados bancários estão seguros?',
+        answer: 'Segurança é nossa obsessão. Utilizamos criptografia AES-256 (mesmo padrão de bancos) e não vendemos seus dados para terceiros.',
     },
     {
-        question: 'Posso acessar de qualquer dispositivo?',
-        answer: 'Sim! O FinzAI é uma aplicação web responsiva, otimizada para funcionar perfeitamente em desktops, tablets e smartphones. Seus dados são sincronizados em tempo real.',
+        question: 'Consigo acessar pelo celular?',
+        answer: 'Perfeitamente. O FinzAI é um Web App Progressivo (PWA) que funciona de forma fluida em qualquer dispositivo, seja Android, iOS ou Desktop.',
     },
     {
-        question: 'Como faço para adicionar minhas transações?',
-        answer: 'É muito simples! No seu dashboard, clique no botão "Adicionar Transação" e preencha os detalhes como descrição, valor, data, tipo (receita/despesa), categoria e meio de pagamento.',
+        question: 'Como funciona o controle de cartões?',
+        answer: 'Você cadastra o limite total do seu cartão. Ao lançar despesas no crédito, o limite disponível é atualizado automaticamente. Ao pagar a fatura, o limite é restabelecido.',
     },
 ];
 
 const LandingPage: React.FC<LandingPageProps> = ({ appConfig, onStartAuth }) => {
     const [openFaq, setOpenFaq] = useState<number | null>(null);
 
+    const scrollToSection = (id: string) => {
+        const element = document.getElementById(id);
+        if (element) {
+            element.scrollIntoView({ behavior: 'smooth' });
+        }
+    };
+
     return (
-        <div className="min-h-screen bg-background flex flex-col items-center relative custom-scrollbar overflow-y-auto"> {/* Changed overflow-hidden to overflow-y-auto */}
+        <div className="bg-background flex flex-col items-center relative custom-scrollbar overflow-y-auto overflow-x-hidden scroll-smooth">
             <AnimatedBackground />
 
-            {/* Fixed Header (Tarja Preta) */}
-            <header className="fixed top-0 left-0 right-0 z-50 bg-card/90 backdrop-blur-sm border-b border-border p-4 flex items-center justify-between shadow-md">
-                <div className="flex items-center">
+            {/* Fixed Header */}
+            <header className="fixed top-0 left-0 right-0 z-50 bg-card/80 backdrop-blur-md border-b border-white/5 py-4 px-6 flex items-center justify-between shadow-2xl transition-all duration-300">
+                <div className="flex items-center cursor-pointer" onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })}>
                     {appConfig?.site_logo ? (
-                        <img src={appConfig.site_logo} alt="Logo" className="h-10 w-10 object-contain" /> {/* Smaller logo for header */}
+                        <img src={appConfig.site_logo} alt="Logo" className="h-10 w-10 object-contain hover:scale-110 transition-transform" />
                     ) : (
-                        <WalletIcon className="h-10 w-10 text-brand-primary" />
+                        <WalletIcon className="h-10 w-10 text-brand-primary hover:scale-110 transition-transform" />
                     )}
-                    <span className="ml-2 text-xl font-bold text-text-primary">{appConfig?.site_name || 'FinzAI'}</span>
+                    {/* Title Removed as requested */}
                 </div>
-                <div className="flex items-center gap-2">
+
+                {/* Desktop Nav */}
+                <nav className="hidden md:flex items-center gap-8">
+                    {['Benefícios', 'Planos', 'Depoimentos', 'FAQ'].map((item) => (
+                        <button 
+                            key={item}
+                            onClick={() => scrollToSection(item.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, ""))}
+                            className="text-text-secondary hover:text-brand-primary font-medium transition-colors text-sm uppercase tracking-wider"
+                        >
+                            {item}
+                        </button>
+                    ))}
+                </nav>
+
+                <div className="flex items-center gap-3">
                     <button
                         onClick={() => onStartAuth('login')}
-                        className="bg-white/5 hover:bg-white/10 text-text-primary font-bold py-2 px-4 rounded-lg text-sm transition-all"
+                        className="text-text-primary hover:text-brand-primary font-bold py-2 px-4 text-sm transition-colors"
                     >
                         Entrar
                     </button>
                     <button
                         onClick={() => onStartAuth('signup')}
-                        className="bg-brand-primary hover:bg-brand-secondary text-black font-bold py-2 px-4 rounded-lg text-sm transition-all"
+                        className="bg-brand-primary hover:bg-brand-secondary text-black font-bold py-2.5 px-5 rounded-full text-sm transition-all shadow-[0_0_15px_rgba(64,255,0,0.3)] hover:shadow-[0_0_25px_rgba(64,255,0,0.5)] transform hover:-translate-y-0.5"
                     >
-                        Comece Grátis
+                        Começar
                     </button>
                 </div>
             </header>
 
             {/* Hero Section */}
-            <section className="relative w-full pt-28 pb-20 md:pt-40 md:pb-32 flex flex-col justify-center items-center z-10 px-4"> {/* Adjusted pt */}
-                <div className="w-full max-w-2xl flex flex-col items-center">
+            <section className="relative w-full min-h-screen flex flex-col justify-center items-center z-10 px-4 pt-20">
+                <RevealOnScroll className="w-full max-w-4xl flex flex-col items-center text-center">
                     {appConfig?.site_logo ? (
-                        <img src={appConfig.site_logo} alt="Logo" className="h-28 w-28 object-contain mx-auto mb-6 animate-fade-in-up" />
+                        <img src={appConfig.site_logo} alt="Logo" className="h-32 w-32 object-contain mx-auto mb-8 drop-shadow-[0_0_15px_rgba(64,255,0,0.3)]" />
                     ) : (
-                        <WalletIcon className="h-28 w-28 text-brand-primary mx-auto mb-6 animate-fade-in-up" />
+                        <WalletIcon className="h-32 w-32 text-brand-primary mx-auto mb-8 drop-shadow-[0_0_15px_rgba(64,255,0,0.3)]" />
                     )}
-                    <h1 className="text-4xl md:text-6xl font-extrabold text-text-primary mb-4 animate-fade-in-up">
-                        {appConfig?.site_name || 'FinzAI'}
+                    
+                    <h1 className="text-5xl md:text-7xl font-black text-text-primary mb-6 leading-tight tracking-tight">
+                        Domine Suas <span className="text-brand-primary">Finanças</span><br className="hidden md:block" /> Com Inteligência.
                     </h1>
-                    <p className="text-lg md:text-xl text-text-secondary mb-8 max-w-xl animate-fade-in-up delay-100">
-                        {appConfig?.site_description || 'Seu controle financeiro inteligente e simplificado.'}
+                    
+                    <p className="text-lg md:text-2xl text-text-secondary mb-10 max-w-2xl leading-relaxed">
+                        Deixe de sobreviver e comece a prosperar. O sistema definitivo para quem quer controle total, previsibilidade e crescimento patrimonial.
                     </p>
-                    <div className="flex flex-col sm:flex-row gap-4 animate-fade-in-up delay-200">
-                        <button
-                            onClick={() => onStartAuth('login')}
-                            className="bg-brand-primary hover:bg-brand-secondary text-black font-bold py-3 px-8 rounded-xl text-lg transition-all transform hover:scale-105 shadow-glow-sm"
-                        >
-                            Entrar
-                        </button>
+                    
+                    <div className="flex flex-col sm:flex-row gap-5 w-full justify-center">
                         <button
                             onClick={() => onStartAuth('signup')}
-                            className="bg-white/5 hover:bg-white/10 text-text-primary border border-border font-bold py-3 px-8 rounded-xl text-lg transition-all transform hover:scale-105"
+                            className="bg-brand-primary hover:bg-brand-secondary text-black font-extrabold py-4 px-10 rounded-full text-lg transition-all transform hover:scale-105 shadow-[0_0_30px_rgba(64,255,0,0.4)] hover:shadow-[0_0_50px_rgba(64,255,0,0.6)]"
                         >
-                            Comece Grátis
+                            Assuma o Controle Agora
+                        </button>
+                        <button
+                            onClick={() => scrollToSection('beneficios')}
+                            className="bg-white/5 hover:bg-white/10 text-text-primary border border-white/10 font-bold py-4 px-10 rounded-full text-lg transition-all transform hover:scale-105 backdrop-blur-sm"
+                        >
+                            Saiba Mais
                         </button>
                     </div>
+                </RevealOnScroll>
+                
+                {/* Scroll Down Indicator */}
+                <div className="absolute bottom-10 animate-bounce">
+                    <ChevronRightIcon className="h-8 w-8 text-text-secondary rotate-90" />
                 </div>
             </section>
 
             {/* Why Choose Finz? Section */}
-            <section className="relative w-full py-16 bg-background z-10 px-4">
-                <div className="max-w-7xl mx-auto text-center animate-fade-in-up">
-                    <h2 className="text-3xl md:text-4xl font-bold text-text-primary mb-4">
-                        Por que escolher o Finz?
-                    </h2>
-                    <p className="text-lg text-text-secondary mb-12 max-w-2xl mx-auto">
-                        Transforme a maneira como você gerencia suas finanças com uma plataforma projetada para você.
-                    </p>
+            <section id="beneficios" className="relative w-full min-h-screen flex flex-col justify-center items-center bg-background z-10 px-4 py-20 scroll-mt-20">
+                <div className="max-w-7xl mx-auto text-center">
+                    <RevealOnScroll>
+                        <h2 className="text-3xl md:text-5xl font-bold text-text-primary mb-6">
+                            Por que o Finz é <span className="text-brand-primary">Diferente</span>?
+                        </h2>
+                        <p className="text-lg text-text-secondary mb-16 max-w-3xl mx-auto">
+                            Esqueça planilhas complexas e apps que não te entendem. Criamos a experiência financeira definitiva.
+                        </p>
+                    </RevealOnScroll>
+
                     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
                         {benefits.map((benefit, index) => (
-                            <div key={index} className="bg-card p-6 rounded-2xl border border-border text-center animate-fade-in-up" style={{ animationDelay: `${0.1 * index}s` }}>
-                                {benefit.icon}
-                                <h3 className="text-xl font-semibold text-text-primary mb-2">
-                                    {benefit.title}
-                                </h3>
-                                <p className="text-text-secondary">{benefit.description}</p>
-                            </div>
+                            <RevealOnScroll key={index} delay={index * 100} className="h-full">
+                                <div className="group bg-card p-8 rounded-3xl border border-border hover:border-brand-primary/50 transition-all duration-300 hover:shadow-[0_0_30px_rgba(64,255,0,0.1)] hover:-translate-y-2 h-full flex flex-col items-center">
+                                    <div className="p-4 bg-white/5 rounded-2xl mb-6 group-hover:bg-brand-primary/20 transition-colors">
+                                        {benefit.icon}
+                                    </div>
+                                    <h3 className="text-2xl font-bold text-text-primary mb-4 group-hover:text-brand-primary transition-colors">
+                                        {benefit.title}
+                                    </h3>
+                                    <p className="text-text-secondary leading-relaxed">
+                                        {benefit.description}
+                                    </p>
+                                </div>
+                            </RevealOnScroll>
+                        ))}
+                    </div>
+                </div>
+            </section>
+
+            {/* Plans Section */}
+            <section id="planos" className="relative w-full min-h-screen flex flex-col justify-center items-center bg-black/20 z-10 px-4 py-20 scroll-mt-20">
+                 <div className="max-w-7xl mx-auto text-center w-full">
+                    <RevealOnScroll>
+                        <h2 className="text-3xl md:text-5xl font-bold text-text-primary mb-6">
+                            Planos que Cabem no seu <span className="text-brand-primary">Bolso</span>
+                        </h2>
+                        <p className="text-lg text-text-secondary mb-16 max-w-2xl mx-auto">
+                            Comece grátis e evolua conforme seu patrimônio cresce. Sem contratos de fidelidade.
+                        </p>
+                    </RevealOnScroll>
+
+                    <div className="grid grid-cols-1 md:grid-cols-3 gap-8 max-w-6xl mx-auto">
+                        {plans.map((plan, index) => (
+                            <RevealOnScroll key={index} delay={index * 150} className="h-full">
+                                <div className={`relative flex flex-col h-full p-8 rounded-3xl border transition-all duration-300 hover:-translate-y-2 ${plan.highlight ? 'bg-card border-brand-primary shadow-[0_0_40px_rgba(64,255,0,0.15)] scale-105 z-10' : 'bg-card/50 border-border hover:border-white/20'}`}>
+                                    {plan.highlight && (
+                                        <div className="absolute top-0 left-1/2 -translate-x-1/2 -translate-y-1/2 bg-brand-primary text-black font-bold px-4 py-1 rounded-full text-sm uppercase tracking-wider">
+                                            Mais Popular
+                                        </div>
+                                    )}
+                                    <h3 className="text-2xl font-bold text-text-primary mb-2">{plan.name}</h3>
+                                    <div className="mb-6 flex items-baseline justify-center">
+                                        <span className="text-4xl font-black text-text-primary">{plan.price}</span>
+                                        {plan.period && <span className="text-text-secondary ml-1">{plan.period}</span>}
+                                    </div>
+                                    <ul className="space-y-4 mb-8 flex-1 text-left">
+                                        {plan.features.map((feat, i) => (
+                                            <li key={i} className="flex items-start text-text-secondary">
+                                                <CheckIcon className={`h-5 w-5 mr-3 flex-shrink-0 ${plan.highlight ? 'text-brand-primary' : 'text-gray-500'}`} />
+                                                <span className="text-sm">{feat}</span>
+                                            </li>
+                                        ))}
+                                    </ul>
+                                    <button
+                                        onClick={() => onStartAuth('signup')}
+                                        className={`w-full py-4 rounded-xl font-bold transition-all ${
+                                            plan.highlight 
+                                            ? 'bg-brand-primary hover:bg-brand-secondary text-black shadow-lg hover:shadow-brand-primary/50' 
+                                            : 'bg-white/10 hover:bg-white/20 text-text-primary'
+                                        }`}
+                                    >
+                                        Escolher {plan.name}
+                                    </button>
+                                </div>
+                            </RevealOnScroll>
                         ))}
                     </div>
                 </div>
             </section>
 
             {/* Testimonials Section */}
-            <section className="relative w-full py-16 bg-background z-10 px-4">
-                <div className="max-w-7xl mx-auto text-center animate-fade-in-up">
-                    <h2 className="text-3xl md:text-4xl font-bold text-text-primary mb-4">
-                        O que nossos usuários dizem
-                    </h2>
-                    <p className="text-lg text-text-secondary mb-12 max-w-2xl mx-auto">
-                        Veja como o Finz tem feito a diferença na vida financeira de milhares de pessoas.
-                    </p>
-                    <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+            <section id="depoimentos" className="relative w-full min-h-screen flex flex-col justify-center items-center bg-background z-10 px-4 py-20 scroll-mt-20">
+                <div className="max-w-7xl mx-auto text-center">
+                    <RevealOnScroll>
+                        <h2 className="text-3xl md:text-5xl font-bold text-text-primary mb-4">
+                            Amado por <span className="text-brand-primary">Milhares</span>
+                        </h2>
+                        <div className="flex flex-col items-center justify-center mb-16">
+                             <div className="flex items-center space-x-1 mb-2">
+                                {[1, 2, 3, 4, 5].map((star) => (
+                                    <StarIcon key={star} className="h-6 w-6 text-yellow-400 fill-yellow-400" />
+                                ))}
+                             </div>
+                             <p className="text-text-secondary font-medium">
+                                 <span className="text-text-primary font-bold">4.9/5</span> de média baseada em avaliações reais
+                             </p>
+                        </div>
+                    </RevealOnScroll>
+
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
                         {testimonials.map((testimonial, index) => (
-                            <div key={index} className="bg-card p-6 rounded-2xl border border-border text-left animate-fade-in-up" style={{ animationDelay: `${0.1 * index}s` }}>
-                                <p className="text-text-primary text-lg italic mb-4">"{testimonial.quote}"</p>
-                                <p className="font-semibold text-brand-primary">- {testimonial.author}</p>
-                            </div>
+                            <RevealOnScroll key={index} delay={index * 100}>
+                                <div className="bg-card p-8 rounded-3xl border border-border text-left hover:border-brand-primary/30 transition-all duration-300 hover:shadow-lg hover:-translate-y-1 h-full flex flex-col">
+                                    <div className="flex-1">
+                                        <div className="mb-6 opacity-30">
+                                            <svg className="h-10 w-10 text-brand-primary" fill="currentColor" viewBox="0 0 24 24"><path d="M14.017 21L14.017 18C14.017 16.896 14.321 15.923 14.929 15.081C15.537 14.239 16.29 13.565 17.189 13.058C18.089 12.551 19.062 12.298 20.108 12.298V9C18.735 9.07 17.472 9.563 16.319 10.479C15.166 11.395 14.399 12.569 14.017 14V9H11V21H14.017ZM8.017 21L8.017 18C8.017 16.896 8.321 15.923 8.929 15.081C9.537 14.239 10.29 13.565 11.189 13.058C12.089 12.551 13.062 12.298 14.108 12.298V9C12.735 9.07 11.472 9.563 10.319 10.479C9.166 11.395 8.399 12.569 8.017 14V9H5V21H8.017Z"/></svg>
+                                        </div>
+                                        <p className="text-text-primary text-lg md:text-xl italic mb-6 leading-relaxed">"{testimonial.quote}"</p>
+                                    </div>
+                                    <div className="flex items-center mt-auto border-t border-white/5 pt-6">
+                                        <div className="h-12 w-12 rounded-full bg-gradient-to-br from-brand-primary to-green-800 flex items-center justify-center font-bold text-black text-lg mr-4">
+                                            {testimonial.author.charAt(0)}
+                                        </div>
+                                        <div>
+                                            <p className="font-bold text-text-primary">{testimonial.author}</p>
+                                            <p className="text-text-secondary text-sm">{testimonial.role}</p>
+                                        </div>
+                                    </div>
+                                </div>
+                            </RevealOnScroll>
                         ))}
                     </div>
                 </div>
             </section>
 
             {/* FAQ Section */}
-            <section className="relative w-full py-16 bg-background z-10 px-4">
-                <div className="max-w-7xl mx-auto text-center animate-fade-in-up">
-                    <h2 className="text-3xl md:text-4xl font-bold text-text-primary mb-12">
-                        Perguntas Frequentes
-                    </h2>
-                    <div className="max-w-3xl mx-auto text-left">
+            <section id="faq" className="relative w-full min-h-screen flex flex-col justify-center items-center bg-background z-10 px-4 py-20 scroll-mt-20">
+                <div className="max-w-4xl mx-auto w-full">
+                    <RevealOnScroll className="text-center mb-16">
+                        <h2 className="text-3xl md:text-5xl font-bold text-text-primary mb-4">
+                            Perguntas <span className="text-brand-primary">Frequentes</span>
+                        </h2>
+                        <p className="text-text-secondary">Tire suas dúvidas e comece com confiança.</p>
+                    </RevealOnScroll>
+                    
+                    <div className="space-y-4">
                         {faqItems.map((item, index) => (
-                            <div key={index} className="bg-card p-4 rounded-xl border border-border mb-3 animate-fade-in-up" style={{ animationDelay: `${0.1 * index}s` }}>
-                                <button
-                                    className="flex justify-between items-center w-full text-text-primary text-lg font-semibold py-2"
-                                    onClick={() => setOpenFaq(openFaq === index ? null : index)}
-                                >
-                                    {item.question}
-                                    <ChevronRightIcon className={`h-5 w-5 transition-transform ${openFaq === index ? 'rotate-90 text-brand-primary' : ''}`} />
-                                </button>
-                                {openFaq === index && (
-                                    <p className="mt-2 text-text-secondary text-base pb-2 animate-fade-in">
-                                        {item.answer}
-                                    </p>
-                                )}
-                            </div>
+                            <RevealOnScroll key={index} delay={index * 50}>
+                                <div className="bg-card border border-border rounded-2xl overflow-hidden hover:border-brand-primary/30 transition-colors">
+                                    <button
+                                        className="flex justify-between items-center w-full p-6 text-left"
+                                        onClick={() => setOpenFaq(openFaq === index ? null : index)}
+                                    >
+                                        <span className="text-lg md:text-xl font-bold text-text-primary">{item.question}</span>
+                                        <ChevronRightIcon className={`h-6 w-6 transition-transform duration-300 ${openFaq === index ? 'rotate-90 text-brand-primary' : 'text-text-secondary'}`} />
+                                    </button>
+                                    <div 
+                                        className={`overflow-hidden transition-all duration-300 ease-in-out ${openFaq === index ? 'max-h-96 opacity-100' : 'max-h-0 opacity-0'}`}
+                                    >
+                                        <p className="px-6 pb-6 text-text-secondary text-base leading-relaxed">
+                                            {item.answer}
+                                        </p>
+                                    </div>
+                                </div>
+                            </RevealOnScroll>
                         ))}
                     </div>
                 </div>
             </section>
 
-            {/* Final Call to Action - Pode ser uma versão mais simples da hero CTA */}
-            <section className="relative w-full py-20 bg-background z-10 px-4">
-                <div className="max-w-2xl mx-auto text-center animate-fade-in-up">
-                    <h2 className="text-3xl md:text-4xl font-bold text-text-primary mb-4">
-                        Pronto para o controle financeiro?
-                    </h2>
-                    <p className="text-lg text-text-secondary mb-8">
-                        Junte-se a milhares de usuários que transformaram suas finanças com o FinzAI.
-                    </p>
-                    <div className="flex flex-col sm:flex-row gap-4 justify-center">
-                        <button
-                            onClick={() => onStartAuth('signup')}
-                            className="bg-brand-primary hover:bg-brand-secondary text-black font-bold py-3 px-8 rounded-xl text-lg transition-all transform hover:scale-105 shadow-glow-sm"
-                        >
-                            Comece Grátis Agora
-                        </button>
-                        <button
-                            onClick={() => onStartAuth('login')}
-                            className="bg-white/5 hover:bg-white/10 text-text-primary border border-border font-bold py-3 px-8 rounded-xl text-lg transition-all transform hover:scale-105"
-                        >
-                            Já sou cliente
-                        </button>
-                    </div>
-                </div>
-            </section>
-
             {/* Footer */}
-            <footer className="relative w-full py-8 bg-card border-t border-border z-10 px-4">
-                <div className="max-w-7xl mx-auto text-center text-text-secondary text-sm">
-                    <p>&copy; {new Date().getFullYear()} {appConfig?.site_name || 'FinzAI'}. Todos os direitos reservados.</p>
+            <footer className="relative w-full py-12 bg-card border-t border-border z-10 px-4">
+                <div className="max-w-7xl mx-auto flex flex-col md:flex-row justify-between items-center gap-6">
+                    <div className="flex items-center">
+                         {appConfig?.site_logo ? (
+                            <img src={appConfig.site_logo} alt="Logo" className="h-8 w-8 object-contain opacity-50 grayscale hover:grayscale-0 transition-all" />
+                        ) : (
+                            <WalletIcon className="h-8 w-8 text-text-secondary" />
+                        )}
+                        <span className="ml-3 text-text-secondary text-sm">&copy; {new Date().getFullYear()} {appConfig?.site_name || 'FinzAI'}.</span>
+                    </div>
+                    <div className="flex gap-6 text-sm text-text-secondary">
+                        <a href="#" className="hover:text-brand-primary transition-colors">Termos de Uso</a>
+                        <a href="#" className="hover:text-brand-primary transition-colors">Privacidade</a>
+                        <a href="#" className="hover:text-brand-primary transition-colors">Suporte</a>
+                    </div>
                 </div>
             </footer>
         </div>

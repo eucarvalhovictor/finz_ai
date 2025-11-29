@@ -164,10 +164,11 @@ const DashboardPage: React.FC<DashboardPageProps> = ({ user }) => {
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-3 md:gap-4">
+        {/* FIX: Removed invalid 'size' prop and used Tailwind classes for sizing. */}
         <DashboardCard 
             title="Patrimônio" 
             amount={totalInvestments} 
-            icon={<WalletIcon size={20} className="text-brand-primary" />} 
+            icon={<WalletIcon className="h-5 w-5 text-brand-primary" />} 
             colorClass="bg-brand-primary/20" 
         />
         <DashboardCard 
@@ -176,16 +177,18 @@ const DashboardPage: React.FC<DashboardPageProps> = ({ user }) => {
             icon={<DollarSign size={20} className="text-blue-300" />} 
             colorClass="bg-blue-500/20" 
         />
+        {/* FIX: Removed invalid 'size' prop and used Tailwind classes for sizing. */}
         <DashboardCard 
             title="Receitas" 
             amount={totalIncome} 
-            icon={<TrendingUp size={20} className="text-green-300" />} 
+            icon={<TrendingUp className="h-5 w-5 text-green-300" />} 
             colorClass="bg-green-500/20" 
         />
+        {/* FIX: Removed invalid 'size' prop and used Tailwind classes for sizing. */}
         <DashboardCard 
             title="Despesas" 
             amount={totalExpenses} 
-            icon={<TrendingDown size={20} className="text-red-300" />} 
+            icon={<TrendingDown className="h-5 w-5 text-red-300" />} 
             colorClass="bg-red-500/20" 
         />
       </div>

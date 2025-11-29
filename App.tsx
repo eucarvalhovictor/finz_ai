@@ -273,7 +273,6 @@ const App: React.FC = () => {
                     logoUrl={appConfig?.site_logo}
                     siteName={appConfig?.site_name}
                     isMobileOpen={isMobileMenuOpen}
-                    // Fix: Corrected prop name to match the state setter function
                     setIsMobileOpen={setIsMobileMenuOpen}
                 />
                 
