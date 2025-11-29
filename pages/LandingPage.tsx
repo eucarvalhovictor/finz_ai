@@ -47,7 +47,7 @@ const useOnScreen = (ref: React.RefObject<HTMLElement | null>, rootMargin = "0px
 
 const RevealOnScroll: React.FC<{ children: React.ReactNode; className?: string; delay?: number }> = ({ children, className = "", delay = 0 }) => {
     const ref = useRef<HTMLDivElement>(null);
-    const isVisible = useOnScreen(ref, "-100px");
+    const isVisible = useOnScreen(ref, "-50px"); // Margin ajustada para disparar mais cedo no mobile
 
     return (
         <div
@@ -167,16 +167,16 @@ const LandingPage: React.FC<LandingPageProps> = ({ appConfig, onStartAuth, onVie
     };
 
     return (
-        <div className="bg-background flex flex-col items-center relative custom-scrollbar overflow-y-auto overflow-x-hidden scroll-smooth h-full">
+        <div className="bg-background flex flex-col items-center relative custom-scrollbar overflow-y-auto overflow-x-hidden scroll-smooth h-full w-full">
             <CookieConsent />
             
             {/* Fixed Header */}
-            <header className="fixed top-0 left-0 right-0 z-50 bg-sidebar/90 backdrop-blur-md border-b border-white/5 py-4 px-6 flex items-center justify-between shadow-2xl transition-all duration-300">
+            <header className="fixed top-0 left-0 right-0 z-50 bg-sidebar/95 backdrop-blur-md border-b border-white/5 py-3 md:py-4 px-4 md:px-6 flex items-center justify-between shadow-2xl transition-all duration-300">
                 <div className="flex items-center cursor-pointer" onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })}>
                     {appConfig?.site_logo ? (
-                        <img src={appConfig.site_logo} alt="Logo" className="h-10 w-10 object-contain hover:scale-110 transition-transform" />
+                        <img src={appConfig.site_logo} alt="Logo" className="h-8 w-8 md:h-10 md:w-10 object-contain hover:scale-110 transition-transform" />
                     ) : (
-                        <WalletIcon className="h-10 w-10 text-brand-primary hover:scale-110 transition-transform" />
+                        <WalletIcon className="h-8 w-8 md:h-10 md:w-10 text-brand-primary hover:scale-110 transition-transform" />
                     )}
                 </div>
 
@@ -193,85 +193,86 @@ const LandingPage: React.FC<LandingPageProps> = ({ appConfig, onStartAuth, onVie
                     ))}
                 </nav>
 
-                <div className="flex items-center gap-3">
+                <div className="flex items-center gap-2 md:gap-3">
                     <button
                         onClick={() => onStartAuth('login')}
-                        className="text-text-primary hover:text-brand-primary font-bold py-2 px-4 text-sm transition-colors rounded-lg"
+                        className="text-text-primary hover:text-brand-primary font-bold py-1.5 px-3 md:py-2 md:px-4 text-xs md:text-sm transition-colors rounded-lg"
                     >
                         Entrar
                     </button>
                     <button
                         onClick={() => onStartAuth('signup')}
-                        className="bg-brand-primary hover:bg-brand-secondary text-black font-bold py-2.5 px-5 rounded-lg text-sm transition-all shadow-glow hover:shadow-[0_0_25px_rgba(64,255,0,0.5)] transform hover:-translate-y-0.5"
+                        className="bg-brand-primary hover:bg-brand-secondary text-black font-bold py-2 px-4 md:py-2.5 md:px-5 rounded-lg text-xs md:text-sm transition-all shadow-glow hover:shadow-[0_0_25px_rgba(64,255,0,0.5)] transform hover:-translate-y-0.5"
                     >
                         Começar
                     </button>
                 </div>
             </header>
 
-            {/* Hero Section - Solid Background (Darkest) */}
-            <section className="relative w-full min-h-screen flex flex-col justify-center items-center z-10 px-4 pt-20 bg-[#050505]">
+            {/* Hero Section */}
+            <section className="relative w-full min-h-screen flex flex-col justify-center items-center z-10 px-4 pt-24 pb-12 md:pt-20 bg-[#050505]">
                 <RevealOnScroll className="w-full max-w-4xl flex flex-col items-center text-center">
                     {appConfig?.site_logo ? (
-                        <img src={appConfig.site_logo} alt="Logo" className="h-32 w-32 object-contain mx-auto mb-8 drop-shadow-[0_0_15px_rgba(64,255,0,0.3)]" />
+                        <img src={appConfig.site_logo} alt="Logo" className="h-20 w-20 md:h-32 md:w-32 object-contain mx-auto mb-6 md:mb-8 drop-shadow-[0_0_15px_rgba(64,255,0,0.3)]" />
                     ) : (
-                        <WalletIcon className="h-32 w-32 text-brand-primary mx-auto mb-8 drop-shadow-[0_0_15px_rgba(64,255,0,0.3)]" />
+                        <WalletIcon className="h-20 w-20 md:h-32 md:w-32 text-brand-primary mx-auto mb-6 md:mb-8 drop-shadow-[0_0_15px_rgba(64,255,0,0.3)]" />
                     )}
                     
                     {/* H1 Radley Font */}
-                    <h1 className="font-radley text-5xl md:text-7xl font-normal text-text-primary mb-6 leading-tight tracking-tight">
-                        <span className="bg-clip-text text-transparent bg-gradient-to-r from-[#40ff00] via-[#00c49f] to-[#40ff00] bg-[length:200%_auto] animate-gradient font-bold">Domine Suas Finanças</span><br className="hidden md:block" /> Com Inteligência.
+                    <h1 className="font-radley text-4xl sm:text-5xl md:text-7xl font-normal text-text-primary mb-4 md:mb-6 leading-tight tracking-tight">
+                        <span className="bg-clip-text text-transparent bg-gradient-to-r from-[#40ff00] via-[#00c49f] to-[#40ff00] bg-[length:200%_auto] animate-gradient font-bold block sm:inline">Domine Suas Finanças</span>{' '}
+                        <span className="block mt-2 sm:mt-0 sm:inline">Com Inteligência.</span>
                     </h1>
                     
-                    <p className="text-lg md:text-2xl text-text-secondary mb-10 max-w-2xl leading-relaxed">
+                    <p className="text-base sm:text-lg md:text-2xl text-text-secondary mb-8 md:mb-10 max-w-2xl leading-relaxed px-2">
                         Deixe de sobreviver e comece a prosperar. O sistema definitivo para quem quer controle total, previsibilidade e crescimento patrimonial.
                     </p>
                     
-                    <div className="flex flex-col sm:flex-row gap-5 w-full justify-center">
+                    <div className="flex flex-col sm:flex-row gap-4 md:gap-5 w-full justify-center px-4">
                         <button
                             onClick={() => onStartAuth('signup')}
-                            className="bg-brand-primary hover:bg-brand-secondary text-black font-extrabold py-4 px-10 rounded-lg text-lg transition-all transform hover:scale-105 shadow-[0_0_30px_rgba(64,255,0,0.4)] hover:shadow-[0_0_50px_rgba(64,255,0,0.6)]"
+                            className="bg-brand-primary hover:bg-brand-secondary text-black font-extrabold py-3 px-6 md:py-4 md:px-10 rounded-lg text-base md:text-lg transition-all transform hover:scale-105 shadow-[0_0_30px_rgba(64,255,0,0.4)] hover:shadow-[0_0_50px_rgba(64,255,0,0.6)] w-full sm:w-auto"
                         >
                             Assuma o Controle Agora
                         </button>
                         <button
                             onClick={() => scrollToSection('beneficios')}
-                            className="bg-white/5 hover:bg-white/10 text-text-primary border border-white/10 font-bold py-4 px-10 rounded-lg text-lg transition-all transform hover:scale-105 backdrop-blur-sm flex items-center justify-center gap-2"
+                            className="bg-white/5 hover:bg-white/10 text-text-primary border border-white/10 font-bold py-3 px-6 md:py-4 md:px-10 rounded-lg text-base md:text-lg transition-all transform hover:scale-105 backdrop-blur-sm flex items-center justify-center gap-2 w-full sm:w-auto"
                         >
-                            <PlayIcon className="h-6 w-6" />
+                            <PlayIcon className="h-5 w-5 md:h-6 md:w-6" />
                             Ver Demonstração
                         </button>
                     </div>
                 </RevealOnScroll>
                 
-                <div className="absolute bottom-10 animate-bounce">
-                    <ChevronRightIcon className="h-8 w-8 text-text-secondary rotate-90" />
+                <div className="absolute bottom-6 md:bottom-10 animate-bounce hidden sm:block">
+                    <ChevronRightIcon className="h-6 w-6 md:h-8 md:w-8 text-text-secondary rotate-90" />
                 </div>
             </section>
 
-            {/* Why Choose Finz? - Complementary Dark BG */}
-            <section id="beneficios" className="relative w-full min-h-screen flex flex-col justify-center items-center bg-[#0a0a0a] z-10 px-4 py-20 scroll-mt-20 border-t border-white/5">
-                <div className="max-w-7xl mx-auto text-center">
+            {/* Why Choose Finz? (Benefits) */}
+            <section id="beneficios" className="relative w-full h-auto md:min-h-screen flex flex-col justify-center items-center bg-[#0a0a0a] z-10 px-4 py-16 md:py-20 scroll-mt-16 border-t border-white/5">
+                <div className="max-w-7xl mx-auto text-center w-full">
                     <RevealOnScroll>
-                        <h2 className="text-3xl md:text-5xl font-bold text-text-primary mb-6">
-                            Por que o Finz é <span className="text-brand-primary">Diferente</span>?
+                        <h2 className="text-3xl md:text-5xl font-bold text-text-primary mb-6 md:mb-8 leading-tight">
+                            Por que o Finz é <span className="text-brand-primary">melhor?</span>
                         </h2>
-                        <p className="text-lg text-text-secondary mb-16 max-w-3xl mx-auto">
+                        <p className="text-base md:text-lg text-text-secondary mb-12 md:mb-16 max-w-3xl mx-auto px-2">
                             Esqueça planilhas complexas e apps que não te entendem. Criamos a experiência financeira definitiva.
                         </p>
                     </RevealOnScroll>
 
-                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 md:gap-8">
                         {benefits.map((benefit, index) => (
                             <RevealOnScroll key={index} delay={index * 100} className="h-full">
-                                <div className="group bg-[#121212] p-8 rounded-2xl border border-border hover:border-brand-primary/50 transition-all duration-300 hover:shadow-[0_0_30px_rgba(64,255,0,0.1)] hover:-translate-y-2 h-full flex flex-col items-center">
-                                    <div className="p-4 bg-white/5 rounded-xl mb-6 group-hover:bg-brand-primary/20 transition-colors">
+                                <div className="group bg-[#121212] p-6 md:p-8 rounded-2xl border border-border hover:border-brand-primary/50 transition-all duration-300 hover:shadow-[0_0_30px_rgba(64,255,0,0.1)] hover:-translate-y-2 h-full flex flex-col items-center">
+                                    <div className="p-3 md:p-4 bg-white/5 rounded-xl mb-4 md:mb-6 group-hover:bg-brand-primary/20 transition-colors">
                                         {benefit.icon}
                                     </div>
-                                    <h3 className="text-2xl font-bold text-text-primary mb-4 group-hover:text-brand-primary transition-colors">
+                                    <h3 className="text-xl md:text-2xl font-bold text-text-primary mb-3 md:mb-4 group-hover:text-brand-primary transition-colors">
                                         {benefit.title}
                                     </h3>
-                                    <p className="text-text-secondary leading-relaxed">
+                                    <p className="text-sm md:text-base text-text-secondary leading-relaxed">
                                         {benefit.description}
                                     </p>
                                 </div>
@@ -281,44 +282,44 @@ const LandingPage: React.FC<LandingPageProps> = ({ appConfig, onStartAuth, onVie
                 </div>
             </section>
 
-            {/* Plans Section - Slightly Lighter/Different Dark BG */}
-            <section id="planos" className="relative w-full min-h-screen flex flex-col justify-center items-center bg-[#111] z-10 px-4 py-20 scroll-mt-20 border-t border-white/5">
+            {/* Plans Section */}
+            <section id="planos" className="relative w-full h-auto md:min-h-screen flex flex-col justify-center items-center bg-[#111] z-10 px-4 py-16 md:py-20 scroll-mt-16 border-t border-white/5">
                  <div className="max-w-7xl mx-auto text-center w-full">
                     <RevealOnScroll>
-                        <h2 className="text-3xl md:text-5xl font-bold text-text-primary mb-6">
-                            Planos que Cabem no seu <span className="text-brand-primary">Bolso</span>
+                        <h2 className="text-3xl md:text-5xl font-bold text-text-primary mb-6 md:mb-8">
+                            Planos que Cabem no <span className="text-brand-primary block sm:inline">seu Bolso</span>
                         </h2>
-                        <p className="text-lg text-text-secondary mb-16 max-w-2xl mx-auto">
+                        <p className="text-base md:text-lg text-text-secondary mb-12 md:mb-16 max-w-2xl mx-auto">
                             Evolua conforme seu patrimônio cresce. Sem contratos de fidelidade.
                         </p>
                     </RevealOnScroll>
 
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-8 max-w-4xl mx-auto">
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6 md:gap-8 max-w-4xl mx-auto">
                         {plans.map((plan, index) => (
                             <RevealOnScroll key={index} delay={index * 150} className="h-full">
-                                <div className={`relative flex flex-col h-full p-8 rounded-2xl border transition-all duration-300 hover:-translate-y-2 ${plan.highlight ? 'bg-[#151515] border-brand-primary shadow-[0_0_40px_rgba(64,255,0,0.15)] scale-105 z-10' : 'bg-[#151515]/50 border-border hover:border-white/20'}`}>
+                                <div className={`relative flex flex-col h-full p-6 md:p-8 rounded-2xl border transition-all duration-300 hover:-translate-y-2 ${plan.highlight ? 'bg-[#151515] border-brand-primary shadow-[0_0_40px_rgba(64,255,0,0.15)] scale-105 z-10' : 'bg-[#151515]/50 border-border hover:border-white/20'}`}>
                                     {plan.highlight && (
-                                        <div className="absolute top-0 left-1/2 -translate-x-1/2 -translate-y-1/2 bg-brand-primary text-black font-bold px-4 py-1 rounded-lg text-sm uppercase tracking-wider flex items-center gap-2">
-                                            <CrownIcon className="h-4 w-4" />
+                                        <div className="absolute top-0 left-1/2 -translate-x-1/2 -translate-y-1/2 bg-brand-primary text-black font-bold px-3 py-1 md:px-4 rounded-lg text-xs md:text-sm uppercase tracking-wider flex items-center gap-2 whitespace-nowrap">
+                                            <CrownIcon className="h-3 w-3 md:h-4 md:w-4" />
                                             Mais Popular
                                         </div>
                                     )}
-                                    <h3 className="text-2xl font-bold text-text-primary mb-2">{plan.name}</h3>
+                                    <h3 className="text-xl md:text-2xl font-bold text-text-primary mb-2">{plan.name}</h3>
                                     <div className="mb-6 flex items-baseline justify-center">
-                                        <span className="text-4xl font-black text-text-primary">{plan.price}</span>
-                                        {plan.period && <span className="text-text-secondary ml-1">{plan.period}</span>}
+                                        <span className="text-3xl md:text-4xl font-black text-text-primary">{plan.price}</span>
+                                        {plan.period && <span className="text-text-secondary ml-1 text-sm md:text-base">{plan.period}</span>}
                                     </div>
-                                    <ul className="space-y-4 mb-8 flex-1 text-left">
+                                    <ul className="space-y-3 md:space-y-4 mb-6 md:mb-8 flex-1 text-left">
                                         {plan.features.map((feat, i) => (
                                             <li key={i} className="flex items-start text-text-secondary">
-                                                <CheckIcon className={`h-5 w-5 mr-3 flex-shrink-0 ${plan.highlight ? 'text-brand-primary' : 'text-gray-500'}`} />
+                                                <CheckIcon className={`h-4 w-4 md:h-5 md:w-5 mr-3 flex-shrink-0 ${plan.highlight ? 'text-brand-primary' : 'text-gray-500'}`} />
                                                 <span className="text-sm">{feat}</span>
                                             </li>
                                         ))}
                                     </ul>
                                     <button
                                         onClick={() => onStartAuth('signup')}
-                                        className={`w-full py-4 rounded-lg font-bold transition-all ${
+                                        className={`w-full py-3 md:py-4 rounded-lg font-bold transition-all text-sm md:text-base ${
                                             plan.highlight 
                                             ? 'bg-brand-primary hover:bg-brand-secondary text-black shadow-lg hover:shadow-brand-primary/50' 
                                             : 'bg-white/10 hover:bg-white/20 text-text-primary'
@@ -333,42 +334,42 @@ const LandingPage: React.FC<LandingPageProps> = ({ appConfig, onStartAuth, onVie
                 </div>
             </section>
 
-            {/* Testimonials Section - Back to Darkest */}
-            <section id="depoimentos" className="relative w-full min-h-screen flex flex-col justify-center items-center bg-[#050505] z-10 px-4 py-20 scroll-mt-20 border-t border-white/5">
-                <div className="max-w-7xl mx-auto text-center">
+            {/* Testimonials Section */}
+            <section id="depoimentos" className="relative w-full h-auto md:min-h-screen flex flex-col justify-center items-center bg-[#050505] z-10 px-4 py-16 md:py-20 scroll-mt-16 border-t border-white/5">
+                <div className="max-w-7xl mx-auto text-center w-full">
                     <RevealOnScroll>
-                        <h2 className="text-3xl md:text-5xl font-bold text-text-primary mb-4">
-                            Aprovado por <span className="text-brand-primary">+100 clientes</span>
+                        <h2 className="text-3xl md:text-5xl font-bold text-text-primary mb-4 leading-tight">
+                            Aprovado por <span className="text-brand-primary block sm:inline">+100 clientes</span>
                         </h2>
-                        <div className="flex flex-col items-center justify-center mb-16">
+                        <div className="flex flex-col items-center justify-center mb-12 md:mb-16">
                              <div className="flex items-center space-x-1 mb-2">
                                 {[1, 2, 3, 4, 5].map((star) => (
-                                    <StarIcon key={star} className="h-6 w-6 text-yellow-400 fill-yellow-400" />
+                                    <StarIcon key={star} className="h-5 w-5 md:h-6 md:w-6 text-yellow-400 fill-yellow-400" />
                                 ))}
                              </div>
-                             <p className="text-text-secondary font-medium">
+                             <p className="text-text-secondary font-medium text-sm md:text-base">
                                  <span className="text-text-primary font-bold">4.9/5</span> de média baseada em avaliações reais
                              </p>
                         </div>
                     </RevealOnScroll>
 
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6 md:gap-8">
                         {testimonials.map((testimonial, index) => (
                             <RevealOnScroll key={index} delay={index * 100}>
-                                <div className="bg-[#121212] p-8 rounded-2xl border border-border text-left hover:border-brand-primary/30 transition-all duration-300 hover:shadow-lg hover:-translate-y-1 h-full flex flex-col">
+                                <div className="bg-[#121212] p-6 md:p-8 rounded-2xl border border-border text-left hover:border-brand-primary/30 transition-all duration-300 hover:shadow-lg hover:-translate-y-1 h-full flex flex-col">
                                     <div className="flex-1">
-                                        <div className="mb-6 opacity-30">
-                                            <svg className="h-10 w-10 text-brand-primary" fill="currentColor" viewBox="0 0 24 24"><path d="M14.017 21L14.017 18C14.017 16.896 14.321 15.923 14.929 15.081C15.537 14.239 16.29 13.565 17.189 13.058C18.089 12.551 19.062 12.298 20.108 12.298V9C18.735 9.07 17.472 9.563 16.319 10.479C15.166 11.395 14.399 12.569 14.017 14V9H11V21H14.017ZM8.017 21L8.017 18C8.017 16.896 8.321 15.923 8.929 15.081C9.537 14.239 10.29 13.565 11.189 13.058C12.089 12.551 13.062 12.298 14.108 12.298V9C12.735 9.07 11.472 9.563 10.319 10.479C9.166 11.395 8.399 12.569 8.017 14V9H5V21H8.017Z"/></svg>
+                                        <div className="mb-4 md:mb-6 opacity-30">
+                                            <svg className="h-8 w-8 md:h-10 md:w-10 text-brand-primary" fill="currentColor" viewBox="0 0 24 24"><path d="M14.017 21L14.017 18C14.017 16.896 14.321 15.923 14.929 15.081C15.537 14.239 16.29 13.565 17.189 13.058C18.089 12.551 19.062 12.298 20.108 12.298V9C18.735 9.07 17.472 9.563 16.319 10.479C15.166 11.395 14.399 12.569 14.017 14V9H11V21H14.017ZM8.017 21L8.017 18C8.017 16.896 8.321 15.923 8.929 15.081C9.537 14.239 10.29 13.565 11.189 13.058C12.089 12.551 13.062 12.298 14.108 12.298V9C12.735 9.07 11.472 9.563 10.319 10.479C9.166 11.395 8.399 12.569 8.017 14V9H5V21H8.017Z"/></svg>
                                         </div>
-                                        <p className="text-text-primary text-lg md:text-xl italic mb-6 leading-relaxed">"{testimonial.quote}"</p>
+                                        <p className="text-text-primary text-base md:text-xl italic mb-6 leading-relaxed">"{testimonial.quote}"</p>
                                     </div>
                                     <div className="flex items-center mt-auto border-t border-white/5 pt-6">
-                                        <div className="h-12 w-12 rounded-full bg-gradient-to-br from-brand-primary to-green-800 flex items-center justify-center font-bold text-black text-lg mr-4">
+                                        <div className="h-10 w-10 md:h-12 md:w-12 rounded-full bg-gradient-to-br from-brand-primary to-green-800 flex items-center justify-center font-bold text-black text-base md:text-lg mr-4">
                                             {testimonial.author.charAt(0)}
                                         </div>
                                         <div>
-                                            <p className="font-bold text-text-primary">{testimonial.author}</p>
-                                            <p className="text-text-secondary text-sm">{testimonial.role}</p>
+                                            <p className="font-bold text-text-primary text-sm md:text-base">{testimonial.author}</p>
+                                            <p className="text-text-secondary text-xs md:text-sm">{testimonial.role}</p>
                                         </div>
                                     </div>
                                 </div>
@@ -378,31 +379,31 @@ const LandingPage: React.FC<LandingPageProps> = ({ appConfig, onStartAuth, onVie
                 </div>
             </section>
 
-            {/* FAQ Section - Complementary BG */}
-            <section id="faq" className="relative w-full min-h-screen flex flex-col justify-center items-center bg-[#0a0a0a] z-10 px-4 py-20 scroll-mt-20 border-t border-white/5">
+            {/* FAQ Section */}
+            <section id="faq" className="relative w-full h-auto md:min-h-screen flex flex-col justify-center items-center bg-[#0a0a0a] z-10 px-4 py-16 md:py-20 scroll-mt-16 border-t border-white/5">
                 <div className="max-w-4xl mx-auto w-full">
-                    <RevealOnScroll className="text-center mb-16">
+                    <RevealOnScroll className="text-center mb-12 md:mb-16">
                         <h2 className="text-3xl md:text-5xl font-bold text-text-primary mb-4">
                             Perguntas <span className="text-brand-primary">Frequentes</span>
                         </h2>
-                        <p className="text-text-secondary">Tire suas dúvidas e comece com confiança.</p>
+                        <p className="text-text-secondary text-sm md:text-base">Tire suas dúvidas e comece com confiança.</p>
                     </RevealOnScroll>
                     
-                    <div className="space-y-4">
+                    <div className="space-y-3 md:space-y-4">
                         {faqItems.map((item, index) => (
                             <RevealOnScroll key={index} delay={index * 50}>
                                 <div className="bg-[#121212] border border-border rounded-xl overflow-hidden hover:border-brand-primary/30 transition-colors">
                                     <button
-                                        className="flex justify-between items-center w-full p-6 text-left"
+                                        className="flex justify-between items-center w-full p-4 md:p-6 text-left"
                                         onClick={() => setOpenFaq(openFaq === index ? null : index)}
                                     >
-                                        <span className="text-lg md:text-xl font-bold text-text-primary">{item.question}</span>
-                                        <ChevronRightIcon className={`h-6 w-6 transition-transform duration-300 ${openFaq === index ? 'rotate-90 text-brand-primary' : 'text-text-secondary'}`} />
+                                        <span className="text-base md:text-xl font-bold text-text-primary pr-4">{item.question}</span>
+                                        <ChevronRightIcon className={`h-5 w-5 md:h-6 md:w-6 flex-shrink-0 transition-transform duration-300 ${openFaq === index ? 'rotate-90 text-brand-primary' : 'text-text-secondary'}`} />
                                     </button>
                                     <div 
                                         className={`overflow-hidden transition-all duration-300 ease-in-out ${openFaq === index ? 'max-h-96 opacity-100' : 'max-h-0 opacity-0'}`}
                                     >
-                                        <p className="px-6 pb-6 text-text-secondary text-base leading-relaxed">
+                                        <p className="px-4 pb-4 md:px-6 md:pb-6 text-text-secondary text-sm md:text-base leading-relaxed">
                                             {item.answer}
                                         </p>
                                     </div>
@@ -414,17 +415,17 @@ const LandingPage: React.FC<LandingPageProps> = ({ appConfig, onStartAuth, onVie
             </section>
 
             {/* Footer */}
-            <footer className="relative w-full py-12 bg-card border-t border-border z-10 px-4">
+            <footer className="relative w-full py-8 md:py-12 bg-card border-t border-border z-10 px-4">
                 <div className="max-w-7xl mx-auto flex flex-col md:flex-row justify-between items-center gap-6">
                     <div className="flex items-center">
                          {appConfig?.site_logo ? (
-                            <img src={appConfig.site_logo} alt="Logo" className="h-8 w-8 object-contain opacity-50 grayscale hover:grayscale-0 transition-all" />
+                            <img src={appConfig.site_logo} alt="Logo" className="h-6 w-6 md:h-8 md:w-8 object-contain opacity-50 grayscale hover:grayscale-0 transition-all" />
                         ) : (
-                            <WalletIcon className="h-8 w-8 text-text-secondary" />
+                            <WalletIcon className="h-6 w-6 md:h-8 md:w-8 text-text-secondary" />
                         )}
-                        <span className="ml-3 text-text-secondary text-sm">&copy; {new Date().getFullYear()} {appConfig?.site_name || 'FinzAI'}.</span>
+                        <span className="ml-3 text-text-secondary text-xs md:text-sm">&copy; {new Date().getFullYear()} {appConfig?.site_name || 'FinzAI'}.</span>
                     </div>
-                    <div className="flex gap-6 text-sm text-text-secondary">
+                    <div className="flex flex-wrap justify-center gap-4 md:gap-6 text-xs md:text-sm text-text-secondary">
                         <button onClick={onViewTerms} className="hover:text-brand-primary transition-colors">Termos de Uso</button>
                         <button onClick={onViewPrivacy} className="hover:text-brand-primary transition-colors">Privacidade</button>
                         <a href="#" className="hover:text-brand-primary transition-colors">Suporte</a>
