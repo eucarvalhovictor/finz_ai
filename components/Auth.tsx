@@ -2,14 +2,15 @@ import React, { useState, useEffect } from 'react';
 import { supabase } from '../services/supabase';
 import { WalletIcon } from './icons/Icons';
 import AnimatedBackground from './AnimatedBackground';
-import { AppConfig, AuthMode } from '../types'; // Import AppConfig type
+import { AppConfig, AuthMode } from '../types';
 
 interface AuthComponentProps {
     appConfig?: AppConfig | null;
-    defaultMode?: AuthMode; // NOVO: Adiciona a prop defaultMode
+    defaultMode?: AuthMode;
+    navigate: (path: string) => void; // NOVO: Prop para navegação
 }
 
-const AuthComponent: React.FC<AuthComponentProps> = ({ appConfig, defaultMode = 'login' }) => {
+const AuthComponent: React.FC<AuthComponentProps> = ({ appConfig, defaultMode = 'login', navigate }) => {
   const [loading, setLoading] = useState(false);
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -17,15 +18,15 @@ const AuthComponent: React.FC<AuthComponentProps> = ({ appConfig, defaultMode = 
   const [firstName, setFirstName] = useState('');
   const [lastName, setLastName] = useState('');
 
-  const [isLogin, setIsLogin] = useState(defaultMode === 'login'); // Inicializa com base em defaultMode
+  const [isLogin, setIsLogin] = useState(defaultMode === 'login');
   const [isForgotPasswordMode, setIsForgotPasswordMode] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [message, setMessage] = useState<string | null>(null);
 
-  // NOVO: Efeito para reagir a mudanças em defaultMode
+  // Reage a mudanças na URL (via prop defaultMode) para resetar o estado do formulário
   useEffect(() => {
       setIsLogin(defaultMode === 'login');
-      setIsForgotPasswordMode(false); // Garante que não está no modo de recuperação ao mudar o defaultMode
+      setIsForgotPasswordMode(false);
       setError(null);
       setMessage(null);
       setEmail('');
@@ -73,7 +74,6 @@ const AuthComponent: React.FC<AuthComponentProps> = ({ appConfig, defaultMode = 
     }
   };
 
-  // Handler para recuperar senha
   const handleForgotPassword = async (event: React.FormEvent) => {
     event.preventDefault();
     setLoading(true);
@@ -82,7 +82,7 @@ const AuthComponent: React.FC<AuthComponentProps> = ({ appConfig, defaultMode = 
 
     try {
       const { error } = await supabase.auth.resetPasswordForEmail(email, {
-        redirectTo: window.location.origin + window.location.pathname, // Redirect back to this page
+        redirectTo: window.location.origin + window.location.pathname,
       });
       if (error) throw error;
       setMessage('Link de recuperação de senha enviado! Verifique seu e-mail.');
@@ -93,24 +93,18 @@ const AuthComponent: React.FC<AuthComponentProps> = ({ appConfig, defaultMode = 
     }
   };
 
-  // Reset states when switching between modes
   const switchMode = (mode: 'login' | 'signup' | 'forgotPassword') => {
-      setError(null);
-      setMessage(null);
-      setEmail('');
-      setPassword('');
-      setConfirmPassword('');
-      setFirstName('');
-      setLastName('');
-
       if (mode === 'login') {
-          setIsLogin(true);
-          setIsForgotPasswordMode(false);
+          navigate('/login');
       } else if (mode === 'signup') {
-          setIsLogin(false);
-          setIsForgotPasswordMode(false);
+          navigate('/signup');
       } else if (mode === 'forgotPassword') {
-          setIsLogin(false); // Not login mode
+          // Forgot password é um estado interno, não uma rota separada
+          setError(null);
+          setMessage(null);
+          setEmail('');
+          setPassword('');
+          setIsLogin(false);
           setIsForgotPasswordMode(true);
       }
   }
@@ -132,7 +126,7 @@ const AuthComponent: React.FC<AuthComponentProps> = ({ appConfig, defaultMode = 
         </div>
         
         <div className="bg-card/80 backdrop-blur-sm p-8 rounded-2xl border border-border">
-          {isForgotPasswordMode ? ( // Formulário de recuperação de senha
+          {isForgotPasswordMode ? (
             <form onSubmit={handleForgotPassword}>
               <div className="mb-4">
                 <label className="block text-text-secondary text-sm font-bold mb-2" htmlFor="email">
@@ -160,6 +154,7 @@ const AuthComponent: React.FC<AuthComponentProps> = ({ appConfig, defaultMode = 
               <p className="text-center text-text-secondary text-sm mt-6">
                 Lembrou da senha?
                 <button
+                  type="button"
                   onClick={() => switchMode('login')}
                   className="font-bold text-brand-primary hover:text-brand-secondary ml-1"
                 >
@@ -167,7 +162,7 @@ const AuthComponent: React.FC<AuthComponentProps> = ({ appConfig, defaultMode = 
                 </button>
               </p>
             </form>
-          ) : ( // Formulários de Login/Cadastro existentes
+          ) : (
             <form onSubmit={handleAuth}>
             {!isLogin && (
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
@@ -234,7 +229,7 @@ const AuthComponent: React.FC<AuthComponentProps> = ({ appConfig, defaultMode = 
                     />
                 </div>
             )}
-            {isLogin && ( // Link "Esqueceu sua senha?"
+            {isLogin && (
                 <div className="text-right mb-4">
                     <button
                         type="button"
@@ -260,10 +255,11 @@ const AuthComponent: React.FC<AuthComponentProps> = ({ appConfig, defaultMode = 
           {error && <p className="mt-4 text-center text-red-400 text-sm">{error}</p>}
           {message && <p className="mt-4 text-center text-green-400 text-sm">{message}</p>}
 
-          {!isForgotPasswordMode && ( // Esconde esta seção no modo "Esqueceu a Senha"
+          {!isForgotPasswordMode && (
             <p className="text-center text-text-secondary text-sm mt-6">
               {isLogin ? 'Não tem uma conta?' : 'Já tem uma conta?'}
               <button
+                type="button"
                 onClick={() => switchMode(isLogin ? 'signup' : 'login')}
                 className="font-bold text-brand-primary hover:text-brand-secondary ml-1"
               >

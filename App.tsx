@@ -2,12 +2,11 @@ import React, { useState, useEffect } from 'react';
 import { supabase } from './services/supabase';
 import type { Session } from '@supabase/supabase-js';
 import { getProfile, getAppConfig } from './services/api';
-import type { Role, AppConfig, AuthMode } from './types';
+import type { Role, AppConfig } from './types';
 import AuthComponent from './components/Auth';
 import Sidebar from './components/Sidebar';
 import DashboardPage from './pages/DashboardPage';
 import TransactionsPage from './pages/TransactionsPage';
-// import InsightsPage from './pages/InsightsPage'; // REMOVED
 import InvestmentsPage from './pages/InvestmentsPage';
 import CreditCardsPage from './pages/CreditCardsPage';
 import ProfilePage from './pages/ProfilePage';
@@ -21,7 +20,8 @@ import Spinner from './components/Spinner';
 
 const INACTIVITY_LIMIT = 15 * 60 * 1000; // 15 minutes in milliseconds
 
-type ViewMode = 'landing' | 'auth' | 'app' | 'terms' | 'privacy';
+// Helper para obter a localização do hash da URL
+const getLocationFromHash = () => window.location.hash.substring(1) || '/';
 
 const App: React.FC = () => {
   const [session, setSession] = useState<Session | null>(null);
@@ -30,82 +30,87 @@ const App: React.FC = () => {
   const [activePage, setActivePage] = useState<Page>('dashboard');
   const [appConfig, setAppConfig] = useState<AppConfig | null>(null);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
-  const [viewMode, setViewMode] = useState<ViewMode>('landing');
-  const [authMode, setAuthMode] = useState<AuthMode>('login');
+  
+  // Roteamento baseado em Hash
+  const [location, setLocation] = useState(getLocationFromHash());
+
+  // Função de navegação via Hash
+  const navigate = (path: string) => {
+    // A mudança do hash aciona o listener 'hashchange' que atualiza o estado
+    if (`#${path}` !== window.location.hash) {
+      window.location.hash = path;
+    }
+  };
+  
+  // Listener para o evento 'hashchange' (navegação por setas do navegador)
+  useEffect(() => {
+    const handleHashChange = () => {
+      setLocation(getLocationFromHash());
+    };
+    window.addEventListener('hashchange', handleHashChange);
+    return () => {
+      window.removeEventListener('hashchange', handleHashChange);
+    };
+  }, []);
+
 
   useEffect(() => {
-    console.log("App.tsx loaded and rendered.");
-    
     let mounted = true;
-
-    const initApp = async () => {
-      // 1. Fetch Config FIRST to avoid logo flicker
-      let config: AppConfig | null = null;
-      try {
-        config = await getAppConfig();
-        if (mounted && config) {
-             setAppConfig(config);
-             applySiteConfig(config);
+    
+    // 1. Fetch Config FIRST
+    getAppConfig().then(config => {
+        if(mounted && config) {
+            setAppConfig(config);
+            applySiteConfig(config);
         }
-      } catch (err) {
-        console.error("Config fetch error:", err);
-      }
+    }).catch(err => console.error("Config fetch error:", err));
 
-      // 2. Then check Session
-      const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
+    // 2. Auth State Change Listener
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(async (_event, newSession) => {
         if (!mounted) return;
         
-        setSession(session);
+        setSession(newSession);
         
-        if (session) {
-          if (event === 'SIGNED_IN' || event === 'PASSWORD_RECOVERY') {
-              setActivePage('dashboard');
-          }
-          setViewMode('app'); // Go to app if session exists
-          
-          getProfile(session.user.id)
-            .then(profile => {
-                if (mounted && profile) setUserRole(profile.role);
-            })
-            .catch(e => console.error("Error fetching user role", e));
+        const currentPath = getLocationFromHash();
+        if (newSession) {
+            // User is logged in, redirect from public-only pages
+            if (['/', '/login', '/signup'].includes(currentPath)) {
+                navigate('/dashboard');
+            }
+            getProfile(newSession.user.id)
+                .then(profile => {
+                    if (mounted && profile) setUserRole(profile.role);
+                })
+                .catch(e => console.error("Error fetching user role", e));
         } else {
+            // User is logged out, redirect from private pages
             setUserRole('basic');
-            // If no session, show landing (unless already in terms/privacy/auth)
-            setViewMode(prev => (prev === 'terms' || prev === 'privacy' || prev === 'auth') ? prev : 'landing');
+            if (!['/', '/login', '/signup', '/terms', '/privacy'].includes(currentPath)) {
+                navigate('/');
+            }
         }
         setLoading(false);
-      });
+    });
 
-      // Initial Session Check
-      try {
-        const { data } = await supabase.auth.getSession();
+    // 3. Initial Session Check on page load
+    supabase.auth.getSession().then(({ data }) => {
         if (!mounted) return;
-
         if (data.session) {
             setSession(data.session);
-            setViewMode('app');
-            try {
-                const profile = await getProfile(data.session.user.id);
-                if (mounted && profile) setUserRole(profile.role);
-            } catch (e) { console.error(e); }
-        } else {
-             // Stay on landing (default)
+            const currentPath = getLocationFromHash();
+            if (['/', '/login', '/signup'].includes(currentPath)) {
+                navigate('/dashboard');
+            }
+            getProfile(data.session.user.id)
+                .then(profile => { if(mounted && profile) setUserRole(profile.role) })
+                .catch(e => console.error(e));
         }
-      } catch (err) {
-          console.error("Session check error:", err);
-      } finally {
-          if (mounted) setLoading(false);
-      }
-
-      return () => {
-        subscription.unsubscribe();
-      };
-    };
-
-    initApp();
+        setLoading(false);
+    });
 
     return () => {
-        mounted = false;
+      mounted = false;
+      subscription.unsubscribe();
     };
   }, []);
 
@@ -171,7 +176,7 @@ const App: React.FC = () => {
           console.log("Sessão expirada por inatividade.");
           await supabase.auth.signOut();
           alert("Sua sessão expirou após 15 minutos de inatividade. Por favor, faça login novamente.");
-          setViewMode('landing');
+          navigate('/');
       };
 
       const resetTimer = () => {
@@ -210,11 +215,6 @@ const App: React.FC = () => {
     }
   };
 
-  const handleStartAuth = (mode: AuthMode) => {
-    setAuthMode(mode);
-    setViewMode('auth');
-  };
-
   if (loading) {
     return (
       <div className="flex flex-col items-center justify-center h-[100dvh] bg-background space-y-4">
@@ -224,28 +224,47 @@ const App: React.FC = () => {
     );
   }
 
-  // Routing Logic based on viewMode
-  if (viewMode === 'terms') {
-      return <TermsPage appConfig={appConfig} onBack={() => setViewMode('landing')} />;
+  // Unauthenticated routing
+  if (!session) {
+      switch(location) {
+          case '/login':
+              return <AuthComponent appConfig={appConfig} defaultMode="login" navigate={navigate} />;
+          case '/signup':
+              return <AuthComponent appConfig={appConfig} defaultMode="signup" navigate={navigate} />;
+          case '/terms':
+              return <TermsPage appConfig={appConfig} onBack={() => navigate('/')} />;
+          case '/privacy':
+              return <PrivacyPage appConfig={appConfig} onBack={() => navigate('/')} />;
+          case '/':
+              return <LandingPage 
+                        appConfig={appConfig} 
+                        onStartAuth={(mode) => navigate(mode === 'login' ? '/login' : '/signup')} 
+                        onViewTerms={() => navigate('/terms')}
+                        onViewPrivacy={() => navigate('/privacy')}
+                     />;
+          default:
+              // For any other path, redirect to landing
+              navigate('/');
+              return <Spinner size="lg" />;
+      }
   }
-  if (viewMode === 'privacy') {
-      return <PrivacyPage appConfig={appConfig} onBack={() => setViewMode('landing')} />;
+
+  // Authenticated view
+  // Redirect from login/signup if somehow landed there while logged in
+  if (['/', '/login', '/signup'].includes(location)) {
+    navigate('/dashboard');
+    return <Spinner size="lg" />;
   }
   
-  if (viewMode === 'landing') {
-      return <LandingPage 
-                appConfig={appConfig} 
-                onStartAuth={handleStartAuth} 
-                onViewTerms={() => setViewMode('terms')}
-                onViewPrivacy={() => setViewMode('privacy')}
-             />;
+  // Handle terms/privacy for logged-in users
+  if (location === '/terms') {
+    return <TermsPage appConfig={appConfig} onBack={() => navigate('/dashboard')} />;
+  }
+  if (location === '/privacy') {
+    return <PrivacyPage appConfig={appConfig} onBack={() => navigate('/dashboard')} />;
   }
 
-  if (viewMode === 'auth' && !session) {
-      return <AuthComponent appConfig={appConfig} defaultMode={authMode} />;
-  }
-
-  // App View (Dashboard)
+  // App View (Dashboard and other internal pages)
   return (
     <div className="font-sans h-[100dvh] bg-background text-text-primary flex flex-col">
         {/* Mobile Header */}

@@ -220,7 +220,7 @@ const LandingPage: React.FC<LandingPageProps> = ({ appConfig, onStartAuth, onVie
                     
                     {/* H1 Radley Font */}
                     <h1 className="font-radley text-4xl sm:text-5xl md:text-7xl font-bold text-text-primary mb-4 md:mb-6 leading-tight tracking-tight">
-                        <span className="bg-clip-text text-transparent bg-gradient-to-r from-brand-secondary via-brand-primary to-green-400 bg-[length:200%_auto] animate-gradient font-bold block sm:inline">Domine Suas Finanças</span>{' '}
+                        <span className="bg-clip-text text-transparent bg-gradient-to-r from-green-400 via-brand-primary to-green-600 bg-[length:200%_auto] animate-gradient font-bold block sm:inline">Domine Suas Finanças</span>{' '}
                         <span className="block mt-2 sm:mt-0 sm:inline">Com Inteligência.</span>
                     </h1>
                     
