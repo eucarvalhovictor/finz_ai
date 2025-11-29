@@ -74,12 +74,14 @@ const App: React.FC = () => {
         const profileData = await getProfile(currentSession.user.id);
         if (mounted.current) {
             // FIX: Revert 'onboarding' role to its actual value, do not map to 'basic' here.
-            setUserRole(profileData?.role || null);
+            // If profileData exists but role is null, or if fetching fails, default to 'onboarding' for authenticated users.
+            // This ensures the app handles new users or users with transient profile fetch issues and directs them to a path.
+            setUserRole(profileData?.role || 'onboarding'); // Default to 'onboarding' if role is not explicitly set or fetch fails.
         }
         console.log("[App.fetchUserAndProfile] User role fetched:", profileData?.role);
       } catch (e) {
         console.error("[App.fetchUserAndProfile] Error fetching user role", e);
-        if (mounted.current) setUserRole(null); // Resetar role em caso de erro
+        if (mounted.current) setUserRole('onboarding'); // Default to 'onboarding' on error to prevent infinite loading.
       } finally {
         if (mounted.current) setLoading(false); // Finalizar loading após a busca (sucesso ou falha)
         console.log("[App.fetchUserAndProfile] Loading set to false.");
@@ -248,14 +250,14 @@ const App: React.FC = () => {
           } else {
               console.warn("[App.handleCheckoutSuccess] Role was not updated after checkout. Navigating to /dashboard anyway.");
               if (mounted.current) {
-                setUserRole(profile?.role || null); 
+                setUserRole(profile?.role || 'onboarding'); // Default to onboarding if role is unexpectedly null
                 navigate('/dashboard'); 
               }
           }
       } catch (e) {
           console.error("[App.handleCheckoutSuccess] Erro ao atualizar role após checkout", e);
           if (mounted.current) {
-            setUserRole(null); 
+            setUserRole('onboarding'); // Default to onboarding on error
             navigate('/dashboard'); 
           }
       } finally {

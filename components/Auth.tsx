@@ -73,9 +73,10 @@ const AuthComponent: React.FC<AuthComponentProps> = ({ appConfig, defaultMode = 
         if (error) throw error;
         
         if (data.user) {
-            console.log("AuthComponent: User signed up successfully. Updating profile role to 'basic'. Redirecting to dashboard.");
-            await updateProfile(data.user.id, { role: 'basic' }); // New users start as 'basic'
-            navigate('/dashboard'); // Redirect to dashboard
+            console.log("AuthComponent: User signed up successfully.");
+            // Role will be handled by App.tsx, defaulting to 'onboarding' for new users.
+            // The CheckoutPage will then set the actual plan role ('basic' or 'pro').
+            // Do NOT update profile role or navigate here. App.tsx's onAuthStateChange will handle routing.
         } else {
              setMessage('Cadastro realizado! Verifique seu e-mail para confirmação.');
         }
