@@ -78,7 +78,7 @@ const App: React.FC = () => {
             // This ensures the app handles new users or users with transient profile fetch issues and directs them to a path.
             setUserRole(profileData?.role || 'onboarding'); // Default to 'onboarding' if role is not explicitly set or fetch fails.
         }
-        console.log("[App.fetchUserAndProfile] User role fetched:", profileData?.role);
+        console.log("[App.fetchUserAndProfile] User role fetched:", profileData?.role, "-> set to", profileData?.role || 'onboarding');
       } catch (e) {
         console.error("[App.fetchUserAndProfile] Error fetching user role", e);
         if (mounted.current) setUserRole('onboarding'); // Default to 'onboarding' on error to prevent infinite loading.
@@ -112,28 +112,28 @@ const App: React.FC = () => {
         }
     }).catch(err => console.error("[App] Config fetch error:", err));
 
+    // Fetch initial session once and handle initial user and profile state.
     supabase.auth.getSession().then(async ({ data }) => {
         if (!mounted.current) return;
         console.log("[App] Initial getSession data:", data.session ? `authenticated (${data.session.user.id})` : "unauthenticated");
-        // Apenas setar a sessão. O onAuthStateChange será disparado com a sessão inicial.
-        setSession(data.session);
+        setSession(data.session); // Update session state
+        // Manually trigger profile fetch for the initial session.
+        await fetchUserAndProfile(data.session); 
     });
 
+    // Set up the auth state change listener.
+    // This listener will handle subsequent changes (login, logout, token refresh).
     const { data: { subscription } } = supabase.auth.onAuthStateChange(async (_event, newSession) => {
       if (!mounted.current) return;
       console.log(`[App.onAuthStateChange] Event: ${_event}, newSession user: ${newSession?.user?.id || 'null'}`);
       
-      const oldUserId = session?.user?.id;
-      const newUserId = newSession?.user?.id;
+      // Always update the session state with the new session.
+      // This will trigger a re-render.
+      setSession(newSession); 
 
-      // Se a sessão de usuário mudou ou houve uma transição de/para autenticado
-      if (oldUserId !== newUserId || (!session && newSession) || (session && !newSession)) {
-          setSession(newSession); 
-          await fetchUserAndProfile(newSession);
-      } else {
-          // Se a sessão não mudou de usuário (ex: token refresh), apenas atualiza o objeto session
-          setSession(newSession);
-      }
+      // Always refetch profile data when auth state changes (login, logout, token refresh, initial session).
+      // This ensures the userRole is always in sync with the current authentication status.
+      await fetchUserAndProfile(newSession);
     });
 
     return () => {
@@ -141,7 +141,7 @@ const App: React.FC = () => {
       subscription.unsubscribe();
       console.log("[App] Component unmounted. Cleaning up.");
     };
-  }, [fetchUserAndProfile, session?.user?.id]); // Adiciona session?.user?.id como dependência
+  }, [fetchUserAndProfile]); // Depend only on fetchUserAndProfile which is useCallback-memoized
 
   const applySiteConfig = (config: AppConfig) => {
       if (config.site_name) document.title = config.site_name;
