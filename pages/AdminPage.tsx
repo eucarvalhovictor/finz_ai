@@ -1,10 +1,10 @@
 import React, { useState, useEffect, useMemo } from 'react';
-import { getAllProfiles, updateUserRole, getProfile, updateProfile, getAppConfig, updateAppConfig } from '../services/api';
+import { getAllProfiles, updateUserRole, getProfile, updateProfile, getAppConfig, updateAppConfig, deleteUserById } from '../services/api';
 import { supabase } from '../services/supabase';
 import type { AppUser, Profile, Role, AppConfig } from '../types';
 import Spinner from '../components/Spinner';
 import Modal from '../components/Modal';
-import { ShieldIcon, EditIcon, PlusIcon, UserIcon, DashboardIcon, TrendingUp } from '../components/icons/Icons';
+import { ShieldIcon, EditIcon, PlusIcon, UserIcon, DashboardIcon, TrendingUp, DeleteIcon } from '../components/icons/Icons';
 import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip as RechartsTooltip, Legend, BarChart, Bar, XAxis, YAxis, CartesianGrid } from 'recharts';
 
 interface AdminPageProps {
@@ -77,7 +77,7 @@ const AdminPage: React.FC<AdminPageProps> = ({ user }) => {
           lastName: profile.last_name || '',
           email: profile.email || '', 
           password: '',
-          role: profile.role
+          role: profile.role || 'basic'
       });
       setIsUserModalOpen(true);
   }
@@ -107,13 +107,14 @@ const AdminPage: React.FC<AdminPageProps> = ({ user }) => {
               });
               if (error) throw error;
               if (data.user) {
-                  alert("Usuário criado! Atenção: Devido a limitações de segurança do navegador, você pode ter sido desconectado. Por favor, faça login novamente.");
-                  window.location.reload();
+                  // Manually set role after user is created as signUp doesn't allow it.
+                  await updateUserRole(data.user.id, formData.role);
+                  alert("Usuário criado com sucesso!");
+                  await fetchProfiles();
+                  setIsUserModalOpen(false);
               }
           } else if (editingProfile) {
               // Update Existing Profile
-              // Note: Changing the actual auth email requires backend admin privileges or user confirmation.
-              // Here we update the profile record which serves as the display/contact email.
               await updateProfile(editingProfile.id, {
                   first_name: formData.firstName,
                   last_name: formData.lastName,
@@ -130,6 +131,23 @@ const AdminPage: React.FC<AdminPageProps> = ({ user }) => {
           setFormLoading(false);
       }
   }
+  
+  const handleDeleteUser = async (profile: Profile) => {
+    if (profile.id === user.id) {
+        alert("Você não pode excluir sua própria conta de administrador.");
+        return;
+    }
+    if (window.confirm(`Tem certeza que deseja excluir permanentemente o usuário ${profile.first_name} ${profile.last_name}? Esta ação não pode ser desfeita.`)) {
+        try {
+            await deleteUserById(profile.id);
+            await fetchProfiles();
+            alert("Usuário excluído com sucesso.");
+        } catch (error: any) {
+            alert("Erro ao excluir usuário: " + error.message);
+        }
+    }
+  };
+
 
   const handleSettingsSubmit = async (e: React.FormEvent) => {
       e.preventDefault();
@@ -333,17 +351,26 @@ const AdminPage: React.FC<AdminPageProps> = ({ user }) => {
                                     profile.role === 'pro' ? 'bg-brand-primary/20 text-brand-primary' :
                                     'bg-gray-700 text-gray-300'
                                 }`}>
-                                    {profile.role}
+                                    {profile.role || 'N/A'}
                                 </span>
                             </td>
                             <td className="px-6 py-4 text-right">
-                                <button 
-                                    onClick={() => handleOpenEdit(profile)}
-                                    className="text-brand-primary hover:text-brand-secondary p-2 bg-brand-primary/10 rounded-lg transition-colors"
-                                    title="Editar Usuário"
-                                >
-                                    <EditIcon className="h-5 w-5" />
-                                </button>
+                                <div className="flex items-center justify-end gap-2">
+                                    <button 
+                                        onClick={() => handleOpenEdit(profile)}
+                                        className="text-blue-400 hover:text-blue-300 p-2 bg-blue-500/10 rounded-lg transition-colors"
+                                        title="Editar Usuário"
+                                    >
+                                        <EditIcon className="h-5 w-5" />
+                                    </button>
+                                    <button 
+                                        onClick={() => handleDeleteUser(profile)}
+                                        className="text-red-400 hover:text-red-300 p-2 bg-red-500/10 rounded-lg transition-colors"
+                                        title="Excluir Usuário"
+                                    >
+                                        <DeleteIcon className="h-5 w-5" />
+                                    </button>
+                                </div>
                             </td>
                         </tr>
                         )) : (

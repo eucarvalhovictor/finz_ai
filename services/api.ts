@@ -320,6 +320,36 @@ export const updateUserRole = async (userId: string, role: Role) => {
     }
 }
 
+// NOVO: Função para deletar um usuário (requer função RPC no Supabase)
+export const deleteUserById = async (userId: string) => {
+    // Esta função invoca uma "Remote Procedure Call" (RPC) no Supabase.
+    // Você precisa criar uma função SQL no seu painel Supabase chamada `delete_user_by_id`
+    // que recebe um `user_id_to_delete` e executa a exclusão com privilégios de admin.
+    // Exemplo de SQL:
+    // CREATE OR REPLACE FUNCTION delete_user_by_id(user_id_to_delete uuid)
+    // RETURNS void
+    // LANGUAGE plpgsql
+    // SECURITY DEFINER
+    // AS $$
+    // BEGIN
+    //   IF (SELECT role FROM public.profiles WHERE id = auth.uid()) = 'admin' THEN
+    //     DELETE FROM auth.users WHERE id = user_id_to_delete;
+    //   ELSE
+    //     RAISE EXCEPTION 'Acesso negado. Apenas administradores podem excluir usuários.';
+    //   END IF;
+    // END;
+    // $$;
+    const { error } = await supabase.rpc('delete_user_by_id', {
+        user_id_to_delete: userId
+    });
+
+    if (error) {
+        console.error('Error deleting user via RPC:', error);
+        throw error;
+    }
+};
+
+
 // --- Site Config API ---
 
 export const getAppConfig = async (): Promise<AppConfig> => {

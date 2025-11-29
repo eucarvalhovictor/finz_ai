@@ -38,7 +38,7 @@ const getLocationFromHash = () => {
 
 const App: React.FC = () => {
   const [session, setSession] = useState<Session | null>(null);
-  const [userRole, setUserRole] = useState<Role | null>(null); // MODIFICADO: Inicia como null
+  const [userRole, setUserRole] = useState<Role | null>(null);
   const [loading, setLoading] = useState(true);
   const [activePage, setActivePage] = useState<Page>('dashboard');
   const [appConfig, setAppConfig] = useState<AppConfig | null>(null);
@@ -82,33 +82,42 @@ const App: React.FC = () => {
     const { data: { subscription } } = supabase.auth.onAuthStateChange(async (_event, newSession) => {
         if (!mounted) return;
         
+        // Se mudou a sessão (login ou logout), define loading como true para evitar flash de conteúdo incorreto
+        if (session?.user.id !== newSession?.user.id) {
+             setLoading(true);
+        }
+
         setSession(newSession);
         
-        const currentPath = getLocationFromHash();
         if (newSession) {
             getProfile(newSession.user.id)
                 .then(profile => {
-                    if (mounted) setUserRole(profile?.role || null); // MODIFICADO: Seta null se não houver role
+                    if (mounted) setUserRole(profile?.role || null);
                 })
-                .catch(e => console.error("Error fetching user role", e));
+                .catch(e => console.error("Error fetching user role", e))
+                .finally(() => { if (mounted) setLoading(false) });
         } else {
-            setUserRole(null); // MODIFICADO: Seta para null ao deslogar
+            setUserRole(null);
+            const currentPath = getLocationFromHash();
             if (!['/', '/login', '/signup', '/terms', '/privacy'].includes(currentPath)) {
                 navigate('/');
             }
+            setLoading(false);
         }
-        setLoading(false);
     });
 
+    // Check inicial da sessão
     supabase.auth.getSession().then(({ data }) => {
         if (!mounted) return;
         if (data.session) {
             setSession(data.session);
             getProfile(data.session.user.id)
-                .then(profile => { if(mounted) setUserRole(profile?.role || null) }) // MODIFICADO
-                .catch(e => console.error(e));
+                .then(profile => { if(mounted) setUserRole(profile?.role || null) })
+                .catch(e => console.error(e))
+                .finally(() => { if (mounted) setLoading(false) });
+        } else {
+           setLoading(false);
         }
-        setLoading(false);
     });
 
     return () => {
@@ -211,7 +220,7 @@ const App: React.FC = () => {
       if (profile) {
         setUserRole(profile.role);
       }
-      navigate('/dashboard');
+      // A navegação será tratada pelo re-render do App.tsx quando userRole for atualizado
       setLoading(false);
     }
   };
@@ -244,8 +253,9 @@ const App: React.FC = () => {
                         onViewPrivacy={() => navigate('/privacy')}
                      />;
           default:
+              // Se tentar acessar uma rota protegida sem estar logado
               navigate('/');
-              return <Spinner size="lg" />;
+              return null;
       }
   }
 
@@ -256,7 +266,7 @@ const App: React.FC = () => {
       }
       // Para qualquer outra rota, força o checkout
       navigate('/checkout');
-      return <Spinner size="lg" />;
+      return null;
   }
 
   // Rota 3: Usuário autenticado e com plano definido
@@ -264,7 +274,7 @@ const App: React.FC = () => {
       // Redireciona de páginas públicas ou de checkout se já tiver plano
       if (['/', '/login', '/signup', '/checkout'].includes(location)) {
         navigate('/dashboard');
-        return <Spinner size="lg" />;
+        return null; 
       }
       
       if (location === '/terms') {
