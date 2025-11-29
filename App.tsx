@@ -30,6 +30,9 @@ const App: React.FC = () => {
   const [authMode, setAuthMode] = useState<AuthMode>('login'); // NOVO: Estado para o modo de autenticação (login/signup)
 
   useEffect(() => {
+    // Log para depuração de carregamento
+    console.log("App.tsx loaded and rendered.");
+    
     let mounted = true;
 
     const initApp = async () => {
@@ -40,8 +43,10 @@ const App: React.FC = () => {
         setSession(session);
         
         if (session) {
-          // Se houver sessão, pular a landing page
-          setShowLandingPage(false); 
+          // Se houver sessão, NÃO pular a landing page automaticamente. 
+          // O usuário deve interagir com a Landing Page primeiro.
+          // setShowLandingPage(false); <--- REMOVIDO PARA FORÇAR LANDING PAGE
+          
           if (event === 'SIGNED_IN' || event === 'PASSWORD_RECOVERY') {
               setActivePage('dashboard');
           }
@@ -53,7 +58,7 @@ const App: React.FC = () => {
             .catch(e => console.error("Error fetching user role", e));
         } else {
             setUserRole('basic');
-            // Se não houver sessão, mostrar a landing page por padrão
+            // Se não houver sessão, mostrar a landing page
             setShowLandingPage(true); 
         }
         setLoading(false);
@@ -80,13 +85,13 @@ const App: React.FC = () => {
             const { data } = sessionResult.value;
             if (data.session) {
                 setSession(data.session);
-                setShowLandingPage(false); // Pular LandingPage se já tem sessão
+                // setShowLandingPage(false); // <--- REMOVIDO: Landing page é sempre a inicial
                 try {
                     const profile = await getProfile(data.session.user.id);
                     if (mounted && profile) setUserRole(profile.role);
                 } catch (e) { console.error(e); }
             } else {
-                setShowLandingPage(true); // Mostrar LandingPage se não tem sessão
+                setShowLandingPage(true);
             }
         }
 
@@ -173,6 +178,7 @@ const App: React.FC = () => {
           console.log("Sessão expirada por inatividade.");
           await supabase.auth.signOut();
           alert("Sua sessão expirou após 15 minutos de inatividade. Por favor, faça login novamente.");
+          setShowLandingPage(true); // Retorna para landing page ao expirar
       };
 
       const resetTimer = () => {
@@ -191,7 +197,9 @@ const App: React.FC = () => {
   }, [session]);
 
   const renderPage = () => {
+    // Se não houver sessão, não renderiza páginas internas
     if (!session) return null;
+
     switch (activePage) {
       case 'dashboard':
         return <DashboardPage user={session.user} />;
@@ -226,14 +234,17 @@ const App: React.FC = () => {
     setShowLandingPage(false);
   };
 
+  // Lógica de Renderização Principal:
+  // 1. Landing Page (Prioridade Máxima)
+  // 2. Auth (Login/Signup se não tiver sessão)
+  // 3. Dashboard (Se tiver sessão)
+  
   return (
-    <div className="font-sans h-[100dvh] bg-background text-text-primary flex flex-col"> {/* Removed overflow-hidden here */}
-      {!session ? (
-        showLandingPage ? (
-            <LandingPage appConfig={appConfig} onStartAuth={handleStartAuth} />
-        ) : (
-            <AuthComponent appConfig={appConfig} defaultMode={authMode} />
-        )
+    <div className="font-sans h-[100dvh] bg-background text-text-primary flex flex-col">
+      {showLandingPage ? (
+          <LandingPage appConfig={appConfig} onStartAuth={handleStartAuth} />
+      ) : !session ? (
+          <AuthComponent appConfig={appConfig} defaultMode={authMode} />
       ) : (
         <>
             {/* Mobile Header - Visible only on mobile */}

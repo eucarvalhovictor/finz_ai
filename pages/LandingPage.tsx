@@ -10,7 +10,9 @@ import {
     PlusIcon,
     ChevronRightIcon,
     StarIcon,
-    CheckIcon
+    CheckIcon,
+    PlayIcon,
+    CrownIcon
 } from '../components/icons/Icons';
 
 interface LandingPageProps {
@@ -94,22 +96,17 @@ const benefits = [
 const plans = [
     {
         name: 'Básico',
-        price: 'Grátis',
-        features: ['Dashboard Completo', '1 Cartão de Crédito', 'Controle de Receitas/Despesas', 'Suporte Básico'],
+        price: 'R$ 15,00',
+        period: '/mês',
+        features: ['Dashboard Completo', '1 Cartão de Crédito', 'Controle de Receitas/Despesas', 'Pagamento Recorrente (sem consumir limite)'],
         highlight: false
     },
     {
         name: 'Pro',
         price: 'R$ 29,90',
         period: '/mês',
-        features: ['Tudo do Básico', 'Até 5 Cartões de Crédito', 'Módulo de Investimentos', 'Relatórios Avançados', 'Suporte Prioritário'],
+        features: ['Tudo do Básico', 'Cartões de Crédito Ilimitados', 'Módulo de Investimentos', 'Relatórios Avançados', 'Suporte Prioritário'],
         highlight: true
-    },
-    {
-        name: 'Enterprise',
-        price: 'Sob Consulta',
-        features: ['Múltiplos Usuários', 'Cartões Ilimitados', 'API Dedicada', 'Gestor de Conta Exclusivo', 'Customização White-label'],
-        highlight: false
     }
 ];
 
@@ -139,7 +136,7 @@ const testimonials = [
 const faqItems = [
     {
         question: 'O FinzAI é realmente gratuito?',
-        answer: 'Sim! Nosso plano Básico é gratuito para sempre e oferece todas as ferramentas essenciais para você organizar suas finanças sem custo algum.',
+        answer: 'Nossos planos são acessíveis e focados em entregar valor real. O plano Básico custa apenas R$ 15,00 mensais para você organizar suas finanças.',
     },
     {
         question: 'Meus dados bancários estão seguros?',
@@ -158,6 +155,11 @@ const faqItems = [
 const LandingPage: React.FC<LandingPageProps> = ({ appConfig, onStartAuth }) => {
     const [openFaq, setOpenFaq] = useState<number | null>(null);
 
+    // Adiciona log para depuração
+    useEffect(() => {
+        console.log("LandingPage.tsx loaded and rendered.");
+    }, []);
+
     const scrollToSection = (id: string) => {
         const element = document.getElementById(id);
         if (element) {
@@ -166,7 +168,7 @@ const LandingPage: React.FC<LandingPageProps> = ({ appConfig, onStartAuth }) => 
     };
 
     return (
-        <div className="bg-background flex flex-col items-center relative custom-scrollbar overflow-y-auto overflow-x-hidden scroll-smooth">
+        <div className="bg-background flex flex-col items-center relative custom-scrollbar overflow-y-auto overflow-x-hidden scroll-smooth h-full">
             <AnimatedBackground />
 
             {/* Fixed Header */}
@@ -219,7 +221,7 @@ const LandingPage: React.FC<LandingPageProps> = ({ appConfig, onStartAuth }) => 
                     )}
                     
                     <h1 className="text-5xl md:text-7xl font-black text-text-primary mb-6 leading-tight tracking-tight">
-                        Domine Suas <span className="text-brand-primary">Finanças</span><br className="hidden md:block" /> Com Inteligência.
+                        <span className="bg-clip-text text-transparent bg-gradient-to-r from-[#40ff00] via-[#00c49f] to-[#40ff00] bg-[length:200%_auto] animate-gradient">Domine Suas Finanças</span><br className="hidden md:block" /> Com Inteligência.
                     </h1>
                     
                     <p className="text-lg md:text-2xl text-text-secondary mb-10 max-w-2xl leading-relaxed">
@@ -235,9 +237,10 @@ const LandingPage: React.FC<LandingPageProps> = ({ appConfig, onStartAuth }) => 
                         </button>
                         <button
                             onClick={() => scrollToSection('beneficios')}
-                            className="bg-white/5 hover:bg-white/10 text-text-primary border border-white/10 font-bold py-4 px-10 rounded-full text-lg transition-all transform hover:scale-105 backdrop-blur-sm"
+                            className="bg-white/5 hover:bg-white/10 text-text-primary border border-white/10 font-bold py-4 px-10 rounded-full text-lg transition-all transform hover:scale-105 backdrop-blur-sm flex items-center justify-center gap-2"
                         >
-                            Saiba Mais
+                            <PlayIcon className="h-6 w-6" />
+                            Ver Demonstração
                         </button>
                     </div>
                 </RevealOnScroll>
@@ -288,16 +291,17 @@ const LandingPage: React.FC<LandingPageProps> = ({ appConfig, onStartAuth }) => 
                             Planos que Cabem no seu <span className="text-brand-primary">Bolso</span>
                         </h2>
                         <p className="text-lg text-text-secondary mb-16 max-w-2xl mx-auto">
-                            Comece grátis e evolua conforme seu patrimônio cresce. Sem contratos de fidelidade.
+                            Evolua conforme seu patrimônio cresce. Sem contratos de fidelidade.
                         </p>
                     </RevealOnScroll>
 
-                    <div className="grid grid-cols-1 md:grid-cols-3 gap-8 max-w-6xl mx-auto">
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-8 max-w-4xl mx-auto">
                         {plans.map((plan, index) => (
                             <RevealOnScroll key={index} delay={index * 150} className="h-full">
                                 <div className={`relative flex flex-col h-full p-8 rounded-3xl border transition-all duration-300 hover:-translate-y-2 ${plan.highlight ? 'bg-card border-brand-primary shadow-[0_0_40px_rgba(64,255,0,0.15)] scale-105 z-10' : 'bg-card/50 border-border hover:border-white/20'}`}>
                                     {plan.highlight && (
-                                        <div className="absolute top-0 left-1/2 -translate-x-1/2 -translate-y-1/2 bg-brand-primary text-black font-bold px-4 py-1 rounded-full text-sm uppercase tracking-wider">
+                                        <div className="absolute top-0 left-1/2 -translate-x-1/2 -translate-y-1/2 bg-brand-primary text-black font-bold px-4 py-1 rounded-full text-sm uppercase tracking-wider flex items-center gap-2">
+                                            <CrownIcon className="h-4 w-4" />
                                             Mais Popular
                                         </div>
                                     )}
@@ -336,7 +340,7 @@ const LandingPage: React.FC<LandingPageProps> = ({ appConfig, onStartAuth }) => 
                 <div className="max-w-7xl mx-auto text-center">
                     <RevealOnScroll>
                         <h2 className="text-3xl md:text-5xl font-bold text-text-primary mb-4">
-                            Amado por <span className="text-brand-primary">Milhares</span>
+                            Aprovado por <span className="text-brand-primary">+100 clientes</span>
                         </h2>
                         <div className="flex flex-col items-center justify-center mb-16">
                              <div className="flex items-center space-x-1 mb-2">
