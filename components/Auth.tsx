@@ -1,14 +1,15 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { supabase } from '../services/supabase';
 import { WalletIcon } from './icons/Icons';
 import AnimatedBackground from './AnimatedBackground';
-import { AppConfig } from '../types'; // Import AppConfig type
+import { AppConfig, AuthMode } from '../types'; // Import AppConfig type
 
 interface AuthComponentProps {
     appConfig?: AppConfig | null;
+    defaultMode?: AuthMode; // NOVO: Adiciona a prop defaultMode
 }
 
-const AuthComponent: React.FC<AuthComponentProps> = ({ appConfig }) => {
+const AuthComponent: React.FC<AuthComponentProps> = ({ appConfig, defaultMode = 'login' }) => {
   const [loading, setLoading] = useState(false);
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -16,10 +17,24 @@ const AuthComponent: React.FC<AuthComponentProps> = ({ appConfig }) => {
   const [firstName, setFirstName] = useState('');
   const [lastName, setLastName] = useState('');
 
-  const [isLogin, setIsLogin] = useState(true);
-  const [isForgotPasswordMode, setIsForgotPasswordMode] = useState(false); // NOVO: Estado para "Esqueceu a Senha"
+  const [isLogin, setIsLogin] = useState(defaultMode === 'login'); // Inicializa com base em defaultMode
+  const [isForgotPasswordMode, setIsForgotPasswordMode] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [message, setMessage] = useState<string | null>(null);
+
+  // NOVO: Efeito para reagir a mudanças em defaultMode
+  useEffect(() => {
+      setIsLogin(defaultMode === 'login');
+      setIsForgotPasswordMode(false); // Garante que não está no modo de recuperação ao mudar o defaultMode
+      setError(null);
+      setMessage(null);
+      setEmail('');
+      setPassword('');
+      setConfirmPassword('');
+      setFirstName('');
+      setLastName('');
+  }, [defaultMode]);
+
 
   const handleAuth = async (event: React.FormEvent) => {
     event.preventDefault();
@@ -58,7 +73,7 @@ const AuthComponent: React.FC<AuthComponentProps> = ({ appConfig }) => {
     }
   };
 
-  // NOVO: Handler para recuperar senha
+  // Handler para recuperar senha
   const handleForgotPassword = async (event: React.FormEvent) => {
     event.preventDefault();
     setLoading(true);
@@ -117,7 +132,7 @@ const AuthComponent: React.FC<AuthComponentProps> = ({ appConfig }) => {
         </div>
         
         <div className="bg-card/80 backdrop-blur-sm p-8 rounded-2xl border border-border">
-          {isForgotPasswordMode ? ( // NOVO: Formulário de recuperação de senha
+          {isForgotPasswordMode ? ( // Formulário de recuperação de senha
             <form onSubmit={handleForgotPassword}>
               <div className="mb-4">
                 <label className="block text-text-secondary text-sm font-bold mb-2" htmlFor="email">
@@ -219,7 +234,7 @@ const AuthComponent: React.FC<AuthComponentProps> = ({ appConfig }) => {
                     />
                 </div>
             )}
-            {isLogin && ( // NOVO: Link "Esqueceu sua senha?"
+            {isLogin && ( // Link "Esqueceu sua senha?"
                 <div className="text-right mb-4">
                     <button
                         type="button"

@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="pt-BR" class="h-full overflow-hidden">
+<html lang="pt-BR" class="h-full">
   <head>
     <meta charset="UTF-8" />
     <link rel="icon" type="image/svg+xml" href="/vite.svg" />
@@ -42,7 +42,7 @@
                 },
                 'fade-in': {
                     '0%': { opacity: '0' },
-                    '100%': { opacity: '1' },
+                    '100%': { opacity: '1', transform: 'translateY(0)' },
                 }
             },
             animation: {
@@ -97,7 +97,7 @@
       }
     </style>
 </head>
-  <body class="bg-background text-text-primary antialiased h-full overflow-hidden">
+  <body class="bg-background text-text-primary antialiased h-full">
     <div id="root" class="h-full"></div>
     <script type="module" src="./index.tsx"></script>
   </body>

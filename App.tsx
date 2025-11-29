@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { supabase } from './services/supabase';
 import type { Session } from '@supabase/supabase-js';
 import { getProfile, getAppConfig } from './services/api';
-import type { Role, AppConfig } from './types';
+import type { Role, AppConfig, AuthMode } from './types';
 import AuthComponent from './components/Auth';
 import Sidebar from './components/Sidebar';
 import DashboardPage from './pages/DashboardPage';
@@ -12,6 +12,7 @@ import InvestmentsPage from './pages/InvestmentsPage';
 import CreditCardsPage from './pages/CreditCardsPage';
 import ProfilePage from './pages/ProfilePage';
 import AdminPage from './pages/AdminPage';
+import LandingPage from './pages/LandingPage'; // NOVO: Importa a LandingPage
 import { Page } from './types';
 import { WalletIcon } from './components/icons/Icons';
 import Spinner from './components/Spinner';
@@ -25,6 +26,8 @@ const App: React.FC = () => {
   const [activePage, setActivePage] = useState<Page>('dashboard');
   const [appConfig, setAppConfig] = useState<AppConfig | null>(null);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+  const [showLandingPage, setShowLandingPage] = useState(true); // NOVO: Estado para controlar a exibição da Landing Page
+  const [authMode, setAuthMode] = useState<AuthMode>('login'); // NOVO: Estado para o modo de autenticação (login/signup)
 
   useEffect(() => {
     let mounted = true;
@@ -37,6 +40,8 @@ const App: React.FC = () => {
         setSession(session);
         
         if (session) {
+          // Se houver sessão, pular a landing page
+          setShowLandingPage(false); 
           if (event === 'SIGNED_IN' || event === 'PASSWORD_RECOVERY') {
               setActivePage('dashboard');
           }
@@ -48,6 +53,8 @@ const App: React.FC = () => {
             .catch(e => console.error("Error fetching user role", e));
         } else {
             setUserRole('basic');
+            // Se não houver sessão, mostrar a landing page por padrão
+            setShowLandingPage(true); 
         }
         setLoading(false);
       });
@@ -73,10 +80,13 @@ const App: React.FC = () => {
             const { data } = sessionResult.value;
             if (data.session) {
                 setSession(data.session);
+                setShowLandingPage(false); // Pular LandingPage se já tem sessão
                 try {
                     const profile = await getProfile(data.session.user.id);
                     if (mounted && profile) setUserRole(profile.role);
                 } catch (e) { console.error(e); }
+            } else {
+                setShowLandingPage(true); // Mostrar LandingPage se não tem sessão
             }
         }
 
@@ -211,10 +221,19 @@ const App: React.FC = () => {
     );
   }
 
+  const handleStartAuth = (mode: AuthMode) => {
+    setAuthMode(mode);
+    setShowLandingPage(false);
+  };
+
   return (
-    <div className="font-sans h-[100dvh] bg-background text-text-primary flex flex-col overflow-hidden">
+    <div className="font-sans h-[100dvh] bg-background text-text-primary flex flex-col"> {/* Removed overflow-hidden here */}
       {!session ? (
-        <AuthComponent appConfig={appConfig} />
+        showLandingPage ? (
+            <LandingPage appConfig={appConfig} onStartAuth={handleStartAuth} />
+        ) : (
+            <AuthComponent appConfig={appConfig} defaultMode={authMode} />
+        )
       ) : (
         <>
             {/* Mobile Header - Visible only on mobile */}
@@ -254,6 +273,7 @@ const App: React.FC = () => {
                     logoUrl={appConfig?.site_logo}
                     siteName={appConfig?.site_name}
                     isMobileOpen={isMobileMenuOpen}
+                    // Fix: Corrected prop name to match the state setter function
                     setIsMobileOpen={setIsMobileMenuOpen}
                 />
                 

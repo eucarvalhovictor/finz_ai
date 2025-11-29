@@ -46,6 +46,8 @@ export type Page = 'dashboard' | 'transactions' | 'investments' | 'credit-cards'
 
 export type Role = 'basic' | 'pro' | 'admin';
 
+export type AuthMode = 'login' | 'signup'; // NOVO: Tipo para o modo de autenticação
+
 export type AppUser = User;
 
 export interface Profile {

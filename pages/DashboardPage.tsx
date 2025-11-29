@@ -7,7 +7,8 @@ import RecentTransactionsList from '../components/RecentTransactionsList';
 import Spinner from '../components/Spinner';
 import Modal from '../components/Modal';
 import TransactionForm from '../components/TransactionForm';
-import { TrendingUp, TrendingDown, DollarSign, PlusIcon, WalletIcon } from 'lucide-react';
+import { DollarSign } from 'lucide-react'; // ONLY DollarSign from lucide-react
+import { TrendingUp, TrendingDown, PlusIcon, WalletIcon } from '../components/icons/Icons'; // Custom icons
 import PaymentMethodChart from '../components/charts/PaymentMethodChart'; // NOVO
 
 interface DashboardPageProps {
