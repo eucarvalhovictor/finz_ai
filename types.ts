@@ -57,7 +57,7 @@ export interface Profile {
   email?: string; 
   avatar_url: string | null;
   updated_at: string | null;
-  role: Role;
+  role: Role | null; // MODIFICADO: Permite que a role seja nula
 }
 
 export interface AppConfig {

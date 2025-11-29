@@ -47,6 +47,7 @@ const AuthComponent: React.FC<AuthComponentProps> = ({ appConfig, defaultMode = 
       if (isLogin) {
         const { error } = await supabase.auth.signInWithPassword({ email, password });
         if (error) throw error;
+        // The onAuthStateChange in App.tsx will handle the navigation to /dashboard
       } else {
         if (password !== confirmPassword) {
           throw new Error('As senhas não coincidem.');
@@ -54,7 +55,7 @@ const AuthComponent: React.FC<AuthComponentProps> = ({ appConfig, defaultMode = 
         if (!firstName) {
             throw new Error('O campo "Nome" é obrigatório.');
         }
-        const { error } = await supabase.auth.signUp({ 
+        const { data, error } = await supabase.auth.signUp({ 
             email, 
             password,
             options: {
@@ -65,7 +66,14 @@ const AuthComponent: React.FC<AuthComponentProps> = ({ appConfig, defaultMode = 
             }
         });
         if (error) throw error;
-        setMessage('Cadastro realizado! Verifique seu e-mail para confirmação.');
+        
+        // On successful signup, navigate to the checkout page.
+        // The onAuthStateChange will create the session and App.tsx will render the CheckoutPage.
+        if (data.user) {
+             navigate('/checkout');
+        } else {
+             setMessage('Cadastro realizado! Verifique seu e-mail para confirmação.');
+        }
       }
     } catch (error: any) {
       setError(error.error_description || error.message);
