@@ -74,13 +74,14 @@ const AuthComponent: React.FC<AuthComponentProps> = ({ appConfig, defaultMode = 
         
         if (data.user) {
             console.log("AuthComponent: User signed up successfully.");
+            
+            // CRITICAL FIX: Set a session storage flag immediately.
+            // This tells App.tsx to FORCE 'onboarding' role, ignoring DB latency or defaults.
+            sessionStorage.setItem('finz_new_signup', 'true');
+
             // Explicitly set the role to 'onboarding' in the database right after signup.
-            // This ensures that the user is forced through the checkout flow,
-            // even if the Supabase 'profiles' table has a default role (e.g., 'basic').
             await updateProfile(data.user.id, { role: 'onboarding' });
             console.log("AuthComponent: User role set to 'onboarding' in DB.");
-            // The App.tsx's onAuthStateChange will now correctly fetch this 'onboarding' role
-            // and redirect to checkout.
         } else {
              setMessage('Cadastro realizado! Verifique seu e-mail para confirmação.');
         }

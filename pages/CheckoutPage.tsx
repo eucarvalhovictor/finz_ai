@@ -124,6 +124,10 @@ const CheckoutPage: React.FC<CheckoutPageProps> = ({ user, appConfig, onSuccess 
             // Update user's role in the database
             await updateProfile(user.id, { role: selectedPlan });
 
+            // CRITICAL FIX: Clear the "new signup" flag from session storage.
+            // This allows the App to finally trust the DB role (which is now 'basic' or 'pro', not 'onboarding').
+            sessionStorage.removeItem('finz_new_signup');
+
             // Call the success callback to navigate to the dashboard
             onSuccess();
 

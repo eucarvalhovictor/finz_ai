@@ -38,6 +38,9 @@ const App: React.FC = () => {
   const [appConfig, setAppConfig] = useState<AppConfig | null>(null);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   
+  // Estado para detectar carregamento demorado (loop infinito)
+  const [showEmergencyExit, setShowEmergencyExit] = useState(false);
+  
   const [location, setLocation] = useState(getLocationFromHash());
   const mounted = useRef(true); 
 
@@ -66,76 +69,130 @@ const App: React.FC = () => {
     };
   }, []); // NO DEPENDENCIES here. Listener is set up once.
 
+  // Monitor de carregamento demorado (Safety Timeout)
+  useEffect(() => {
+    let timer: ReturnType<typeof setTimeout>;
+    if (loading) {
+        timer = setTimeout(() => {
+            if (mounted.current) setShowEmergencyExit(true);
+        }, 5000); // Se carregar por mais de 5 segundos, mostra botão de emergência
+    } else {
+        setShowEmergencyExit(false);
+    }
+    return () => clearTimeout(timer);
+  }, [loading]);
+
+  const handleEmergencySignOut = async () => {
+      console.warn("Emergency Sign Out Triggered");
+      try {
+          setLoading(true);
+          // Limpa tudo que pode estar corrompido
+          sessionStorage.clear();
+          localStorage.clear();
+          await supabase.auth.signOut();
+      } catch (e) {
+          console.error("Error during emergency signout", e);
+      } finally {
+          window.location.hash = '';
+          window.location.reload(); // Força recarregamento limpo
+      }
+  };
+
   const fetchUserAndProfile = useCallback(async (currentSession: Session | null) => {
     if (!mounted.current) return;
     console.log("[App.fetchUserAndProfile] Initiating fetch for session:", currentSession?.user?.id ? "authenticated" : "unauthenticated");
-    setLoading(true); // Sempre setar loading como true ao iniciar a busca
+    setLoading(true); 
     
-    if (currentSession) {
-      let profileData = null;
-      let retries = 0;
-      const maxRetries = 5; 
-      const retryDelay = 700; // milliseconds
+    try {
+        if (currentSession) {
+        // SECURITY FIX: Check for the new signup flag in SessionStorage.
+        // If present, this user JUST signed up and MUST be treated as 'onboarding',
+        // regardless of what the database says (race condition protection).
+        const isNewSignup = sessionStorage.getItem('finz_new_signup') === 'true';
 
-      while (retries < maxRetries) {
-          try {
-              profileData = await getProfile(currentSession.user.id);
-              // If profile is found and role is not null, AND it's not 'basic' (meaning it's onboarding/pro/admin)
-              // OR if it's explicitly 'onboarding', we are good.
-              if (profileData && profileData.role && profileData.role !== 'basic') {
-                  console.log(`[App.fetchUserAndProfile] Profile with role '${profileData.role}' found after ${retries} tries.`);
-                  break; 
-              }
-              if (profileData && profileData.role === 'basic' && retries < maxRetries -1) {
-                  // If it's 'basic' but we expect 'onboarding' (new user), retry
-                  console.warn(`[App.fetchUserAndProfile] Profile role is 'basic' (unexpected for new user). Retrying in ${retryDelay}ms...`);
-                  await new Promise(res => setTimeout(res, retryDelay));
-              } else if (!profileData || profileData.role === null) {
-                  // Profile not found or role is null, retry assuming latency
-                  console.warn(`[App.fetchUserAndProfile] Profile data or role is null. Retrying in ${retryDelay}ms...`);
-                  await new Promise(res => setTimeout(res, retryDelay));
-              } else {
-                  // If it's 'basic' and max retries reached, or it's already a valid role, break.
-                  break;
-              }
-          } catch (e: any) {
-              console.error(`[App.fetchUserAndProfile] Error fetching profile (retry ${retries + 1}/${maxRetries}):`, e);
-              if (e.code === 'PGRST116') { // Profile not found (often happens for new users before initial profile record is created by Supabase trigger)
-                  console.warn("[App.fetchUserAndProfile] Profile record not found yet. Retrying in case of latency...");
-                  await new Promise(res => setTimeout(res, retryDelay));
-              } else {
-                  // Other errors, don't retry, just treat as missing profile and default to onboarding.
-                  profileData = null; 
-                  break;
-              }
-          }
-          retries++;
-      }
-
-      if (mounted.current) {
-          let determinedRole: Role;
-          if (profileData && profileData.role && profileData.role !== 'basic') {
-              determinedRole = profileData.role;
-          } else {
-              determinedRole = 'onboarding'; // Default to onboarding if profile or role is still null/basic after retries
-          }
-          setUserRole(determinedRole);
-          console.log("[App.fetchUserAndProfile] Final determined user role:", determinedRole);
-      }
-
-    } else { // User is not authenticated
-      if (mounted.current) {
-        setUserRole(null);
-        const currentPath = getLocationFromHash();
-        console.log("[App.fetchUserAndProfile] User unauthenticated. Current path:", currentPath);
-        if (!['/', '/login', '/signup', '/terms', '/privacy'].includes(currentPath)) {
-            console.log("[App.fetchUserAndProfile] Redirecting unauthenticated user to '/'");
-            navigate('/');
+        if (isNewSignup) {
+            console.log("[App.fetchUserAndProfile] 'finz_new_signup' flag detected. Forcing role to 'onboarding'.");
+            if (mounted.current) {
+                setUserRole('onboarding');
+                setLoading(false);
+            }
+            return; // Skip DB fetch entirely to prevent reading stale 'basic' role
         }
-      }
+
+        let profileData = null;
+        let retries = 0;
+        const maxRetries = 5; 
+        const retryDelay = 700; // milliseconds
+
+        while (retries < maxRetries) {
+            try {
+                profileData = await getProfile(currentSession.user.id);
+                // If profile is found and role is not null, AND it's not 'basic' (meaning it's onboarding/pro/admin)
+                // OR if it's explicitly 'onboarding', we are good.
+                if (profileData && profileData.role && profileData.role !== 'basic') {
+                    console.log(`[App.fetchUserAndProfile] Profile with role '${profileData.role}' found after ${retries} tries.`);
+                    break; 
+                }
+                if (profileData && profileData.role === 'basic' && retries < maxRetries -1) {
+                    // If it's 'basic' but we expect 'onboarding' (new user), retry
+                    console.warn(`[App.fetchUserAndProfile] Profile role is 'basic' (possibly default). Retrying in ${retryDelay}ms to check for updates...`);
+                    await new Promise(res => setTimeout(res, retryDelay));
+                } else if (!profileData || profileData.role === null) {
+                    // Profile not found or role is null, retry assuming latency
+                    console.warn(`[App.fetchUserAndProfile] Profile data or role is null. Retrying in ${retryDelay}ms...`);
+                    await new Promise(res => setTimeout(res, retryDelay));
+                } else {
+                    // If it's 'basic' and max retries reached, or it's already a valid role, break.
+                    break;
+                }
+            } catch (e: any) {
+                console.error(`[App.fetchUserAndProfile] Error fetching profile (retry ${retries + 1}/${maxRetries}):`, e);
+                if (e.code === 'PGRST116') { // Profile not found
+                    console.warn("[App.fetchUserAndProfile] Profile record not found yet. Retrying in case of latency...");
+                    await new Promise(res => setTimeout(res, retryDelay));
+                } else {
+                    // Other errors, don't retry, just treat as missing profile and default to onboarding.
+                    profileData = null; 
+                    break;
+                }
+            }
+            retries++;
+        }
+
+        if (mounted.current) {
+            let determinedRole: Role;
+            if (profileData && profileData.role) {
+                determinedRole = profileData.role;
+            } else {
+                // FALLBACK CRÍTICO: Se falhar tudo, define como onboarding para não quebrar a UI
+                console.warn("[App.fetchUserAndProfile] Could not determine role from DB. Defaulting to 'onboarding' to prevent infinite loop.");
+                determinedRole = 'onboarding'; 
+            }
+            setUserRole(determinedRole);
+            console.log("[App.fetchUserAndProfile] Final determined user role:", determinedRole);
+        }
+
+        } else { // User is not authenticated
+        if (mounted.current) {
+            setUserRole(null);
+            const currentPath = getLocationFromHash();
+            console.log("[App.fetchUserAndProfile] User unauthenticated. Current path:", currentPath);
+            if (!['/', '/login', '/signup', '/terms', '/privacy'].includes(currentPath)) {
+                console.log("[App.fetchUserAndProfile] Redirecting unauthenticated user to '/'");
+                navigate('/');
+            }
+        }
+        }
+    } catch (err) {
+        console.error("[App.fetchUserAndProfile] Critical error in auth flow:", err);
+        // Em caso de erro crítico não tratado, força logout para resetar estado
+        if (mounted.current) {
+             // Não chamamos handleEmergencySignOut aqui para evitar loop de reload, mas paramos o loading
+        }
+    } finally {
+        if (mounted.current) setLoading(false); 
+        console.log("[App.fetchUserAndProfile] Loading set to false.");
     }
-    if (mounted.current) setLoading(false); // Finalizar loading após a busca (sucesso ou falha, autenticado ou não)
-    console.log("[App.fetchUserAndProfile] Loading set to false.");
   }, [navigate]); 
 
   useEffect(() => {
@@ -159,17 +216,11 @@ const App: React.FC = () => {
     });
 
     // Set up the auth state change listener.
-    // This listener will handle subsequent changes (login, logout, token refresh).
     const { data: { subscription } } = supabase.auth.onAuthStateChange(async (_event, newSession) => {
       if (!mounted.current) return;
       console.log(`[App.onAuthStateChange] Event: ${_event}, newSession user: ${newSession?.user?.id || 'null'}`);
       
-      // Always update the session state with the new session.
-      // This will trigger a re-render.
       setSession(newSession); 
-
-      // Always refetch profile data when auth state changes (login, logout, token refresh, initial session).
-      // This ensures the userRole is always in sync with the current authentication status.
       await fetchUserAndProfile(newSession);
     });
 
@@ -178,7 +229,7 @@ const App: React.FC = () => {
       subscription.unsubscribe();
       console.log("[App] Component unmounted. Cleaning up.");
     };
-  }, [fetchUserAndProfile]); // Depend only on fetchUserAndProfile which is useCallback-memoized
+  }, [fetchUserAndProfile]); 
 
   const applySiteConfig = (config: AppConfig) => {
       if (config.site_name) document.title = config.site_name;
@@ -220,10 +271,6 @@ const App: React.FC = () => {
   };
 
   useEffect(() => {
-      if (appConfig) applySiteConfig(appConfig);
-  }, [appConfig]);
-
-  useEffect(() => {
       if (!session) return;
       let timeoutId: ReturnType<typeof setTimeout>;
       const handleLogout = async () => {
@@ -261,7 +308,6 @@ const App: React.FC = () => {
       case '/admin':
         return 'admin';
       default:
-        // Se a rota não for uma página interna conhecida, mas o usuário está logado, default para dashboard
         return 'dashboard'; 
     }
   };
@@ -269,13 +315,10 @@ const App: React.FC = () => {
   // NOVO: Função para renderizar as páginas internas com base na localização atual
   const renderInternalPageContent = (currentLocation: string) => {
     if (!session || !userRole || userRole === 'onboarding') {
-        // Isso não deve ser chamado se o userRole for 'onboarding' ou se não houver sessão,
-        // pois a lógica externa já redirecionou.
         console.warn("[App.renderInternalPageContent] Called without valid session/role or with onboarding role.");
         return null;
     }
     
-    // Converte a string da rota em um tipo Page
     const pageToRender: Page = getCurrentPageFromLocation(currentLocation);
 
     switch (pageToRender) {
@@ -292,7 +335,6 @@ const App: React.FC = () => {
       case 'admin':
         return <AdminPage user={session.user} />;
       default:
-        // Fallback para dashboard se a rota interna não for reconhecida, mas o usuário estiver autenticado e não-onboarding.
         return <DashboardPage user={session.user} />;
     }
   };
@@ -346,9 +388,9 @@ const App: React.FC = () => {
   const handleCheckoutSuccess = async () => {
     if (session) {
       console.log("[App.handleCheckoutSuccess] Checkout completed. Navigating to /dashboard.");
-      // O fetchUserAndProfile no onAuthStateChange eventualmente atualizará a role
-      // e a re-renderização do App.tsx levará ao Dashboard ou Checkout se a role ainda for 'onboarding'.
-      // Chamamos navigate para forçar a mudança de rota.
+      // We rely on CheckoutPage to clear the sessionStorage flag.
+      // fetchUserAndProfile will be called eventually or we can force it, 
+      // but navigating triggers re-render.
       navigate('/dashboard'); 
     }
   };
@@ -356,9 +398,22 @@ const App: React.FC = () => {
   if (loading) {
     console.log("[App] Displaying spinner (loading).");
     return (
-      <div className="flex flex-col items-center justify-center h-[100dvh] bg-background space-y-4">
+      <div className="flex flex-col items-center justify-center h-[100dvh] bg-background space-y-6 relative">
         <Spinner size="lg" />
         <p className="text-text-secondary animate-pulse text-sm">Carregando...</p>
+        
+        {/* EMERGENCY EXIT BUTTON */}
+        {showEmergencyExit && (
+            <div className="absolute bottom-20 flex flex-col items-center animate-fade-in-up">
+                <p className="text-red-400 text-xs mb-2">Está demorando muito?</p>
+                <button 
+                    onClick={handleEmergencySignOut}
+                    className="bg-red-500/10 hover:bg-red-500/20 text-red-500 border border-red-500/30 px-6 py-2 rounded-xl text-sm font-bold transition-all"
+                >
+                    Sair e Recarregar (Reset)
+                </button>
+            </div>
+        )}
       </div>
     );
   }
@@ -387,7 +442,7 @@ const App: React.FC = () => {
           default:
               console.log("[App] Unauthenticated user trying to access restricted path. Redirecting to '/'.");
               navigate('/');
-              return null; // Retorna null para que a próxima renderização já seja com o novo location
+              return null;
       }
   }
 
@@ -401,9 +456,11 @@ const App: React.FC = () => {
       const isPublicAuthPath = ['/', '/login', '/signup'].includes(location);
 
       if (userRole === 'onboarding') {
+          // Force onboarding users to checkout, blocking Landing Page access immediately
           if (isPublicAuthPath || location !== '/checkout') {
               console.log("[App] Authenticated 'onboarding' user on public path or restricted path. Redirecting to '/checkout'.");
               targetLocation = '/checkout';
+              // Perform immediate navigation to avoid flicker, but render the checkout component in this pass if possible
               if (location !== targetLocation) {
                   navigate(targetLocation);
               }
@@ -428,20 +485,31 @@ const App: React.FC = () => {
               return <PrivacyPage appConfig={appConfig} onBack={() => navigate('/dashboard')} />;
           default:
               // Se o usuário não é 'onboarding', renderiza o layout principal.
-              // Se fosse 'onboarding', já teria sido redirecionado e renderizado '/checkout'.
+              // Se fosse 'onboarding', o bloco if acima já teria mudado targetLocation para /checkout.
               if (userRole !== 'onboarding') {
                   return renderMainAppLayout(getCurrentPageFromLocation(targetLocation));
               }
-              // Caso contrário, deve ser um estado de transição ou erro
-              console.warn("[App] Authenticated user in unexpected state. Displaying spinner.", { userRole, location: targetLocation });
-              return <Spinner />;
+              // Caso extremo: userRole é onboarding, targetLocation não é /checkout (ex: transição de estado).
+              // Renderiza CheckoutPage preventivamente para evitar "loading" infinito ou null.
+              return <CheckoutPage user={session.user} appConfig={appConfig} onSuccess={handleCheckoutSuccess} />;
       }
   }
 
-  // Fallback final: se por algum motivo não cair em nenhuma das condições acima,
-  // exibe um spinner. Isso deve ser evitado com a lógica de roteamento robusta.
-  console.log("[App] Fallback: Displaying spinner. This state should ideally not be reached.");
-  return <Spinner />;
+  // Fallback final: Se chegamos aqui, temos sessão mas userRole é nulo e loading é false (O que não deveria acontecer com o novo try/finally).
+  // Se acontecer, mostramos o botão de emergência.
+  console.warn("[App] Fallback state reached. Session exists but rendering failed.");
+  return (
+      <div className="flex flex-col items-center justify-center h-[100dvh] bg-background space-y-6">
+        <Spinner size="lg" />
+        <p className="text-red-400 text-sm">Erro de estado. Por favor, reinicie.</p>
+        <button 
+            onClick={handleEmergencySignOut}
+            className="bg-red-500/10 hover:bg-red-500/20 text-red-500 border border-red-500/30 px-6 py-2 rounded-xl text-sm font-bold transition-all"
+        >
+            Sair e Corrigir
+        </button>
+      </div>
+  );
 };
 
 export default App;
