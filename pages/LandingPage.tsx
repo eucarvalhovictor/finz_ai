@@ -211,7 +211,7 @@ const LandingPage: React.FC<LandingPageProps> = ({ appConfig, onStartAuth, onVie
             </header>
 
             {/* Hero Section */}
-            <section className="relative w-full min-h-screen flex flex-col justify-center items-center z-10 px-4 pt-24 pb-12 md:pt-20 bg-[#050505]">
+            <section className="relative w-full min-h-[100dvh] flex flex-col justify-center items-center z-10 px-4 pt-24 pb-12 md:pt-20 bg-[#050505]">
                 <RevealOnScroll className="w-full max-w-4xl flex flex-col items-center text-center">
                     {appConfig?.site_logo ? (
                         <img src={appConfig.site_logo} alt="Logo" className="h-20 w-20 md:h-32 md:w-32 object-contain mx-auto mb-6 md:mb-8 drop-shadow-[0_0_15px_rgba(64,255,0,0.3)]" />
@@ -252,7 +252,7 @@ const LandingPage: React.FC<LandingPageProps> = ({ appConfig, onStartAuth, onVie
             </section>
 
             {/* Why Choose Finz? (Benefits) */}
-            <section id="beneficios" className="relative w-full h-auto md:min-h-screen flex flex-col justify-center items-center bg-[#0a0a0a] z-10 px-4 py-16 md:py-20 scroll-mt-16 border-t border-white/5">
+            <section id="beneficios" className="relative w-full flex flex-col justify-center items-center bg-[#0a0a0a] z-10 px-4 py-16 md:py-20 scroll-mt-16 border-t border-white/5">
                 <div className="max-w-7xl mx-auto text-center w-full">
                     <RevealOnScroll>
                         <h2 className="font-radley text-3xl md:text-5xl font-bold text-text-primary mb-6 md:mb-8 leading-tight">
@@ -284,7 +284,7 @@ const LandingPage: React.FC<LandingPageProps> = ({ appConfig, onStartAuth, onVie
             </section>
 
             {/* Plans Section */}
-            <section id="planos" className="relative w-full h-auto md:min-h-screen flex flex-col justify-center items-center bg-[#111] z-10 px-4 py-16 md:py-20 scroll-mt-16 border-t border-white/5">
+            <section id="planos" className="relative w-full flex flex-col justify-center items-center bg-[#111] z-10 px-4 py-16 md:py-20 scroll-mt-16 border-t border-white/5">
                  <div className="max-w-7xl mx-auto text-center w-full">
                     <RevealOnScroll>
                         <h2 className="font-radley text-3xl md:text-5xl font-bold text-text-primary mb-6 md:mb-8">
@@ -336,7 +336,7 @@ const LandingPage: React.FC<LandingPageProps> = ({ appConfig, onStartAuth, onVie
             </section>
 
             {/* Testimonials Section */}
-            <section id="depoimentos" className="relative w-full h-auto md:min-h-screen flex flex-col justify-center items-center bg-[#050505] z-10 px-4 py-16 md:py-20 scroll-mt-16 border-t border-white/5">
+            <section id="depoimentos" className="relative w-full flex flex-col justify-center items-center bg-[#050505] z-10 px-4 py-16 md:py-20 scroll-mt-16 border-t border-white/5">
                 <div className="max-w-7xl mx-auto text-center w-full">
                     <RevealOnScroll>
                         <h2 className="font-radley text-3xl md:text-5xl font-bold text-text-primary mb-4 leading-tight">
@@ -381,7 +381,7 @@ const LandingPage: React.FC<LandingPageProps> = ({ appConfig, onStartAuth, onVie
             </section>
 
             {/* FAQ Section */}
-            <section id="faq" className="relative w-full h-auto md:min-h-screen flex flex-col justify-center items-center bg-[#0a0a0a] z-10 px-4 py-16 md:py-20 scroll-mt-16 border-t border-white/5">
+            <section id="faq" className="relative w-full flex flex-col justify-center items-center bg-[#0a0a0a] z-10 px-4 py-16 md:py-20 scroll-mt-16 border-t border-white/5">
                 <div className="max-w-4xl mx-auto w-full">
                     <RevealOnScroll className="text-center mb-12 md:mb-16">
                         <h2 className="font-radley text-3xl md:text-5xl font-bold text-text-primary mb-4">
