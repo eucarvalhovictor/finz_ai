@@ -332,11 +332,18 @@ const LandingPage: React.FC<LandingPageProps> = ({ appConfig, onStartAuth, onVie
             <section id="depoimentos" className="relative w-full flex flex-col justify-center items-center bg-[#0a0a0a] z-10 px-4 py-28 md:py-36 scroll-mt-16 border-t border-white/5">
                 <div className="max-w-7xl mx-auto text-center w-full">
                     <RevealOnScroll>
-                        <h2 className="font-radley text-3xl md:text-4xl lg:text-4xl font-bold text-text-primary mb-6 md:mb-8 leading-tight">
+                        <h2 className="font-radley text-3xl md:text-4xl lg:text-4xl font-bold text-text-primary mb-4 md:mb-6 leading-tight">
                             Aprovado por <span className="text-brand-primary">+100 clientes</span>
                         </h2>
+                        <div className="flex justify-center items-center mb-2 md:mb-4 space-x-1">
+                            <StarIcon className="h-5 w-5 text-yellow-400" aria-hidden="true" />
+                            <StarIcon className="h-5 w-5 text-yellow-400" aria-hidden="true" />
+                            <StarIcon className="h-5 w-5 text-yellow-400" aria-hidden="true" />
+                            <StarIcon className="h-5 w-5 text-yellow-400" aria-hidden="true" />
+                            <StarIcon className="h-5 w-5 text-yellow-400" aria-hidden="true" />
+                        </div>
                         <p className="text-base md:text-base text-text-secondary mb-12 md:mb-16 max-w-3xl mx-auto px-2">
-                            Veja o que nossos usuários estão falando sobre como o Finz transformou suas vidas financeiras.
+                            <span className="font-bold text-text-primary">4.9/5</span> de média baseada em avaliações reais
                         </p>
                     </RevealOnScroll>
 
