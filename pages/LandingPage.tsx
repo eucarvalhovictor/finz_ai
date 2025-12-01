@@ -225,11 +225,11 @@ const LandingPage: React.FC<LandingPageProps> = ({ appConfig, onStartAuth, onVie
                         <span className="block mt-2 sm:mt-0 sm:inline">Com Inteligência.</span>
                     </h1>
                     
-                    <p className="text-base sm:text-lg md:text-2xl text-text-secondary mb-8 md:mb-10 max-w-2xl leading-relaxed px-2">
+                    <p className="text-base sm:text-lg md:text-2xl text-text-secondary mb-8 md:mb-10 max-w-2xl leading-relaxed">
                         Deixe de sobreviver e comece a prosperar. O sistema definitivo para quem quer controle total, previsibilidade e crescimento patrimonial.
                     </p>
                     
-                    <div className="flex flex-col sm:flex-row gap-4 md:gap-5 w-full justify-center px-4">
+                    <div className="flex flex-col sm:flex-row gap-4 md:gap-5 w-full justify-center">
                         <button
                             onClick={() => onStartAuth('signup')}
                             className="bg-brand-primary hover:bg-brand-secondary text-black font-extrabold py-3 px-6 md:py-4 md:px-10 rounded-lg text-base md:text-lg transition-all transform hover:scale-105 shadow-[0_0_30px_rgba(64,255,0,0.4)] hover:shadow-[0_0_50px_rgba(64,255,0,0.6)] w-full sm:w-auto"
@@ -298,7 +298,7 @@ const LandingPage: React.FC<LandingPageProps> = ({ appConfig, onStartAuth, onVie
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-6 md:gap-8 max-w-4xl mx-auto">
                         {plans.map((plan, index) => (
                             <RevealOnScroll key={index} delay={index * 150} className="h-full">
-                                <div className={`relative flex flex-col h-full p-6 md:p-8 rounded-2xl border transition-all duration-300 hover:-translate-y-2 ${plan.highlight ? 'bg-[#151515] border-brand-primary shadow-[0_0_40px_rgba(64,255,0,0.15)] scale-105 z-10' : 'bg-[#151515]/50 border-border hover:border-white/20'}`}>
+                                <div className={`relative flex flex-col h-full p-6 md:p-8 rounded-2xl border transition-all duration-300 hover:-translate-y-2 ${plan.highlight ? 'bg-[#151515] border-brand-primary shadow-[0_0_40px_rgba(64,255,0,0.15)] md:scale-105 z-10' : 'bg-[#151515]/50 border-border hover:border-white/20'}`}>
                                     {plan.highlight && (
                                         <div className="absolute top-0 left-1/2 -translate-x-1/2 -translate-y-1/2 bg-brand-primary text-black font-bold px-3 py-1 md:px-4 rounded-lg text-xs md:text-sm uppercase tracking-wider flex items-center gap-2 whitespace-nowrap">
                                             <CrownIcon className="h-3 w-3 md:h-4 md:w-4" />
