@@ -211,7 +211,7 @@ const LandingPage: React.FC<LandingPageProps> = ({ appConfig, onStartAuth, onVie
             </header>
 
             {/* Hero Section */}
-            <section className="relative w-full min-h-[100dvh] flex flex-col justify-center items-center z-10 px-4 pt-24 pb-12 md:pt-20 bg-[#050505]">
+            <section className="relative w-full flex flex-col justify-center items-center z-10 px-4 pt-32 pb-24 md:pt-48 md:pb-32 bg-[#050505]">
                 <RevealOnScroll className="w-full max-w-4xl flex flex-col items-center text-center">
                     {appConfig?.site_logo ? (
                         <img src={appConfig.site_logo} alt="Logo" className="h-20 w-20 md:h-32 md:w-32 object-contain mx-auto mb-6 md:mb-8 drop-shadow-[0_0_15px_rgba(64,255,0,0.3)]" />
