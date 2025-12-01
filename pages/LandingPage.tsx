@@ -216,7 +216,7 @@ const LandingPage: React.FC<LandingPageProps> = ({ appConfig, onStartAuth, onVie
                     {appConfig?.site_logo ? (
                         <img src={appConfig.site_logo} alt="Logo" className="h-16 w-16 md:h-20 md:w-20 object-contain mx-auto mb-6 drop-shadow-[0_0_15px_rgba(64,255,0,0.3)]" />
                     ) : (
-                        <WalletIcon className="h-16 w-16 md:h-20 md:w-20 text-brand-primary mx-auto mb-6 drop-shadow-[0_0_15px_rgba(64,255,0,0.3)]" />
+                        <WalletIcon className="h-16 w-16 md:h-20 w-20 text-brand-primary mx-auto mb-6 drop-shadow-[0_0_15px_rgba(64,255,0,0.3)]" />
                     )}
                     
                     {/* H1 Radley Font - Adjusted sizes: reduced md:text-6xl to 5xl and lg to 6xl to fit 1366px screens better */}
@@ -332,27 +332,27 @@ const LandingPage: React.FC<LandingPageProps> = ({ appConfig, onStartAuth, onVie
             <section id="depoimentos" className="relative w-full flex flex-col justify-center items-center bg-[#0a0a0a] z-10 px-4 py-28 md:py-36 scroll-mt-16 border-t border-white/5">
                 <div className="max-w-7xl mx-auto text-center w-full">
                     <RevealOnScroll>
-                        <h2 className="font-radley text-3xl md:text-4xl lg:text-4xl font-bold text-text-primary mb-4 md:mb-6 leading-tight">
+                        <h2 className="font-radley text-2xl md:text-3xl lg:text-3xl font-bold text-text-primary mb-3 md:mb-4 leading-tight">
                             Aprovado por <span className="text-brand-primary">+100 clientes</span>
                         </h2>
-                        <div className="flex justify-center items-center mb-2 md:mb-4 space-x-1">
-                            <StarIcon className="h-5 w-5 text-yellow-400" aria-hidden="true" />
-                            <StarIcon className="h-5 w-5 text-yellow-400" aria-hidden="true" />
-                            <StarIcon className="h-5 w-5 text-yellow-400" aria-hidden="true" />
-                            <StarIcon className="h-5 w-5 text-yellow-400" aria-hidden="true" />
-                            <StarIcon className="h-5 w-5 text-yellow-400" aria-hidden="true" />
+                        <div className="flex justify-center items-center mb-1.5 md:mb-2 space-x-0.5">
+                            <StarIcon className="h-4 w-4 text-yellow-400" aria-hidden="true" />
+                            <StarIcon className="h-4 w-4 text-yellow-400" aria-hidden="true" />
+                            <StarIcon className="h-4 w-4 text-yellow-400" aria-hidden="true" />
+                            <StarIcon className="h-4 w-4 text-yellow-400" aria-hidden="true" />
+                            <StarIcon className="h-4 w-4 text-yellow-400" aria-hidden="true" />
                         </div>
-                        <p className="text-base md:text-base text-text-secondary mb-12 md:mb-16 max-w-3xl mx-auto px-2">
+                        <p className="text-sm md:text-sm text-text-secondary mb-8 md:mb-10 max-w-3xl mx-auto px-2">
                             <span className="font-bold text-text-primary">4.9/5</span> de média baseada em avaliações reais
                         </p>
                     </RevealOnScroll>
 
-                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
                         {testimonials.map((testimonial, index) => (
                             <RevealOnScroll key={index} delay={index * 100} className="h-full">
-                                <div className="bg-[#121212] p-6 rounded-2xl border border-border h-full flex flex-col justify-between">
-                                    <p className="text-base md:text-lg text-text-primary mb-6 flex-grow">"{testimonial.quote}"</p>
-                                    <div className="text-sm text-text-secondary">
+                                <div className="bg-[#121212] p-5 rounded-2xl border border-border h-full flex flex-col justify-between">
+                                    <p className="text-sm md:text-base text-text-primary mb-6 flex-grow">"{testimonial.quote}"</p>
+                                    <div className="text-xs text-text-secondary">
                                         <p className="font-bold text-text-primary">{testimonial.author}</p>
                                         <p>{testimonial.role}</p>
                                     </div>
