@@ -212,7 +212,7 @@ const LandingPage: React.FC<LandingPageProps> = ({ appConfig, onStartAuth, onVie
 
             {/* Hero Section */}
             {/* ADJUSTED: Changed padding to min-h-screen for better responsiveness. Adjusted font sizes to prevent overlap on smaller laptop screens. */}
-            <section className="relative w-full min-h-screen flex flex-col justify-center items-center z-10 px-4 pt-32 pb-24 md:pt-40 bg-[#050505]">
+            <section id="hero" className="relative w-full min-h-screen flex flex-col justify-center items-center z-10 px-4 pt-32 pb-24 md:pt-40 bg-[#050505]">
                 <RevealOnScroll className="w-full max-w-5xl flex flex-col items-center text-center">
                     {appConfig?.site_logo ? (
                         <img src={appConfig.site_logo} alt="Logo" className="h-16 w-16 md:h-20 md:w-20 object-contain mx-auto mb-6 drop-shadow-[0_0_15px_rgba(64,255,0,0.3)]" />
@@ -221,13 +221,13 @@ const LandingPage: React.FC<LandingPageProps> = ({ appConfig, onStartAuth, onVie
                     )}
                     
                     {/* H1 Radley Font - Adjusted sizes: reduced md:text-6xl to 5xl and lg to 6xl to fit 1366px screens better */}
-                    <h1 className="font-radley text-4xl sm:text-5xl md:text-5xl lg:text-6xl xl:text-7xl font-bold text-text-primary mb-6 leading-tight tracking-tight">
+                    <h1 className="font-radley text-4xl sm:text-5xl md:text-4xl lg:text-5xl xl:text-6xl font-bold text-text-primary mb-6 leading-tight tracking-tight">
                         <span className="bg-clip-text text-transparent bg-gradient-to-r from-green-400 via-brand-primary to-green-600 bg-[length:200%_auto] animate-gradient font-bold block sm:inline">Domine Suas Finanças</span>{' '}
                         <span className="block mt-2 sm:mt-0 sm:inline">Com Inteligência.</span>
                     </h1>
                     
                     {/* Description - Adjusted text size */}
-                    <p className="text-base sm:text-lg md:text-xl text-text-secondary mb-10 max-w-2xl leading-relaxed">
+                    <p className="text-base sm:text-lg md:text-xl text-text-secondary mb-10 max-w-2xl mx-auto leading-relaxed">
                         Deixe de sobreviver e comece a prosperar. O sistema definitivo para quem quer controle total, previsibilidade e crescimento patrimonial.
                     </p>
                     
