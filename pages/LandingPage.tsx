@@ -47,7 +47,7 @@ const useOnScreen = (ref: React.RefObject<HTMLElement | null>, rootMargin = "0px
 
 const RevealOnScroll: React.FC<{ children: React.ReactNode; className?: string; delay?: number }> = ({ children, className = "", delay = 0 }) => {
     const ref = useRef<HTMLDivElement>(null);
-    const isVisible = useOnScreen(ref, "-50px"); // Margin ajustada para disparar mais cedo no mobile
+    const isVisible = useOnScreen(ref, "-50px");
 
     return (
         <div
@@ -103,7 +103,7 @@ const plans = [
     },
     {
         name: 'Pro',
-        price: 'R$ 29,90', // MODIFICADO: Preço atualizado
+        price: 'R$ 29,90',
         period: '/mês',
         features: ['Tudo do Básico', 'Cartões de Crédito Ilimitados', 'Módulo de Investimentos', 'Relatórios Avançados', 'Suporte Prioritário'],
         highlight: true
@@ -211,35 +211,36 @@ const LandingPage: React.FC<LandingPageProps> = ({ appConfig, onStartAuth, onVie
             </header>
 
             {/* Hero Section */}
-            {/* ADJUSTED: Changed padding to min-h-screen for better responsiveness on 1366x768 screens */}
-            <section className="relative w-full min-h-[95vh] flex flex-col justify-center items-center z-10 px-4 pt-28 pb-16 md:pt-32 bg-[#050505]">
+            {/* ADJUSTED: Changed padding to min-h-screen for better responsiveness. Adjusted font sizes to prevent overlap on smaller laptop screens. */}
+            <section className="relative w-full min-h-screen flex flex-col justify-center items-center z-10 px-4 pt-32 pb-24 md:pt-40 bg-[#050505]">
                 <RevealOnScroll className="w-full max-w-5xl flex flex-col items-center text-center">
                     {appConfig?.site_logo ? (
-                        <img src={appConfig.site_logo} alt="Logo" className="h-16 w-16 md:h-24 md:w-24 object-contain mx-auto mb-6 md:mb-8 drop-shadow-[0_0_15px_rgba(64,255,0,0.3)]" />
+                        <img src={appConfig.site_logo} alt="Logo" className="h-16 w-16 md:h-20 md:w-20 object-contain mx-auto mb-6 drop-shadow-[0_0_15px_rgba(64,255,0,0.3)]" />
                     ) : (
-                        <WalletIcon className="h-16 w-16 md:h-24 md:w-24 text-brand-primary mx-auto mb-6 md:mb-8 drop-shadow-[0_0_15px_rgba(64,255,0,0.3)]" />
+                        <WalletIcon className="h-16 w-16 md:h-20 md:w-20 text-brand-primary mx-auto mb-6 drop-shadow-[0_0_15px_rgba(64,255,0,0.3)]" />
                     )}
                     
-                    {/* H1 Radley Font - Adjusted sizes for Laptop (md:text-6xl instead of 7xl) */}
-                    <h1 className="font-radley text-4xl sm:text-5xl md:text-6xl lg:text-7xl font-bold text-text-primary mb-4 md:mb-6 leading-tight tracking-tight">
+                    {/* H1 Radley Font - Adjusted sizes: reduced md:text-6xl to 5xl and lg to 6xl to fit 1366px screens better */}
+                    <h1 className="font-radley text-4xl sm:text-5xl md:text-5xl lg:text-6xl xl:text-7xl font-bold text-text-primary mb-6 leading-tight tracking-tight">
                         <span className="bg-clip-text text-transparent bg-gradient-to-r from-green-400 via-brand-primary to-green-600 bg-[length:200%_auto] animate-gradient font-bold block sm:inline">Domine Suas Finanças</span>{' '}
                         <span className="block mt-2 sm:mt-0 sm:inline">Com Inteligência.</span>
                     </h1>
                     
-                    <p className="text-base sm:text-lg md:text-2xl text-text-secondary mb-8 md:mb-10 max-w-2xl leading-relaxed">
+                    {/* Description - Adjusted text size */}
+                    <p className="text-base sm:text-lg md:text-xl text-text-secondary mb-10 max-w-2xl leading-relaxed">
                         Deixe de sobreviver e comece a prosperar. O sistema definitivo para quem quer controle total, previsibilidade e crescimento patrimonial.
                     </p>
                     
-                    <div className="flex flex-col sm:flex-row gap-4 md:gap-5 w-full justify-center">
+                    <div className="flex flex-col sm:flex-row gap-4 w-full justify-center">
                         <button
                             onClick={() => onStartAuth('signup')}
-                            className="bg-brand-primary hover:bg-brand-secondary text-black font-extrabold py-3 px-6 md:py-4 md:px-10 rounded-lg text-base md:text-lg transition-all transform hover:scale-105 shadow-[0_0_30px_rgba(64,255,0,0.4)] hover:shadow-[0_0_50px_rgba(64,255,0,0.6)] w-full sm:w-auto"
+                            className="bg-brand-primary hover:bg-brand-secondary text-black font-extrabold py-3 px-6 md:py-4 md:px-8 rounded-lg text-base md:text-lg transition-all transform hover:scale-105 shadow-[0_0_30px_rgba(64,255,0,0.4)] hover:shadow-[0_0_50px_rgba(64,255,0,0.6)] w-full sm:w-auto"
                         >
                             Assuma o Controle Agora
                         </button>
                         <button
                             onClick={() => scrollToSection('beneficios')}
-                            className="bg-white/5 hover:bg-white/10 text-text-primary border border-white/10 font-bold py-3 px-6 md:py-4 md:px-10 rounded-lg text-base md:text-lg transition-all transform hover:scale-105 backdrop-blur-sm flex items-center justify-center gap-2 w-full sm:w-auto"
+                            className="bg-white/5 hover:bg-white/10 text-text-primary border border-white/10 font-bold py-3 px-6 md:py-4 md:px-8 rounded-lg text-base md:text-lg transition-all transform hover:scale-105 backdrop-blur-sm flex items-center justify-center gap-2 w-full sm:w-auto"
                         >
                             <PlayIcon className="h-5 w-5 md:h-6 md:w-6" />
                             Ver Demonstração
@@ -253,11 +254,10 @@ const LandingPage: React.FC<LandingPageProps> = ({ appConfig, onStartAuth, onVie
             </section>
 
             {/* Why Choose Finz? (Benefits) */}
-            {/* ADJUSTED: Increased vertical padding (py-20 md:py-24) to avoid overlap */}
             <section id="beneficios" className="relative w-full flex flex-col justify-center items-center bg-[#0a0a0a] z-10 px-4 py-20 md:py-24 scroll-mt-16 border-t border-white/5">
                 <div className="max-w-7xl mx-auto text-center w-full">
                     <RevealOnScroll>
-                        <h2 className="font-radley text-3xl md:text-5xl font-bold text-text-primary mb-6 md:mb-8 leading-tight">
+                        <h2 className="font-radley text-3xl md:text-4xl lg:text-5xl font-bold text-text-primary mb-6 md:mb-8 leading-tight">
                             Por que o Finz é <span className="text-brand-primary">melhor?</span>
                         </h2>
                         <p className="text-base md:text-lg text-text-secondary mb-12 md:mb-16 max-w-3xl mx-auto px-2">
@@ -286,11 +286,10 @@ const LandingPage: React.FC<LandingPageProps> = ({ appConfig, onStartAuth, onVie
             </section>
 
             {/* Plans Section */}
-            {/* ADJUSTED: Increased vertical padding */}
             <section id="planos" className="relative w-full flex flex-col justify-center items-center bg-[#111] z-10 px-4 py-20 md:py-24 scroll-mt-16 border-t border-white/5">
                  <div className="max-w-7xl mx-auto text-center w-full">
                     <RevealOnScroll>
-                        <h2 className="font-radley text-3xl md:text-5xl font-bold text-text-primary mb-6 md:mb-8">
+                        <h2 className="font-radley text-3xl md:text-4xl lg:text-5xl font-bold text-text-primary mb-6 md:mb-8">
                             Planos que Cabem no <span className="text-brand-primary block sm:inline">seu Bolso</span>
                         </h2>
                         <p className="text-base md:text-lg text-text-secondary mb-12 md:mb-16 max-w-2xl mx-auto">
@@ -339,11 +338,10 @@ const LandingPage: React.FC<LandingPageProps> = ({ appConfig, onStartAuth, onVie
             </section>
 
             {/* Testimonials Section */}
-            {/* ADJUSTED: Increased vertical padding */}
             <section id="depoimentos" className="relative w-full flex flex-col justify-center items-center bg-[#050505] z-10 px-4 py-20 md:py-24 scroll-mt-16 border-t border-white/5">
                 <div className="max-w-7xl mx-auto text-center w-full">
                     <RevealOnScroll>
-                        <h2 className="font-radley text-3xl md:text-5xl font-bold text-text-primary mb-4 leading-tight">
+                        <h2 className="font-radley text-3xl md:text-4xl lg:text-5xl font-bold text-text-primary mb-4 leading-tight">
                             Aprovado por <span className="text-brand-primary block sm:inline">+100 clientes</span>
                         </h2>
                         <div className="flex flex-col items-center justify-center mb-12 md:mb-16">
@@ -385,11 +383,10 @@ const LandingPage: React.FC<LandingPageProps> = ({ appConfig, onStartAuth, onVie
             </section>
 
             {/* FAQ Section */}
-            {/* ADJUSTED: Increased vertical padding */}
             <section id="faq" className="relative w-full flex flex-col justify-center items-center bg-[#0a0a0a] z-10 px-4 py-20 md:py-24 scroll-mt-16 border-t border-white/5">
                 <div className="max-w-4xl mx-auto w-full">
                     <RevealOnScroll className="text-center mb-12 md:mb-16">
-                        <h2 className="font-radley text-3xl md:text-5xl font-bold text-text-primary mb-4">
+                        <h2 className="font-radley text-3xl md:text-4xl lg:text-5xl font-bold text-text-primary mb-4">
                             Perguntas <span className="text-brand-primary">Frequentes</span>
                         </h2>
                         <p className="text-text-secondary text-sm md:text-base">Tire suas dúvidas e comece com confiança.</p>
