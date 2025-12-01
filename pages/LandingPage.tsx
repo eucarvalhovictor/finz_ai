@@ -211,16 +211,17 @@ const LandingPage: React.FC<LandingPageProps> = ({ appConfig, onStartAuth, onVie
             </header>
 
             {/* Hero Section */}
-            <section className="relative w-full flex flex-col justify-center items-center z-10 px-4 pt-32 pb-24 md:pt-48 md:pb-32 bg-[#050505]">
-                <RevealOnScroll className="w-full max-w-4xl flex flex-col items-center text-center">
+            {/* ADJUSTED: Changed padding to min-h-screen for better responsiveness on 1366x768 screens */}
+            <section className="relative w-full min-h-[95vh] flex flex-col justify-center items-center z-10 px-4 pt-28 pb-16 md:pt-32 bg-[#050505]">
+                <RevealOnScroll className="w-full max-w-5xl flex flex-col items-center text-center">
                     {appConfig?.site_logo ? (
-                        <img src={appConfig.site_logo} alt="Logo" className="h-20 w-20 md:h-32 md:w-32 object-contain mx-auto mb-6 md:mb-8 drop-shadow-[0_0_15px_rgba(64,255,0,0.3)]" />
+                        <img src={appConfig.site_logo} alt="Logo" className="h-16 w-16 md:h-24 md:w-24 object-contain mx-auto mb-6 md:mb-8 drop-shadow-[0_0_15px_rgba(64,255,0,0.3)]" />
                     ) : (
-                        <WalletIcon className="h-20 w-20 md:h-32 md:w-32 text-brand-primary mx-auto mb-6 md:mb-8 drop-shadow-[0_0_15px_rgba(64,255,0,0.3)]" />
+                        <WalletIcon className="h-16 w-16 md:h-24 md:w-24 text-brand-primary mx-auto mb-6 md:mb-8 drop-shadow-[0_0_15px_rgba(64,255,0,0.3)]" />
                     )}
                     
-                    {/* H1 Radley Font */}
-                    <h1 className="font-radley text-4xl sm:text-5xl md:text-7xl font-bold text-text-primary mb-4 md:mb-6 leading-tight tracking-tight">
+                    {/* H1 Radley Font - Adjusted sizes for Laptop (md:text-6xl instead of 7xl) */}
+                    <h1 className="font-radley text-4xl sm:text-5xl md:text-6xl lg:text-7xl font-bold text-text-primary mb-4 md:mb-6 leading-tight tracking-tight">
                         <span className="bg-clip-text text-transparent bg-gradient-to-r from-green-400 via-brand-primary to-green-600 bg-[length:200%_auto] animate-gradient font-bold block sm:inline">Domine Suas Finanças</span>{' '}
                         <span className="block mt-2 sm:mt-0 sm:inline">Com Inteligência.</span>
                     </h1>
@@ -252,7 +253,8 @@ const LandingPage: React.FC<LandingPageProps> = ({ appConfig, onStartAuth, onVie
             </section>
 
             {/* Why Choose Finz? (Benefits) */}
-            <section id="beneficios" className="relative w-full flex flex-col justify-center items-center bg-[#0a0a0a] z-10 px-4 py-16 md:py-20 scroll-mt-16 border-t border-white/5">
+            {/* ADJUSTED: Increased vertical padding (py-20 md:py-24) to avoid overlap */}
+            <section id="beneficios" className="relative w-full flex flex-col justify-center items-center bg-[#0a0a0a] z-10 px-4 py-20 md:py-24 scroll-mt-16 border-t border-white/5">
                 <div className="max-w-7xl mx-auto text-center w-full">
                     <RevealOnScroll>
                         <h2 className="font-radley text-3xl md:text-5xl font-bold text-text-primary mb-6 md:mb-8 leading-tight">
@@ -284,7 +286,8 @@ const LandingPage: React.FC<LandingPageProps> = ({ appConfig, onStartAuth, onVie
             </section>
 
             {/* Plans Section */}
-            <section id="planos" className="relative w-full flex flex-col justify-center items-center bg-[#111] z-10 px-4 py-16 md:py-20 scroll-mt-16 border-t border-white/5">
+            {/* ADJUSTED: Increased vertical padding */}
+            <section id="planos" className="relative w-full flex flex-col justify-center items-center bg-[#111] z-10 px-4 py-20 md:py-24 scroll-mt-16 border-t border-white/5">
                  <div className="max-w-7xl mx-auto text-center w-full">
                     <RevealOnScroll>
                         <h2 className="font-radley text-3xl md:text-5xl font-bold text-text-primary mb-6 md:mb-8">
@@ -295,12 +298,12 @@ const LandingPage: React.FC<LandingPageProps> = ({ appConfig, onStartAuth, onVie
                         </p>
                     </RevealOnScroll>
 
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6 md:gap-8 max-w-4xl mx-auto">
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6 md:gap-8 max-w-4xl mx-auto items-stretch">
                         {plans.map((plan, index) => (
                             <RevealOnScroll key={index} delay={index * 150} className="h-full">
-                                <div className={`relative flex flex-col h-full p-6 md:p-8 rounded-2xl border transition-all duration-300 hover:-translate-y-2 ${plan.highlight ? 'bg-[#151515] border-brand-primary shadow-[0_0_40px_rgba(64,255,0,0.15)] md:scale-105 z-10' : 'bg-[#151515]/50 border-border hover:border-white/20'}`}>
+                                <div className={`relative flex flex-col h-full p-6 md:p-8 rounded-2xl border transition-all duration-300 hover:-translate-y-2 ${plan.highlight ? 'bg-[#151515] border-brand-primary shadow-[0_0_40px_rgba(64,255,0,0.15)] md:scale-105 z-20' : 'bg-[#151515]/50 border-border hover:border-white/20 z-10'}`}>
                                     {plan.highlight && (
-                                        <div className="absolute top-0 left-1/2 -translate-x-1/2 -translate-y-1/2 bg-brand-primary text-black font-bold px-3 py-1 md:px-4 rounded-lg text-xs md:text-sm uppercase tracking-wider flex items-center gap-2 whitespace-nowrap">
+                                        <div className="absolute top-0 left-1/2 -translate-x-1/2 -translate-y-1/2 bg-brand-primary text-black font-bold px-3 py-1 md:px-4 rounded-lg text-xs md:text-sm uppercase tracking-wider flex items-center gap-2 whitespace-nowrap shadow-lg">
                                             <CrownIcon className="h-3 w-3 md:h-4 md:w-4" />
                                             Mais Popular
                                         </div>
@@ -336,7 +339,8 @@ const LandingPage: React.FC<LandingPageProps> = ({ appConfig, onStartAuth, onVie
             </section>
 
             {/* Testimonials Section */}
-            <section id="depoimentos" className="relative w-full flex flex-col justify-center items-center bg-[#050505] z-10 px-4 py-16 md:py-20 scroll-mt-16 border-t border-white/5">
+            {/* ADJUSTED: Increased vertical padding */}
+            <section id="depoimentos" className="relative w-full flex flex-col justify-center items-center bg-[#050505] z-10 px-4 py-20 md:py-24 scroll-mt-16 border-t border-white/5">
                 <div className="max-w-7xl mx-auto text-center w-full">
                     <RevealOnScroll>
                         <h2 className="font-radley text-3xl md:text-5xl font-bold text-text-primary mb-4 leading-tight">
@@ -381,7 +385,8 @@ const LandingPage: React.FC<LandingPageProps> = ({ appConfig, onStartAuth, onVie
             </section>
 
             {/* FAQ Section */}
-            <section id="faq" className="relative w-full flex flex-col justify-center items-center bg-[#0a0a0a] z-10 px-4 py-16 md:py-20 scroll-mt-16 border-t border-white/5">
+            {/* ADJUSTED: Increased vertical padding */}
+            <section id="faq" className="relative w-full flex flex-col justify-center items-center bg-[#0a0a0a] z-10 px-4 py-20 md:py-24 scroll-mt-16 border-t border-white/5">
                 <div className="max-w-4xl mx-auto w-full">
                     <RevealOnScroll className="text-center mb-12 md:mb-16">
                         <h2 className="font-radley text-3xl md:text-5xl font-bold text-text-primary mb-4">
