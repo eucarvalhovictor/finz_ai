@@ -167,7 +167,7 @@ const LandingPage: React.FC<LandingPageProps> = ({ appConfig, onStartAuth, onVie
     };
 
     return (
-        <div className="bg-background flex flex-col items-center relative custom-scrollbar overflow-y-auto overflow-x-hidden scroll-smooth h-full w-full">
+        <div className="bg-background relative custom-scrollbar overflow-y-auto overflow-x-hidden scroll-smooth h-full w-full">
             <CookieConsent />
             
             {/* Fixed Header */}
