@@ -182,13 +182,13 @@ const LandingPage: React.FC<LandingPageProps> = ({ appConfig, onStartAuth, onVie
 
                 {/* Desktop Nav */}
                 <nav className="hidden md:flex items-center gap-6">
-                    {['Benefícios', 'Planos', 'Depoimentos', 'Faq'].map((item) => ( 
+                    {['Benefícios', 'Planos', 'Depoimentos', 'FAQ'].map((item) => ( 
                         <React.Fragment key={item}>
                             <button 
                                 onClick={() => scrollToSection(item.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, ""))}
-                                className="text-text-secondary hover:text-brand-primary font-medium transition-colors text-xs uppercase tracking-wider"
+                                className="text-text-secondary hover:text-brand-primary font-medium transition-colors text-xs tracking-wider"
                             >
-                                {item}
+                                {item.charAt(0).toUpperCase() + item.slice(1).toLowerCase()}
                             </button>
                         </React.Fragment>
                     ))}
@@ -298,7 +298,8 @@ const LandingPage: React.FC<LandingPageProps> = ({ appConfig, onStartAuth, onVie
                         {plans.map((plan, index) => (
                             <RevealOnScroll key={index} delay={index * 100} className="h-full">
                                 <div className={`relative bg-[#121212] p-6 md:p-7 rounded-2xl border-2 flex flex-col h-full 
-                                    ${plan.highlight ? 'border-brand-primary shadow-[0_0_30px_rgba(64,255,0,0.2)]' : 'border-border'}`}>
+                                    ${plan.highlight ? 'border-brand-primary shadow-[0_0_30px_rgba(64,255,0,0.2)]' : 'border-border'}
+                                    hover:scale-[1.02] transition-transform duration-200`}>
                                     {plan.highlight && (
                                         <div className="absolute top-0 left-1/2 -translate-x-1/2 -translate-y-1/2 bg-brand-primary text-black font-bold px-4 py-1.5 rounded-lg text-xs uppercase tracking-wider flex items-center gap-2">
                                             <StarIcon className="h-4 w-4" /> Mais Popular
@@ -334,7 +335,7 @@ const LandingPage: React.FC<LandingPageProps> = ({ appConfig, onStartAuth, onVie
             <section id="depoimentos" className="relative w-full flex flex-col justify-center items-center bg-[#0a0a0a] z-10 px-4 py-28 md:py-28 scroll-mt-16 border-t border-white/5">
                 <div className="max-w-7xl mx-auto text-center w-full">
                     <RevealOnScroll>
-                        <h2 className="font-radley text-xl md:text-2xl lg:text-2xl font-bold text-text-primary mb-2 leading-tight">
+                        <h2 className="font-radley text-2xl sm:text-3xl md:text-4xl font-bold text-text-primary mb-6 md:mb-8 leading-tight">
                             Aprovado por <span className="text-brand-primary">+100 clientes</span>
                         </h2>
                         <div className="flex justify-center items-center mb-1 space-x-0.5">
@@ -349,7 +350,7 @@ const LandingPage: React.FC<LandingPageProps> = ({ appConfig, onStartAuth, onVie
                         </p>
                     </RevealOnScroll>
 
-                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4"> {/* Reverted to lg:grid-cols-3 */}
+                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4"> {/* Reverted to lg:grid-cols-4 */}
                         {testimonials.map((testimonial, index) => (
                             <RevealOnScroll key={index} delay={index * 100} className="h-full">
                                 <div className="bg-[#121212] p-4 rounded-2xl border border-border h-full flex flex-col justify-between">
