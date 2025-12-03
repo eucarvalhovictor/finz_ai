@@ -62,32 +62,32 @@ const RevealOnScroll: React.FC<{ children: React.ReactNode; className?: string; 
 
 const benefits = [
     {
-        icon: <DashboardIcon className="h-7 w-7 text-brand-primary mx-auto mb-4" />,
+        icon: <DashboardIcon className="h-7 w-7 text-brand-primary" />,
         title: 'Controle Total',
         description: 'Gerencie receitas e despesas em um painel unificado, intuitivo e poderoso.',
     },
     {
-        icon: <TrendingUp className="h-7 w-7 text-brand-primary mx-auto mb-4" />,
+        icon: <TrendingUp className="h-7 w-7 text-brand-primary" />,
         title: 'Crescimento Real',
         description: 'Identifique gargalos financeiros e otimize seus gastos para investir mais.',
     },
     {
-        icon: <CreditCardIcon className="h-7 w-7 text-brand-primary mx-auto mb-4" />,
+        icon: <CreditCardIcon className="h-7 w-7 text-brand-primary" />,
         title: 'Gestão de Cartões',
         description: 'Acompanhe limites e faturas em tempo real. Nunca mais estoure o orçamento.',
     },
     {
-        icon: <ShieldIcon className="h-7 w-7 text-brand-primary mx-auto mb-4" />,
+        icon: <ShieldIcon className="h-7 w-7 text-brand-primary" />,
         title: 'Segurança Militar',
         description: 'Criptografia de ponta a ponta para proteger seus dados financeiros mais sensíveis.',
     },
     {
-        icon: <PlusIcon className="h-7 w-7 text-brand-primary mx-auto mb-4" />,
+        icon: <PlusIcon className="h-7 w-7 text-brand-primary" />,
         title: 'Lançamentos Rápidos',
         description: 'Adicione transações em segundos, categorizando tudo automaticamente.',
     },
     {
-        icon: <WalletIcon className="h-7 w-7 text-brand-primary mx-auto mb-4" />,
+        icon: <WalletIcon className="h-7 w-7 text-brand-primary" />,
         title: 'Metas Claras',
         description: 'Defina objetivos e acompanhe seu progresso visualmente rumo à liberdade.',
     },
@@ -267,11 +267,13 @@ const LandingPage: React.FC<LandingPageProps> = ({ appConfig, onStartAuth, onVie
                     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8 md:gap-10"> {/* Adjusted gap */}
                         {benefits.map((benefit, index) => (
                             <RevealOnScroll key={index} delay={index * 100} className="h-full">
-                                <div className="group bg-[#121212] p-6 md:p-8 lg:p-8 rounded-2xl border border-border hover:border-brand-primary/50 transition-all duration-300 hover:shadow-[0_0_30px_rgba(64,255,0,0.1)] overflow-hidden"> {/* Added overflow-hidden */}
+                                <div className="group bg-[#121212] p-6 md:p-8 lg:p-8 rounded-2xl border border-border hover:border-brand-primary/50 transition-all duration-300"> {/* Reverted hover:shadow and overflow-hidden */}
                                     <div className="flex flex-col items-center text-center h-full">
-                                        {benefit.icon}
+                                        <div className="p-3 bg-brand-primary/10 rounded-xl mb-4"> {/* Added background to icon */}
+                                            {benefit.icon}
+                                        </div>
                                         <h3 className="text-lg sm:text-xl md:text-2xl font-bold text-text-primary mb-3 group-hover:text-brand-primary transition-colors">{benefit.title}</h3>
-                                        <p className="text-base text-text-secondary leading-relaxed flex-grow break-words px-2">{benefit.description}</p> {/* Added px-2 */}
+                                        <p className="text-base text-text-secondary leading-relaxed flex-grow break-words px-2">{benefit.description}</p>
                                     </div>
                                 </div>
                             </RevealOnScroll>
@@ -347,7 +349,7 @@ const LandingPage: React.FC<LandingPageProps> = ({ appConfig, onStartAuth, onVie
                         </p>
                     </RevealOnScroll>
 
-                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4"> {/* Reverted to lg:grid-cols-3 */}
                         {testimonials.map((testimonial, index) => (
                             <RevealOnScroll key={index} delay={index * 100} className="h-full">
                                 <div className="bg-[#121212] p-4 rounded-2xl border border-border h-full flex flex-col justify-between">
