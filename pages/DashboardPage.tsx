@@ -163,7 +163,7 @@ const DashboardPage: React.FC<DashboardPageProps> = ({ user }) => {
         </button>
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-3 md:gap-4">
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-3 md:gap-4">
         {/* FIX: Removed invalid 'size' prop and used Tailwind classes for sizing. */}
         <DashboardCard 
             title="Patrimônio" 
@@ -193,11 +193,11 @@ const DashboardPage: React.FC<DashboardPageProps> = ({ user }) => {
         />
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-5 gap-4 md:gap-6">
-        <div className="lg:col-span-3 min-w-0">
+      <div className="grid grid-cols-1 lg:grid-cols-1 xl:grid-cols-5 gap-4 md:gap-6">
+        <div className="lg:col-span-1 xl:col-span-3 min-w-0">
           <MonthlySummaryChart data={monthlySummaryData} />
         </div>
-        <div className="lg:col-span-2">
+        <div className="lg:col-span-1 xl:col-span-2">
           <RecentTransactionsList transactions={transactions.slice(0, 5)} />
         </div>
       </div>

@@ -154,9 +154,9 @@ const CheckoutPage: React.FC<CheckoutPageProps> = ({ user, appConfig, onSuccess 
                     <p className="text-text-secondary mt-2">Escolha o plano e preencha os dados para ativar sua conta.</p>
                 </header>
                 
-                 <form onSubmit={handlePayment} className="grid lg:grid-cols-5 gap-8 lg:gap-12 items-start">
+                 <form onSubmit={handlePayment} className="grid lg:grid-cols-1 xl:grid-cols-5 gap-8 lg:gap-12 items-start">
                     {/* Coluna de Formulários */}
-                    <div className="lg:col-span-3 space-y-8">
+                    <div className="lg:col-span-1 xl:col-span-3 space-y-8">
                         {/* Seleção de Plano */}
                          <div className="space-y-4">
                              <h2 className="text-xl font-semibold text-text-primary">Escolha seu plano</h2>
@@ -223,7 +223,7 @@ const CheckoutPage: React.FC<CheckoutPageProps> = ({ user, appConfig, onSuccess 
                                          <label className="block text-xs font-medium text-text-secondary mb-1">Número *</label>
                                         <input type="text" required placeholder="123" value={numero} onChange={(e) => setNumero(e.target.value)} className="w-full bg-background border border-border rounded-xl p-3 text-text-primary focus:ring-brand-primary text-sm"/>
                                     </div>
-                                }
+                                </div>
                                  <div>
                                     <label className="block text-xs font-medium text-text-secondary mb-1">Complemento</label>
                                     <input type="text" placeholder="Apartamento, bloco, etc. (opcional)" value={complemento} onChange={(e) => setComplemento(e.target.value)} className="w-full bg-background border border-border rounded-xl p-3 text-text-primary focus:ring-brand-primary text-sm"/>
@@ -272,7 +272,7 @@ const CheckoutPage: React.FC<CheckoutPageProps> = ({ user, appConfig, onSuccess 
                     </div>
                     
                     {/* Coluna de Resumo */}
-                    <div className="lg:col-span-2 lg:sticky lg:top-8 space-y-6 bg-card p-6 rounded-2xl border border-border">
+                    <div className="lg:col-span-1 xl:col-span-2 lg:sticky lg:top-8 space-y-6 bg-card p-6 rounded-2xl border border-border">
                         <h2 className="text-xl font-semibold text-text-primary mb-4 border-b border-border pb-4">Resumo do pedido</h2>
                         
                         <div className="flex justify-between items-center">

@@ -115,7 +115,7 @@ const TransactionForm: React.FC<TransactionFormProps> = ({ onSave, onClose, exis
        
        <div className="flex-1 space-y-3">
             {/* Toggle Tipo Compacto */}
-            <div className="flex bg-background rounded-lg border border-border p-0.5 h-8 md:h-10">
+            <div className="flex bg-background rounded-lg border border-border p-0.5 min-h-8 md:min-h-10">
                 <button 
                     type="button" 
                     onClick={() => setType('INCOME')} 
@@ -192,7 +192,7 @@ const TransactionForm: React.FC<TransactionFormProps> = ({ onSave, onClose, exis
             {/* Meio de Pagamento (Segmented) */}
             <div>
                 <label className="block text-[10px] md:text-xs font-medium text-text-secondary mb-1">Meio de Pagamento</label>
-                <div className="flex bg-background rounded-lg border border-border p-0.5 h-8">
+                <div className="flex bg-background rounded-lg border border-border p-0.5 min-h-8">
                     {['Dinheiro', 'Pix', 'Cartão'].map((method) => {
                         if (type === 'INCOME' && method === 'Cartão') return null;
                         return (
