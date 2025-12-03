@@ -62,32 +62,32 @@ const RevealOnScroll: React.FC<{ children: React.ReactNode; className?: string; 
 
 const benefits = [
     {
-        icon: <DashboardIcon className="h-8 w-8 text-brand-primary mx-auto mb-3" />,
+        icon: <DashboardIcon className="h-8 w-8 text-brand-primary mx-auto mb-4" />,
         title: 'Controle Total',
         description: 'Gerencie receitas e despesas em um painel unificado, intuitivo e poderoso.',
     },
     {
-        icon: <TrendingUp className="h-8 w-8 text-brand-primary mx-auto mb-3" />,
+        icon: <TrendingUp className="h-8 w-8 text-brand-primary mx-auto mb-4" />,
         title: 'Crescimento Real',
         description: 'Identifique gargalos financeiros e otimize seus gastos para investir mais.',
     },
     {
-        icon: <CreditCardIcon className="h-8 w-8 text-brand-primary mx-auto mb-3" />,
+        icon: <CreditCardIcon className="h-8 w-8 text-brand-primary mx-auto mb-4" />,
         title: 'Gestão de Cartões',
         description: 'Acompanhe limites e faturas em tempo real. Nunca mais estoure o orçamento.',
     },
     {
-        icon: <ShieldIcon className="h-8 w-8 text-brand-primary mx-auto mb-3" />,
+        icon: <ShieldIcon className="h-8 w-8 text-brand-primary mx-auto mb-4" />,
         title: 'Segurança Militar',
         description: 'Criptografia de ponta a ponta para proteger seus dados financeiros mais sensíveis.',
     },
     {
-        icon: <PlusIcon className="h-8 w-8 text-brand-primary mx-auto mb-3" />,
+        icon: <PlusIcon className="h-8 w-8 text-brand-primary mx-auto mb-4" />,
         title: 'Lançamentos Rápidos',
         description: 'Adicione transações em segundos, categorizando tudo automaticamente.',
     },
     {
-        icon: <WalletIcon className="h-8 w-8 text-brand-primary mx-auto mb-3" />,
+        icon: <WalletIcon className="h-8 w-8 text-brand-primary mx-auto mb-4" />,
         title: 'Metas Claras',
         description: 'Defina objetivos e acompanhe seu progresso visualmente rumo à liberdade.',
     },
@@ -220,13 +220,13 @@ const LandingPage: React.FC<LandingPageProps> = ({ appConfig, onStartAuth, onVie
                     )}
                     
                     {/* H1 Radley Font - Adjusted sizes */}
-                    <h1 className="font-radley text-4xl sm:text-4xl md:text-5xl lg:text-5xl xl:text-6xl font-bold text-text-primary mb-6 leading-tight tracking-tight">
+                    <h1 className="font-radley text-4xl sm:text-5xl md:text-6xl lg:text-7xl xl:text-[5.5rem] font-bold text-text-primary mb-6 leading-tight tracking-tight">
                         <span className="bg-clip-text text-transparent bg-gradient-to-r from-green-400 via-brand-primary to-green-600 bg-[length:200%_auto] animate-gradient font-bold block sm:inline">Domine Suas Finanças</span>{' '}
                         <span className="block mt-2 sm:mt-0 sm:inline">Com Inteligência.</span>
                     </h1>
                     
                     {/* Description - Adjusted text size */}
-                    <p className="text-base sm:text-lg md:text-lg lg:text-xl text-text-secondary mb-10 max-w-2xl mx-auto leading-relaxed">
+                    <p className="text-lg md:text-xl lg:text-2xl text-text-secondary mb-10 max-w-2xl mx-auto leading-relaxed">
                         Deixe de sobreviver e comece a prosperar. O sistema definitivo para quem quer controle total, previsibilidade e crescimento patrimonial.
                     </p>
                     
@@ -256,10 +256,10 @@ const LandingPage: React.FC<LandingPageProps> = ({ appConfig, onStartAuth, onVie
             <section id="beneficios" className="relative w-full flex flex-col justify-center items-center bg-[#0a0a0a] z-10 px-4 py-28 md:py-36 scroll-mt-16 border-t border-white/5">
                 <div className="max-w-7xl mx-auto text-center w-full">
                     <RevealOnScroll>
-                        <h2 className="font-radley text-2xl md:text-3xl lg:text-4xl font-bold text-text-primary mb-6 md:mb-8 leading-tight">
+                        <h2 className="font-radley text-3xl md:text-4xl lg:text-5xl font-bold text-text-primary mb-6 md:mb-8 leading-tight">
                             Por que o Finz é <span className="text-brand-primary">melhor?</span>
                         </h2>
-                        <p className="text-base md:text-lg text-text-secondary mb-12 md:mb-16 max-w-3xl mx-auto px-2">
+                        <p className="text-lg md:text-xl text-text-secondary mb-12 md:mb-16 max-w-3xl mx-auto px-2">
                             Esqueça planilhas complexas e apps que não te entendem. Criamos a experiência financeira definitiva.
                         </p>
                     </RevealOnScroll>
@@ -267,11 +267,11 @@ const LandingPage: React.FC<LandingPageProps> = ({ appConfig, onStartAuth, onVie
                     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 md:gap-8">
                         {benefits.map((benefit, index) => (
                             <RevealOnScroll key={index} delay={index * 100} className="h-full">
-                                <div className="group bg-[#121212] p-6 md:p-8 rounded-2xl border border-border hover:border-brand-primary/50 transition-all duration-300 hover:shadow-[0_0_30px_rgba(64,255,0,0.1)]">
+                                <div className="group bg-[#121212] p-6 md:p-8 lg:p-10 rounded-2xl border border-border hover:border-brand-primary/50 transition-all duration-300 hover:shadow-[0_0_30px_rgba(64,255,0,0.1)]">
                                     <div className="flex flex-col items-center text-center h-full">
                                         {benefit.icon}
-                                        <h3 className="text-xl md:text-2xl font-bold text-text-primary mb-2 group-hover:text-brand-primary transition-colors">{benefit.title}</h3>
-                                        <p className="text-sm md:text-base text-text-secondary leading-relaxed flex-grow">{benefit.description}</p>
+                                        <h3 className="text-xl md:text-2xl lg:text-3xl font-bold text-text-primary mb-3 group-hover:text-brand-primary transition-colors">{benefit.title}</h3>
+                                        <p className="text-base md:text-lg text-text-secondary leading-relaxed flex-grow break-words">{benefit.description}</p>
                                     </div>
                                 </div>
                             </RevealOnScroll>
@@ -284,10 +284,10 @@ const LandingPage: React.FC<LandingPageProps> = ({ appConfig, onStartAuth, onVie
             <section id="planos" className="relative w-full flex flex-col justify-center items-center bg-[#0a0a0a] z-10 px-4 py-28 md:py-36 scroll-mt-16 border-t border-white/5">
                 <div className="max-w-4xl mx-auto text-center w-full">
                     <RevealOnScroll>
-                        <h2 className="font-radley text-2xl md:text-3xl lg:text-4xl font-bold text-text-primary mb-6 md:mb-8 leading-tight">
+                        <h2 className="font-radley text-3xl md:text-4xl lg:text-5xl font-bold text-text-primary mb-6 md:mb-8 leading-tight">
                             Planos que Cabem no <span className="text-brand-primary">seu Bolso</span>
                         </h2>
-                        <p className="text-base md:text-lg text-text-secondary mb-12 md:mb-16 max-w-2xl mx-auto px-2">
+                        <p className="text-lg md:text-xl text-text-secondary mb-12 md:mb-16 max-w-2xl mx-auto px-2">
                             Evolua conforme seu patrimônio cresce. Sem contratos de fidelidade, cancele a qualquer momento.
                         </p>
                     </RevealOnScroll>
@@ -302,21 +302,21 @@ const LandingPage: React.FC<LandingPageProps> = ({ appConfig, onStartAuth, onVie
                                             <StarIcon className="h-4 w-4" /> Mais Popular
                                         </div>
                                     )}
-                                    <h3 className="text-xl md:text-2xl lg:text-3xl font-bold text-text-primary mb-4">{plan.name}</h3>
+                                    <h3 className="text-2xl md:text-3xl lg:text-4xl font-bold text-text-primary mb-4">{plan.name}</h3>
                                     <div className="mb-6 flex items-baseline">
-                                        <span className="text-3xl md:text-4xl lg:text-5xl font-black text-brand-primary">{plan.price}</span>
+                                        <span className="text-4xl md:text-5xl lg:text-6xl font-black text-brand-primary">{plan.price}</span>
                                         <span className="text-base text-text-secondary ml-2">{plan.period}</span>
                                     </div>
                                     <ul className="text-left space-y-3 flex-grow mb-8">
                                         {plan.features.map((feature, fIndex) => (
-                                            <li key={fIndex} className="flex items-center text-text-secondary text-sm md:text-base">
+                                            <li key={fIndex} className="flex items-center text-text-secondary text-base md:text-lg">
                                                 <CheckIcon className="h-5 w-5 text-brand-primary mr-3 flex-shrink-0" /> {feature}
                                             </li>
                                         ))}
                                     </ul>
                                     <button
                                         onClick={() => onStartAuth('signup')}
-                                        className={`mt-auto w-full py-3 md:py-4 rounded-xl text-sm md:text-base font-bold transition-all transform hover:scale-105 
+                                        className={`mt-auto w-full py-3 md:py-4 rounded-xl text-base md:text-lg font-bold transition-all transform hover:scale-105 
                                             ${plan.highlight ? 'bg-brand-primary text-black hover:bg-brand-secondary shadow-[0_0_20px_rgba(64,255,0,0.4)]' : 'bg-white/5 text-text-primary hover:bg-white/10 border border-border'}`}
                                     >
                                         Começar no Plano {plan.name}
@@ -367,10 +367,10 @@ const LandingPage: React.FC<LandingPageProps> = ({ appConfig, onStartAuth, onVie
             <section id="faq" className="relative w-full flex flex-col justify-center items-center bg-[#0a0a0a] z-10 px-4 py-28 md:py-36 scroll-mt-16 border-t border-white/5">
                 <div className="max-w-3xl mx-auto text-center w-full">
                     <RevealOnScroll>
-                        <h2 className="font-radley text-2xl md:text-3xl lg:text-4xl font-bold text-text-primary mb-6 md:mb-8 leading-tight">
+                        <h2 className="font-radley text-3xl md:text-4xl lg:text-5xl font-bold text-text-primary mb-6 md:mb-8 leading-tight">
                             Perguntas <span className="text-brand-primary">Frequentes</span>
                         </h2>
-                        <p className="text-base md:text-lg text-text-secondary mb-12 md:mb-16 max-w-2xl mx-auto px-2">
+                        <p className="text-lg md:text-xl text-text-secondary mb-12 md:mb-16 max-w-2xl mx-auto px-2">
                             Tire suas dúvidas rapidamente sobre o FinzAI e nossos serviços.
                         </p>
                     </RevealOnScroll>
@@ -385,7 +385,7 @@ const LandingPage: React.FC<LandingPageProps> = ({ appConfig, onStartAuth, onVie
                                         aria-expanded={openFaq === index}
                                         aria-controls={`faq-answer-${index}`}
                                     >
-                                        <span className="text-base md:text-lg lg:text-xl font-semibold">{item.question}</span>
+                                        <span className="text-lg md:text-xl lg:text-2xl font-semibold">{item.question}</span>
                                         <ChevronRightIcon className={`h-6 w-6 text-brand-primary transition-transform ${openFaq === index ? 'rotate-90' : ''}`} />
                                     </button>
                                     <div
@@ -394,7 +394,7 @@ const LandingPage: React.FC<LandingPageProps> = ({ appConfig, onStartAuth, onVie
                                             openFaq === index ? 'max-h-[200px] pb-5' : 'max-h-0'
                                         }`}
                                     >
-                                        <p className="text-sm md:text-base text-text-secondary leading-relaxed">{item.answer}</p>
+                                        <p className="text-base md:text-lg text-text-secondary leading-relaxed">{item.answer}</p>
                                     </div>
                                 </div>
                             </RevealOnScroll>
