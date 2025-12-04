@@ -21,7 +21,7 @@ const DashboardCard: React.FC<DashboardCardProps> = ({ title, amount, icon, colo
           {icon}
         </div>
       </div>
-      <p className="text-2xl md:text-3xl font-bold text-text-primary mt-4">{formattedAmount}</p>
+      <p className="text-xl sm:text-2xl md:text-3xl font-bold text-text-primary mt-4">{formattedAmount}</p>
     </div>
   );
 };

@@ -151,7 +151,7 @@ const DashboardPage: React.FC<DashboardPageProps> = ({ user }) => {
     <div className="space-y-4 md:space-y-6">
       <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-3">
         <div>
-          <h1 className="text-xl md:text-2xl lg:text-3xl font-bold text-text-primary">Dashboard</h1>
+          <h1 className="text-xl sm:text-2xl lg:text-3xl font-bold text-text-primary">Dashboard</h1>
           <p className="text-xs md:text-sm text-text-secondary mt-0.5">Olá, {userName}!</p>
         </div>
         <button

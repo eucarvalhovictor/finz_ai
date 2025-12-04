@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts';
 import { MonthlySummary } from '../../types';
@@ -33,7 +32,7 @@ const MonthlySummaryChart: React.FC<MonthlySummaryChartProps> = ({ data }) => {
 
   return (
     <div className="bg-card p-6 rounded-2xl border border-border h-96">
-      <h3 className="text-xl font-bold text-text-primary mb-6">Resumo Mensal</h3>
+      <h3 className="text-lg sm:text-xl font-bold text-text-primary mb-6">Resumo Mensal</h3>
       <div className="w-full h-[90%] min-h-0">
         <ResponsiveContainer width="100%" height="100%">
             <BarChart data={data} margin={{ top: 5, right: 20, left: -10, bottom: 5 }}>

@@ -17,7 +17,7 @@ const RecentTransactionsList: React.FC<RecentTransactionsListProps> = ({ transac
 
   return (
     <div className="bg-card p-6 rounded-2xl border border-border h-full">
-      <h3 className="text-xl font-bold text-text-primary mb-6">Últimas Transações</h3>
+      <h3 className="text-lg sm:text-xl font-bold text-text-primary mb-6">Últimas Transações</h3>
       {transactions.length > 0 ? (
         <ul className="space-y-5">
           {transactions.map((t) => (

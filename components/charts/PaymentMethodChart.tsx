@@ -42,7 +42,7 @@ const PaymentMethodChart: React.FC<PaymentMethodChartProps> = ({ transactions })
 
   return (
     <div className="bg-card p-6 rounded-2xl border border-border h-full min-h-[300px]">
-      <h3 className="text-xl font-bold text-text-primary mb-6">Gastos por Meio de Pagamento</h3>
+      <h3 className="text-lg sm:text-xl font-bold text-text-primary mb-6">Gastos por Meio de Pagamento</h3>
       <ResponsiveContainer width="100%" height="85%">
         <PieChart>
           <Pie
