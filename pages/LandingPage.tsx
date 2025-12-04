@@ -409,15 +409,15 @@ const LandingPage: React.FC<LandingPageProps> = ({ appConfig, onStartAuth, onVie
 
             {/* Footer */}
             <footer className="bg-[#0a0a0a] text-text-secondary py-12 md:py-12 border-t border-white/5 px-4 z-10 relative">
-                <div className="max-w-7xl mx-auto flex flex-col md:flex-row justify-between items-center md:items-start gap-8">
+                <div className="max-w-7xl mx-auto flex flex-col md:flex-col justify-center items-center gap-8">
                     {/* Left Section: Logo and Slogan */}
-                    <div className="flex flex-col items-center md:items-start text-center md:text-left">
+                    <div className="flex flex-col items-center text-center">
                         {appConfig?.site_logo ? (
                             <img src={appConfig.site_logo} alt="Logo" className="h-8 w-8 object-contain mb-3" />
                         ) : (
                             <WalletIcon className="h-8 w-8 text-brand-primary mb-3" />
                         )}
-                        <span className="font-radley text-xl font-bold text-text-primary mb-2">{appConfig?.site_name || 'Finz.'}</span>
+    
                         <p className="text-sm max-w-sm">Seu controle financeiro inteligente para prosperar.</p>
                     </div>
 
@@ -428,7 +428,7 @@ const LandingPage: React.FC<LandingPageProps> = ({ appConfig, onStartAuth, onVie
                     </nav>
 
                     {/* Right Section: Copyright and Credits */}
-                    <div className="text-center md:text-right text-sm md:text-sm">
+                    <div className="text-center text-sm md:text-sm">
                         <p>&copy; 2025 Finz. Todos os direitos reservados.</p>
                         <p>
                             Feito com ❤️ por{' '}
